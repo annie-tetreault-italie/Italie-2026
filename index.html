@@ -350,7 +350,7 @@ document.addEventListener('touchend', function(e){
 <script type="module">
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
 
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -368,6 +368,35 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig)
 const db = getFirestore(app);
 const bookingsRef = doc(db, "italie", "bookings");
+
+// --- Firestore sync for bookings ---
+let syncing=false;
+async function saveBookingsRemote(){
+  if(syncing) return;
+  try{
+    await setDoc(bookingsRef,{items:bookings});
+  }catch(e){console.error("Firestore save failed",e);}
+}
+onSnapshot(bookingsRef,(snap)=>{
+  const data=snap.data();
+  syncing=true;
+  bookings=Array.isArray(data?.items)?data.items:[];
+  LS.set('italie_bookings',bookings);
+  renderBookings();
+  syncing=false;
+},(e)=>console.error(e));
+
+const _oldAdd=addBooking;
+addBooking=function(){
+  _oldAdd();
+  saveBookingsRemote();
+}
+const _oldDel=delBooking;
+delBooking=function(i){
+  _oldDel(i);
+  saveBookingsRemote();
+}
+
 </script>
 </body>
 </html>
