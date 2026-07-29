@@ -5,14 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f7f0e6">
 <title>Mon Carnet de Voyages — Italie 2026</title>
-<meta name="application-version" content="home-premium-2.0">
+<meta name="application-version" content="premium-3.0-timeline">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
-<link rel="stylesheet" href="css/style.css?v=home-premium-2.0">
+<link rel="stylesheet" href="css/style.css?v=premium-3.0-timeline">
 </head>
 <body>
 <div class="app">
   <section id="home" class="panel active">
-    <div class="premium-home-hero">
+    <div class="premium-home-hero manarola-hero">
       <div class="premium-hero-overlay"></div>
       <div class="premium-hero-content">
         <div class="app-brand premium-brand"><div class="app-brand-mark">🌍</div><div><div class="app-brand-name">Mon Carnet de Voyages</div><div class="app-brand-slogan">Préparer · Voyager · Revivre</div></div></div>
@@ -259,6 +259,27 @@
   </section>
 
 
+  <section id="timeline" class="panel">
+    <div class="timeline-hero">
+      <div class="timeline-hero-overlay"></div>
+      <div class="timeline-hero-content">
+        <span class="eyebrow">L’histoire de ton voyage</span>
+        <h1>Timeline</h1>
+        <p>Fais défiler chaque journée, tes photos, tes souvenirs et tes lieux préférés.</p>
+        <div class="timeline-progress-wrap"><div id="timelineProgressBar"></div></div>
+        <div class="timeline-progress-meta"><strong id="timelineProgressLabel">Jour 1 sur 18</strong><span id="timelineProgressPercent">0 %</span></div>
+      </div>
+    </div>
+    <div class="section timeline-section">
+      <div class="timeline-toolbar card">
+        <button id="timelineTodayButton" class="btn" type="button">📅 Aller à aujourd’hui</button>
+        <button id="timelineHighlightsButton" class="btn secondary" type="button">⭐ Meilleurs moments</button>
+      </div>
+      <div id="timelineList" class="premium-timeline-list"></div>
+      <div id="timelineEmpty" class="card loading-card" hidden>Aucune journée n’est disponible dans la Timeline.</div>
+    </div>
+  </section>
+
   <section id="map" class="panel">
     <div class="hero map-hero"><div class="eyebrow">Voir le voyage d’un coup d’œil</div><h1>Carte interactive</h1><div class="dates">Itinéraire, position actuelle et endroits « Je suis ici »</div></div>
     <div class="section">
@@ -470,7 +491,7 @@
 <nav class="nav">
   <button class="active" data-panel="home" onclick="showPanel('home')"><span>🏠</span>Accueil</button>
   <button data-panel="today" onclick="showPanel('today')"><span>☀️</span>Aujourd’hui</button>
-  <button data-panel="itinerary" onclick="showPanel('itinerary')"><span>🗓️</span>Voyage</button>
+  <button data-panel="timeline" onclick="showPanel('timeline')"><span>🕒</span>Timeline</button>
   <button data-panel="map" onclick="showPanel('map')"><span>🗺️</span>Carte</button>
   <button data-panel="bookings" onclick="showPanel('bookings')"><span>🎟️</span>Réserv.</button>
   <button data-panel="budget" onclick="showPanel('budget')"><span>💶</span>Budget</button>
@@ -498,6 +519,6 @@
 })();
 </script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-<script type="module" src="js/app.js?v=map-1.0"></script>
+<script type="module" src="js/app.js?v=premium-3.0-timeline"></script>
 </body>
 </html>
