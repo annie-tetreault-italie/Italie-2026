@@ -1,3 +1,6 @@
+// Italie 2026 — Version 4.0 stable
+window.__ITALIE_APP_STARTED__ = true;
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
 import {
   getFirestore, doc, collection, query, orderBy,
@@ -36,13 +39,19 @@ let expenseSearchText = "";
 let expenseCategoryValue = "";
 
 function setStatus(message, type=""){
+  if(!syncStatus) return;
   syncStatus.textContent = message;
   syncStatus.className = "sync-status" + (type ? " " + type : "");
 }
 
 function showPanel(id){
+  const target = $(id);
+  if(!target){
+    console.warn("Panneau introuvable :", id);
+    return;
+  }
   document.querySelectorAll(".panel").forEach(p=>p.classList.remove("active"));
-  $(id).classList.add("active");
+  target.classList.add("active");
   document.querySelectorAll(".nav button").forEach(
     b=>b.classList.toggle("active", b.dataset.panel===id)
   );
