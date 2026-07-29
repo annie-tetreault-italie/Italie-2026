@@ -1784,7 +1784,8 @@ function renderTripMapData(fit=false){
   const route=[];
   stages.forEach((stage,index)=>{
     route.push(stage.coords);
-    L.marker(stage.coords,{title:stage.city}).addTo(tripMarkersLayer).bindPopup(stagePopup(stage,index));
+    const marker=L.marker(stage.coords,{title:stage.city}).addTo(tripMarkersLayer).bindPopup(stagePopup(stage,index));
+    marker.on("click",()=>renderMapStageDetails(stage,index));
   });
   if(route.length>1) L.polyline(route,{color:"#1f6b52",weight:4,opacity:.75,dashArray:"9 8"}).addTo(tripRouteLayer);
   places.forEach(place=>{
@@ -1796,6 +1797,59 @@ function renderTripMapData(fit=false){
   $("mapStatus").textContent=stages.length?`${stages.length} étape${stages.length===1?"":"s"} et ${places.length} endroit${places.length===1?"":"s"} personnel${places.length===1?"":"s"} affichés.`:"Ajoute des destinations dans l’itinéraire pour les voir sur la carte.";
   if(fit) fitTripMap();
 }
+
+function stageDateRange(stage){
+  const first=stage.days[0], last=stage.days[stage.days.length-1];
+  return `${formatDateFr(first.id)}${last.id!==first.id?` au ${formatDateFr(last.id)}`:""}`;
+}
+function uniqueStageItems(stage, fields){
+  const items=[];
+  stage.days.forEach(day=>valueItems(firstValue(day,fields)).forEach(item=>{
+    if(item && !items.some(existing=>existing.toLocaleLowerCase("fr-CA")===item.toLocaleLowerCase("fr-CA"))) items.push(item);
+  }));
+  return items;
+}
+function renderStageList(icon,title,items){
+  if(!items.length) return "";
+  return `<section class="stage-info-block"><h3>${icon} ${esc(title)}</h3><ul>${items.map(item=>`<li>${esc(item)}</li>`).join("")}</ul></section>`;
+}
+function renderMapStageDetails(stage,index){
+  const root=$("mapStageDetails"); if(!root) return;
+  const hotels=uniqueStageItems(stage,["hotel","accommodation"]);
+  const restaurants=uniqueStageItems(stage,["restaurants","restaurant"]);
+  const activities=uniqueStageItems(stage,["activities","activity","schedule"]);
+  const transports=uniqueStageItems(stage,["transport","train","flight"]);
+  const memories=stage.days.map(day=>firstValue(day,["memoryText","journal","memory","favoriteMoment"])).filter(Boolean);
+  const places=stage.days.flatMap(day=>(Array.isArray(day.herePlaces)?day.herePlaces:[]).map(place=>({...place,dayId:day.id})));
+  const photos=stage.days.flatMap(day=>(Array.isArray(day.photos)?day.photos:[]).map((src,photoIndex)=>({src,dayId:day.id,photoIndex})));
+  const ratings=stage.days.map(day=>Number(day.rating||day.dayRating||0)).filter(n=>n>0);
+  const average=ratings.length?Math.round(ratings.reduce((a,b)=>a+b,0)/ratings.length):0;
+  const budgetValues=stage.days.map(day=>firstValue(day,["budget","dailyBudget"])).filter(Boolean);
+  root.innerHTML=`<article class="card stage-detail-card">
+    <div class="stage-detail-head"><div><span class="stage-number">Étape ${index+1}</span><h2>📍 ${esc(stage.city)}</h2><p>${esc(stageDateRange(stage))}</p></div><div class="stage-rating">${average?"★".repeat(average)+"☆".repeat(5-average):"Pas encore notée"}</div></div>
+    <div class="stage-kpis"><span><strong>${stage.days.length}</strong> journée${stage.days.length>1?"s":""}</span><span><strong>${photos.length}</strong> photo${photos.length>1?"s":""}</span><span><strong>${places.length}</strong> lieu${places.length>1?"x":""}</span></div>
+    <div class="stage-info-grid">${renderStageList("🏨","Hébergement",hotels)}${renderStageList("🍝","Restaurants",restaurants)}${renderStageList("🥾","Activités",activities)}${renderStageList("🚆","Transports",transports)}${budgetValues.length?renderStageList("💶","Budget",budgetValues.map(displayValue)):""}${renderStageList("📝","Souvenirs",memories.map(displayValue))}</div>
+    ${photos.length?`<section class="stage-photo-section"><h3>📸 Photos de l’étape</h3><div class="stage-photo-grid">${photos.slice(0,12).map((photo,i)=>`<button type="button" class="stage-photo-button" data-stage-photo-index="${i}"><img src="${photo.src}" alt="Photo de ${esc(stage.city)}"></button>`).join("")}</div></section>`:""}
+    ${places.length?`<section class="stage-place-section"><h3>📌 Je suis ici</h3>${places.map(place=>`<a target="_blank" rel="noopener" href="https://www.google.com/maps?q=${encodeURIComponent(place.latitude+","+place.longitude)}"><strong>${esc(place.name||"Endroit")}</strong><span>${esc(formatDateFr(place.dayId))}${place.time?` · ${esc(place.time)}`:""}</span></a>`).join("")}</section>`:""}
+    <div class="stage-detail-actions"><button type="button" class="btn" id="openStageFirstDay">Voir la première journée</button><a class="btn secondary" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(stage.coords[0]+","+stage.coords[1])}">🧭 Itinéraire Google Maps</a></div>
+  </article>`;
+  $("openStageFirstDay")?.addEventListener("click",()=>openDayDetail(stage.days[0].id));
+  root.querySelectorAll(".stage-photo-button").forEach(button=>button.addEventListener("click",()=>openPhotoViewer(photos.map(p=>p.src),Number(button.dataset.stagePhotoIndex)||0,stage.city)));
+  root.scrollIntoView({behavior:"smooth",block:"start"});
+}
+function openMapTodayStage(){
+  const stages=mapStageData(); if(!stages.length) return;
+  const now=new Date();
+  const todayId=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
+  let index=stages.findIndex(stage=>stage.days.some(day=>day.id===todayId));
+  if(index<0){
+    index=stages.findIndex(stage=>stage.days.some(day=>day.id>todayId));
+    if(index<0) index=stages.length-1;
+  }
+  const stage=stages[index]; renderMapStageDetails(stage,index);
+  if(tripMap){ tripMap.setView(stage.coords,10); }
+}
+
 function fitTripMap(){
   if(!tripMap) return;
   const points=[...mapStageData().map(s=>s.coords),...allHerePlaces().map(p=>[Number(p.latitude),Number(p.longitude)]).filter(c=>c.every(Number.isFinite))];
@@ -1817,6 +1871,7 @@ function renderMapPlacesList(places){
   root.innerHTML=`<h2>📌 Mes endroits enregistrés</h2><div class="map-place-grid">${places.slice().reverse().map(place=>`<article class="card map-place-card"><div><strong>${esc(place.name||"Endroit")}</strong><span>${esc(formatDateFr(place.dayId))}${place.city?` · ${esc(place.city)}`:""}</span>${place.note?`<p>${esc(place.note)}</p>`:""}</div><a href="https://www.google.com/maps?q=${encodeURIComponent(place.latitude+","+place.longitude)}" target="_blank" rel="noopener">Voir →</a></article>`).join("")}</div>`;
 }
 $("mapFitButton")?.addEventListener("click",fitTripMap);
+$("mapTodayButton")?.addEventListener("click",openMapTodayStage);
 $("mapLocateButton")?.addEventListener("click",()=>{ startCurrentLocation(); setTimeout(()=>{ if(currentPositionSnapshot&&tripMap){ const c=currentPositionSnapshot.coords; updateMapCurrentPosition(c.latitude,c.longitude,c.accuracy); tripMap.setView([c.latitude,c.longitude],14); } },800); });
 window.renderTripMapData=renderTripMapData;
 
