@@ -455,3 +455,18 @@ hr{border:0;border-top:1px solid var(--line);margin:16px 0}
   .day-edit-toolbar .btn,.day-edit-actions .btn{width:100%}
   .day-edit-actions{display:grid;grid-template-columns:1fr}
 }
+
+/* Module Itinéraire — édition rapide */
+.day-completion{padding:15px;margin-bottom:12px}
+.day-completion-head{display:flex;justify-content:space-between;gap:12px;color:var(--green);font-weight:900;font-size:13px}
+.day-completion-bar{height:11px;background:#e6ded3;border-radius:999px;overflow:hidden;margin-top:10px}
+.day-completion-bar>div{height:100%;width:0;background:linear-gradient(90deg,var(--olive),var(--green));border-radius:inherit;transition:width .3s ease}
+.quick-day-editor{padding:17px;margin-bottom:14px;background:linear-gradient(145deg,#fffaf3,#f3f8f5)}
+.quick-day-editor-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:13px}
+.quick-day-editor-head h2{margin:3px 0 0;color:var(--green);font-size:21px}
+.quick-edit-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.quick-edit-grid button{border:1px solid var(--line);background:#fff;border-radius:13px;padding:12px 10px;text-align:left;font:inherit;font-size:13px;font-weight:800;color:var(--green);cursor:pointer}
+.quick-edit-grid button:active{transform:translateY(1px)}
+#quickEditStatus{margin-top:10px;font-weight:700}
+@media(min-width:760px){.quick-edit-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:560px){.quick-day-editor-head{align-items:flex-start}.quick-day-editor-head .btn{width:auto}.quick-edit-grid{grid-template-columns:1fr 1fr}.quick-edit-grid button{font-size:12px;padding:11px 8px}}

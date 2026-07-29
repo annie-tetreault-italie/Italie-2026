@@ -336,6 +336,64 @@ $("dayEditForm").addEventListener("submit", async event => {
   }
 });
 
+
+function dayCompletionPercent(day){
+  const checks = [
+    firstValue(day,["city","destination"]),
+    firstValue(day,["transport","train","flight"]),
+    firstValue(day,["hotel","accommodation","lodging"]),
+    firstValue(day,["activities","activity"]),
+    firstValue(day,["restaurants","restaurant"]),
+    firstValue(day,["budget","plannedBudget"]),
+    firstValue(day,["notes","description"]),
+    firstValue(day,["maps","map","address"])
+  ];
+  const complete = checks.filter(value => displayValue(value).trim() !== "").length;
+  return Math.round((complete / checks.length) * 100);
+}
+
+async function saveQuickDayPatch(patch){
+  const status = $("quickEditStatus");
+  status.textContent = "Enregistrement…";
+  try{
+    await setDoc(doc(db,"Trips","italy-2026","Days",activeDayId), patch, {merge:true});
+    status.textContent = "✅ Modification enregistrée.";
+  }catch(error){
+    console.error("Modification rapide impossible :", error);
+    status.textContent = "⚠️ Enregistrement impossible.";
+  }
+}
+
+const quickFieldLabels = {
+  city:"Destination", hotel:"Hébergement", transport:"Transport",
+  budget:"Budget prévu", notes:"Notes", maps:"Adresse ou lien Google Maps"
+};
+
+document.querySelectorAll("[data-quick-field]").forEach(button=>{
+  button.addEventListener("click", async()=>{
+    const day = itineraryDays.find(item=>item.id===activeDayId);
+    if(!day) return;
+    const field = button.dataset.quickField;
+    const current = editorText(firstValue(day,[field]));
+    const value = prompt(`${quickFieldLabels[field]} :`, current);
+    if(value === null) return;
+    await saveQuickDayPatch({[field]: value.trim()});
+  });
+});
+
+document.querySelectorAll("[data-quick-add]").forEach(button=>{
+  button.addEventListener("click", async()=>{
+    const day = itineraryDays.find(item=>item.id===activeDayId);
+    if(!day) return;
+    const field = button.dataset.quickAdd;
+    const label = field === "activities" ? "Nouvelle activité" : "Nouveau restaurant";
+    const value = prompt(`${label} :`, "");
+    if(value === null || !value.trim()) return;
+    const existing = valueItems(firstValue(day,[field]));
+    await saveQuickDayPatch({[field]: [...existing, value.trim()]});
+  });
+});
+
 function openDayDetail(dayId){
   const day = itineraryDays.find(item => item.id === dayId);
   if(!day) return;
@@ -346,6 +404,10 @@ function openDayDetail(dayId){
   const city = cityForDay(day);
   $("dayDetailTitle").textContent = title;
   $("dayDetailDate").textContent = formatDateFr(day.id);
+  const completion = dayCompletionPercent(day);
+  $("dayCompletionPercent").textContent = completion + " %";
+  $("dayCompletionFill").style.width = completion + "%";
+  $("quickEditStatus").textContent = "";
   $("dayDetailOverview").innerHTML = [
     city ? `<span>📍 ${esc(city)}</span>` : "",
     firstValue(day,["hotel","accommodation"]) ? `<span>🏨 Hébergement prévu</span>` : "",

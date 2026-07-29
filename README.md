@@ -1,4 +1,4 @@
-# Mon Carnet de Voyages — Module Itinéraire modifiable
+# Mon Carnet de Voyages — Module Itinéraire rapide modifiable
 
 Cette étape conserve tous les modules déjà stables et ajoute une seule fonction : la modification directe d’une journée depuis sa fiche.
 

@@ -215,8 +215,26 @@
 
     <div class="section">
       <div id="dayDetailOverview" class="day-overview"></div>
-      <div class="day-edit-toolbar">
-        <button id="editDayButton" class="btn secondary" type="button">✏️ Modifier cette journée</button>
+      <div class="day-completion card">
+        <div class="day-completion-head"><strong>Journée complétée</strong><span id="dayCompletionPercent">0 %</span></div>
+        <div class="day-completion-bar"><div id="dayCompletionFill"></div></div>
+      </div>
+      <div class="quick-day-editor card">
+        <div class="quick-day-editor-head">
+          <div><div class="eyebrow">Modification rapide</div><h2>Changer une information</h2></div>
+          <button id="editDayButton" class="btn secondary" type="button">✏️ Tout modifier</button>
+        </div>
+        <div class="quick-edit-grid">
+          <button type="button" data-quick-field="city">📍 Destination</button>
+          <button type="button" data-quick-field="hotel">🏨 Hébergement</button>
+          <button type="button" data-quick-field="transport">🚆 Transport</button>
+          <button type="button" data-quick-field="budget">💶 Budget</button>
+          <button type="button" data-quick-add="activities">➕ Activité</button>
+          <button type="button" data-quick-add="restaurants">➕ Restaurant</button>
+          <button type="button" data-quick-field="notes">📝 Notes</button>
+          <button type="button" data-quick-field="maps">📍 Adresse / carte</button>
+        </div>
+        <div id="quickEditStatus" class="subtle" role="status"></div>
       </div>
       <form id="dayEditForm" class="day-edit-form card" hidden>
         <div class="row">
