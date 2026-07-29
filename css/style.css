@@ -526,7 +526,7 @@ hr{border:0;border-top:1px solid var(--line);margin:16px 0}
 /* Module étoiles et photo préférée */
 .day-rating-block{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:15px;margin:10px 0 16px;border:1px solid rgba(24,83,61,.12);border-radius:16px;background:#fffaf3}
 .day-rating-block strong,.day-rating-block small{display:block}.day-rating-block small{margin-top:4px;color:var(--muted);font-size:12px}
-.day-rating-stars{display:flex;gap:3px}.day-rating-stars button{border:0;background:transparent;color:#cfc8bc;font-size:31px;line-height:1;padding:3px;cursor:pointer}.day-rating-stars button.selected{color:#e5a526}.day-rating-stars button:focus-visible{outline:3px solid rgba(229,165,38,.3);border-radius:8px}
+.day-rating-stars{display:flex;gap:3px}.day-rating-stars button{border:0;background:transparent;color:#cfc8bc;font-size:31px;line-height:1;padding:8px 5px;cursor:pointer;touch-action:manipulation;position:relative;z-index:2;-webkit-tap-highlight-color:transparent}.day-rating-stars button.selected{color:#e5a526}.day-rating-stars button:focus-visible{outline:3px solid rgba(229,165,38,.3);border-radius:8px}
 .day-photo-favorite{position:absolute;left:7px;top:7px;width:34px;height:34px;border:0;border-radius:50%;background:rgba(255,255,255,.92);font-size:18px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.15)}
 .day-photo-item.favorite{outline:3px solid #e5a526;outline-offset:2px}.day-photo-item.favorite:after{content:"Photo préférée";position:absolute;left:6px;bottom:6px;background:rgba(255,255,255,.92);padding:4px 7px;border-radius:999px;font-size:9px;font-weight:900;color:var(--terracotta)}
 .memory-summary{grid-template-columns:repeat(3,1fr)}
