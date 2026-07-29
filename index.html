@@ -446,6 +446,17 @@
   </div>
 </div>
 
+<div id="photoViewerModal" class="photo-viewer" hidden>
+  <div class="photo-viewer-backdrop" data-close-photo-viewer></div>
+  <div class="photo-viewer-card" role="dialog" aria-modal="true" aria-label="Photo en gros plan">
+    <button id="photoViewerClose" type="button" class="photo-viewer-close" aria-label="Fermer">×</button>
+    <button id="photoViewerPrev" type="button" class="photo-viewer-nav photo-viewer-prev" aria-label="Photo précédente">‹</button>
+    <img id="photoViewerImage" src="" alt="Photo souvenir en gros plan">
+    <button id="photoViewerNext" type="button" class="photo-viewer-nav photo-viewer-next" aria-label="Photo suivante">›</button>
+    <div id="photoViewerCaption" class="photo-viewer-caption"></div>
+  </div>
+</div>
+
 <nav class="nav">
   <button class="active" data-panel="home" onclick="showPanel('home')"><span>🏠</span>Accueil</button>
   <button data-panel="today" onclick="showPanel('today')"><span>☀️</span>Aujourd’hui</button>
@@ -475,6 +486,6 @@
   });
 })();
 </script>
-<script type="module" src="js/app.js?v=rating-1.1"></script>
+<script type="module" src="js/app.js?v=photo-viewer-1.0"></script>
 </body>
 </html>

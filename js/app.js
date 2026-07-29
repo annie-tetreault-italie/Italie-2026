@@ -487,12 +487,70 @@ function renderDayPhotos(day){
     const item = document.createElement("figure");
     item.className = "day-photo-item" + (Number(day.favoritePhotoIndex) === index ? " favorite" : "");
     item.innerHTML = `<button type="button" class="day-photo-open" aria-label="Ouvrir la photo"><img src="${src}" alt="Souvenir du ${esc(formatDateFr(day.id))}"></button><button type="button" class="day-photo-favorite" aria-label="Choisir comme photo préférée" title="Photo préférée">${Number(day.favoritePhotoIndex) === index ? "❤️" : "🤍"}</button><button type="button" class="day-photo-delete" aria-label="Supprimer la photo">×</button>`;
-    item.querySelector(".day-photo-open").addEventListener("click",()=>window.open(src,"_blank"));
+    item.querySelector(".day-photo-open").addEventListener("click",()=>openPhotoViewer(photos,index,`${formatDateFr(day.id)} — ${day.location || day.title || "Souvenir"}`));
     item.querySelector(".day-photo-favorite").addEventListener("click",()=>setFavoriteDayPhoto(index));
     item.querySelector(".day-photo-delete").addEventListener("click",()=>deleteDayPhoto(index));
     root.appendChild(item);
   });
 }
+
+
+let photoViewerPhotos = [];
+let photoViewerIndex = 0;
+let photoViewerCaptionText = "";
+
+function updatePhotoViewer(){
+  const image = $("photoViewerImage");
+  if(!image || !photoViewerPhotos.length) return;
+  photoViewerIndex = (photoViewerIndex + photoViewerPhotos.length) % photoViewerPhotos.length;
+  image.src = photoViewerPhotos[photoViewerIndex];
+  $("photoViewerCaption").textContent = `${photoViewerCaptionText}${photoViewerPhotos.length > 1 ? ` · ${photoViewerIndex + 1} / ${photoViewerPhotos.length}` : ""}`;
+  $("photoViewerPrev").hidden = photoViewerPhotos.length < 2;
+  $("photoViewerNext").hidden = photoViewerPhotos.length < 2;
+}
+
+function openPhotoViewer(photos,index=0,caption="Photo souvenir"){
+  photoViewerPhotos = Array.isArray(photos) ? photos.filter(Boolean) : [];
+  if(!photoViewerPhotos.length) return;
+  photoViewerIndex = Number(index) || 0;
+  photoViewerCaptionText = caption;
+  const modal = $("photoViewerModal");
+  modal.hidden = false;
+  document.body.classList.add("photo-viewer-open");
+  updatePhotoViewer();
+  $("photoViewerClose")?.focus();
+}
+
+function closePhotoViewer(){
+  const modal = $("photoViewerModal");
+  if(modal) modal.hidden = true;
+  document.body.classList.remove("photo-viewer-open");
+  const image = $("photoViewerImage");
+  if(image) image.src = "";
+}
+
+function changePhotoViewer(step){
+  photoViewerIndex += step;
+  updatePhotoViewer();
+}
+
+$("photoViewerClose")?.addEventListener("click",closePhotoViewer);
+$("photoViewerPrev")?.addEventListener("click",()=>changePhotoViewer(-1));
+$("photoViewerNext")?.addEventListener("click",()=>changePhotoViewer(1));
+$("photoViewerModal")?.addEventListener("click",e=>{ if(e.target.matches("[data-close-photo-viewer]")) closePhotoViewer(); });
+document.addEventListener("keydown",e=>{
+  if($("photoViewerModal")?.hidden !== false) return;
+  if(e.key === "Escape") closePhotoViewer();
+  if(e.key === "ArrowLeft") changePhotoViewer(-1);
+  if(e.key === "ArrowRight") changePhotoViewer(1);
+});
+let photoTouchStartX = 0;
+$("photoViewerImage")?.addEventListener("touchstart",e=>{ photoTouchStartX = e.changedTouches[0]?.clientX || 0; },{passive:true});
+$("photoViewerImage")?.addEventListener("touchend",e=>{
+  const endX = e.changedTouches[0]?.clientX || 0;
+  const delta = endX - photoTouchStartX;
+  if(Math.abs(delta) > 45) changePhotoViewer(delta > 0 ? -1 : 1);
+},{passive:true});
 
 function imageFromFile(file){
   return new Promise((resolve,reject)=>{
@@ -659,7 +717,7 @@ function renderMemories(){
       ${Number(day.rating || 0) ? `<div class="memory-rating" aria-label="${Number(day.rating)} étoiles">${"★".repeat(Number(day.rating))}${"☆".repeat(5-Number(day.rating))}</div>` : ""}
       ${Array.isArray(day.photos) && Number(day.favoritePhotoIndex) >= 0 && day.photos[Number(day.favoritePhotoIndex)] ? `<div class="memory-cover"><img src="${day.photos[Number(day.favoritePhotoIndex)]}" alt="Photo préférée de cette journée"><span>❤️ Photo préférée</span></div>` : ""}
       ${day.favorite ? `<div class="memory-favorite">❤️ ${esc(day.favorite)}</div>` : ""}
-      ${Array.isArray(day.photos) && day.photos.length ? `<div class="memory-photo-strip">${day.photos.slice(0,3).map(src=>`<img src="${src}" alt="Photo souvenir">`).join("")}</div>` : ""}
+      ${Array.isArray(day.photos) && day.photos.length ? `<div class="memory-photo-strip">${day.photos.slice(0,3).map((src,index)=>`<button type="button" class="memory-photo-open" data-memory-day="${day.id}" data-memory-index="${index}" aria-label="Ouvrir la photo"><img src="${src}" alt="Photo souvenir"></button>`).join("")}</div>` : ""}
       ${day.journal ? `<p>${esc(day.journal)}</p>` : ""}
       <button type="button" class="btn secondary memory-open-day">Ouvrir cette journée</button>`;
     card.querySelector(".memory-open-day").addEventListener("click",()=>openDayDetail(day.id));
@@ -1485,6 +1543,14 @@ renderExpenses();
 renderChecks();
 renderPreparationAssistant();
 renderDashboard();
+
+document.addEventListener("click",e=>{
+  const button = e.target.closest(".memory-photo-open");
+  if(!button) return;
+  const day = itineraryDays.find(item=>item.id===button.dataset.memoryDay);
+  if(!day) return;
+  openPhotoViewer(day.photos,Number(button.dataset.memoryIndex)||0,`${formatDateFr(day.id)} — ${day.location || day.title || "Souvenir"}`);
+});
 
 document.addEventListener("touchend", function(e){
   const btn=e.target.closest("button[data-panel]");
