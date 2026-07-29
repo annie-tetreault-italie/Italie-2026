@@ -1,4 +1,4 @@
-# Italie 2026 — Version 3.4
+# Italie 2026 — Version 3.5
 
 ## Nouveautés
 
@@ -21,3 +21,7 @@ README.md
 css/style.css
 js/app.js
 ```
+
+
+## Version 3.5
+Budget prévu, dépenses détaillées, conversion EUR/CAD, filtres, ventilation par catégorie et par ville, et dépenses liées aux journées.

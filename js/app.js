@@ -32,6 +32,8 @@ let itinerarySearchText = "";
 let itineraryCityValue = "";
 let bookingSearchText = "";
 let bookingStatusValue = "";
+let expenseSearchText = "";
+let expenseCategoryValue = "";
 
 function setStatus(message, type=""){
   syncStatus.textContent = message;
@@ -292,6 +294,16 @@ function openDayDetail(dayId){
     root.appendChild(block);
   }
 
+  const linkedExpenses = expenses.filter(item => item && item.date === day.id);
+  if(linkedExpenses.length){
+    const block=document.createElement("article");
+    block.className="detail-block wide";
+    const total=linkedExpenses.reduce((sum,item)=>sum+expenseCad(item),0);
+    block.innerHTML=`<h3>💶 Dépenses de cette journée</h3><div class="day-budget-summary"><div><span>Total dépensé</span><strong>${esc(moneyCAD(total))}</strong></div><div><span>Nombre de dépenses</span><strong>${linkedExpenses.length}</strong></div></div>`;
+    linkedExpenses.forEach(item=>{const p=document.createElement("p");p.textContent=`${expenseIcon(item.cat)} ${item.name} — ${expenseOriginalMoney(item)}`;block.appendChild(p)});
+    root.appendChild(block);
+  }
+
   const mapValue = firstValue(day, ["maps","map","address"]);
   if(mapValue){
     const mapBlock = renderDetailBlock("🗺️","Carte et adresse",mapValue,true);
@@ -452,6 +464,7 @@ let checks = LS.get("italie_checks", null) || {
 };
 let notes = LS.get("italie_notes", "");
 let eurRateValue = LS.get("italie_eurRate", 1.6);
+let plannedBudgetValue = LS.get("italie_plannedBudget", 0);
 
 function currentState(){
   return {
@@ -460,6 +473,7 @@ function currentState(){
     checks,
     notes,
     eurRate: eurRateValue,
+    plannedBudget: plannedBudgetValue,
     updatedAt: new Date().toISOString()
   };
 }
@@ -470,6 +484,7 @@ function saveLocal(){
   LS.set("italie_checks", checks);
   LS.set("italie_notes", notes);
   LS.set("italie_eurRate", eurRateValue);
+  LS.set("italie_plannedBudget", plannedBudgetValue);
 }
 
 function scheduleCloudSave(){
@@ -603,62 +618,81 @@ $("bookingStatusFilter").addEventListener("change",event=>{
   renderBookings();
 });
 
+function moneyCAD(value){
+  return new Intl.NumberFormat("fr-CA",{style:"currency",currency:"CAD",maximumFractionDigits:2}).format(Number(value)||0);
+}
+function expenseCad(e){
+  const amount=Number(e.amount)||0;
+  return e.cur==="EUR" ? amount*(Number(eurRateValue)||1.6) : amount;
+}
+function expenseIcon(cat=""){
+  return ({"Hébergement":"🏨","Transport":"🚆","Restaurants":"🍝","Cafés":"☕","Activités":"🎟️","Épicerie":"🛒","Magasinage":"🛍️","Essence":"⛽","Divers":"📌","Repas":"🍝","Activité":"🎟️","Autre":"📌"})[cat]||"💶";
+}
+function expenseOriginalMoney(e){
+  return new Intl.NumberFormat("fr-CA",{style:"currency",currency:e.cur||"CAD"}).format(Number(e.amount)||0);
+}
+function renderBreakdown(rootId, field){
+  const root=$(rootId); root.innerHTML="";
+  const totals={};
+  expenses.forEach(e=>{const key=String(e[field]||"Non précisé").trim()||"Non précisé";totals[key]=(totals[key]||0)+expenseCad(e)});
+  const rows=Object.entries(totals).sort((a,b)=>b[1]-a[1]);
+  if(!rows.length){root.innerHTML='<p class="subtle">Aucune donnée pour le moment.</p>';return;}
+  const grand=rows.reduce((s,r)=>s+r[1],0)||1;
+  rows.forEach(([name,total])=>{
+    const row=document.createElement("div"); row.className="breakdown-row";
+    row.innerHTML=`<span>${field==="cat"?expenseIcon(name)+" ":""}${esc(name)}</span><strong>${esc(moneyCAD(total))}</strong><small>${Math.round(total/grand*100)} % des dépenses</small>`;
+    root.appendChild(row);
+  });
+}
+function updateCategoryFilter(){
+  const select=$("expenseCategoryFilter"), current=select.value;
+  const cats=[...new Set(expenses.map(e=>e.cat).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"fr"));
+  select.innerHTML='<option value="">Toutes les catégories</option>'+cats.map(c=>`<option>${esc(c)}</option>`).join("");
+  if(cats.includes(current)) select.value=current;
+}
 function renderExpenses(){
-  const rate=parseFloat(eurRateValue)||1.6;
-  const total=expenses.reduce((s,e)=>s+(e.cur==="EUR"?e.amount*rate:e.amount),0);
-  $("budgetTotal").textContent=new Intl.NumberFormat("fr-CA",{
-    style:"currency",currency:"CAD"
-  }).format(total);
-  const root=$("expenseList");
-  root.innerHTML=expenses.length ? "" :
-    '<p class="subtle">Aucune dépense ajoutée pour le moment.</p>';
-  expenses.forEach((e,i)=>{
-    const amount=new Intl.NumberFormat("fr-CA",{
-      style:"currency",currency:e.cur
-    }).format(e.amount);
-    const el=document.createElement("div");
-    el.className="item";
-    el.innerHTML=`<div class="grow"><strong>${esc(e.name)}</strong><br>
-      <small>${esc(e.cat)} · ${amount}</small></div>
-      <button onclick="delExpense(${i})">✕</button>`;
+  const spent=expenses.reduce((s,e)=>s+expenseCad(e),0);
+  const planned=Number(plannedBudgetValue)||0;
+  const remaining=planned-spent;
+  const percent=planned>0?Math.round(spent/planned*100):0;
+  $("budgetPlannedCard").textContent=moneyCAD(planned);
+  $("budgetSpentCard").textContent=moneyCAD(spent);
+  $("budgetRemainingCard").textContent=moneyCAD(remaining);
+  $("budgetPercentCard").textContent=`${percent} %`;
+  $("budgetProgressBar").style.width=`${Math.min(Math.max(percent,0),100)}%`;
+  $("budgetProgressBar").style.background=percent>100?"var(--terracotta)":"var(--green)";
+  updateCategoryFilter(); renderBreakdown("categoryBreakdown","cat"); renderBreakdown("cityBreakdown","city");
+  const root=$("expenseList"); root.innerHTML="";
+  const filtered=expenses.map((e,i)=>({e,i})).filter(({e})=>{
+    const text=[e.name,e.cat,e.city,e.date,e.payment,e.notes].join(" ").toLocaleLowerCase("fr-CA");
+    return (!expenseSearchText||text.includes(expenseSearchText))&&(!expenseCategoryValue||e.cat===expenseCategoryValue);
+  }).sort((a,b)=>String(b.e.date||"").localeCompare(String(a.e.date||"")));
+  if(!filtered.length){root.innerHTML='<p class="subtle">Aucune dépense ne correspond à ce filtre.</p>';}
+  filtered.forEach(({e,i})=>{
+    const el=document.createElement("article"); el.className="expense-card";
+    const cad=e.cur==="EUR"?` · ${moneyCAD(expenseCad(e))}`:"";
+    el.innerHTML=`<div class="expense-icon">${expenseIcon(e.cat)}</div><div><div class="expense-title">${esc(e.name||"Dépense")}</div><div class="expense-meta">${[e.date?formatDateFr(e.date):"",e.city,e.cat,e.payment].filter(Boolean).map(esc).join(" · ")}</div>${e.notes?`<div class="expense-note">${esc(e.notes)}</div>`:""}</div><div class="expense-amount">${esc(expenseOriginalMoney(e))}${esc(cad)}</div><button class="expense-delete" onclick="delExpense(${i})" aria-label="Supprimer">✕</button>`;
     root.appendChild(el);
   });
   renderDashboard();
 }
-
 function addExpense(){
   const amount=parseFloat($("expAmount").value);
-  if(!$("expName").value.trim() || !Number.isFinite(amount)){
-    alert("Entre une dépense et un montant.");
-    return;
-  }
-  expenses.push({
-    name:$("expName").value.trim(),
-    cat:$("expCat").value,
-    amount,
-    cur:$("expCur").value
-  });
-  $("expName").value="";
-  $("expAmount").value="";
-  renderExpenses();
-  scheduleCloudSave();
+  if(!$("expName").value.trim()||!Number.isFinite(amount)){alert("Entre une dépense et un montant.");return;}
+  expenses.push({id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),date:$("expDate").value,city:$("expCity").value.trim(),name:$("expName").value.trim(),cat:$("expCat").value,amount,cur:$("expCur").value,payment:$("expPayment").value,notes:$("expNotes").value.trim()});
+  ["expName","expAmount","expNotes"].forEach(id=>$(id).value=""); renderExpenses(); scheduleCloudSave();
 }
-window.addExpense = addExpense;
-
-function delExpense(i){
-  expenses.splice(i,1);
-  renderExpenses();
-  scheduleCloudSave();
-}
-window.delExpense = delExpense;
-
-function saveRate(){
+window.addExpense=addExpense;
+function delExpense(i){if(!confirm("Supprimer cette dépense?"))return;expenses.splice(i,1);renderExpenses();scheduleCloudSave();}
+window.delExpense=delExpense;
+function saveBudgetSettings(){
+  plannedBudgetValue=parseFloat($("plannedBudget").value)||0;
   eurRateValue=parseFloat($("eurRate").value)||1.6;
-  renderExpenses();
-  scheduleCloudSave();
+  renderExpenses();scheduleCloudSave();
 }
-window.saveRate = saveRate;
-
+window.saveBudgetSettings=saveBudgetSettings;
+$("expenseSearch").addEventListener("input",e=>{expenseSearchText=e.target.value.trim().toLocaleLowerCase("fr-CA");renderExpenses()});
+$("expenseCategoryFilter").addEventListener("change",e=>{expenseCategoryValue=e.target.value;renderExpenses()});
 function renderChecks(){
   for(const kind of ["packing","todo"]){
     const root=$(kind==="packing" ? "packingList" : "todoList");
@@ -718,9 +752,11 @@ function applyState(data){
   if(data.checks?.packing && data.checks?.todo) checks=data.checks;
   if(typeof data.notes==="string") notes=data.notes;
   if(Number.isFinite(Number(data.eurRate))) eurRateValue=Number(data.eurRate);
+  if(Number.isFinite(Number(data.plannedBudget))) plannedBudgetValue=Number(data.plannedBudget);
 
   $("freeNotes").value=notes;
   $("eurRate").value=eurRateValue;
+  $("plannedBudget").value=plannedBudgetValue;
   renderBookings();
   renderExpenses();
   renderChecks();

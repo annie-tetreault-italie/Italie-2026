@@ -161,23 +161,58 @@
   </section>
 
   <section id="budget" class="panel">
-    <div class="hero"><div class="eyebrow">Suivre les dépenses</div><h1>Budget</h1></div>
+    <div class="hero"><div class="eyebrow">Budget intelligent</div><h1>Budget du voyage</h1></div>
     <div class="section">
-      <div class="card trip-card">
-        <div class="money-total" id="budgetTotal">0,00 $ CA</div>
+      <div class="card budget-summary">
+        <div><strong id="budgetPlannedCard">0 $</strong><span>Budget prévu</span></div>
+        <div><strong id="budgetSpentCard">0 $</strong><span>Dépensé</span></div>
+        <div><strong id="budgetRemainingCard">0 $</strong><span>Reste</span></div>
+        <div><strong id="budgetPercentCard">0 %</strong><span>Utilisé</span></div>
+      </div>
+      <div class="budget-progress"><div id="budgetProgressBar"></div></div>
+
+      <div class="card trip-card budget-settings">
+        <h3>💰 Réglages du budget</h3>
         <div class="row">
-          <div class="field"><label>Dépense</label><input id="expName" placeholder="Ex. Hôtel Florence"></div>
-          <div class="field"><label>Catégorie</label><select id="expCat"><option>Hébergement</option><option>Transport</option><option>Repas</option><option>Activité</option><option>Magasinage</option><option>Autre</option></select></div>
+          <div class="field"><label>Budget total prévu ($ CA)</label><input id="plannedBudget" type="number" min="0" step="1" placeholder="Ex. 6500"></div>
+          <div class="field"><label>1 € = combien de $ CA ?</label><input id="eurRate" type="number" min="0" step="0.01" value="1.60"></div>
+        </div>
+        <button class="btn" onclick="saveBudgetSettings()">Enregistrer les réglages</button>
+      </div>
+
+      <div class="card trip-card budget-form">
+        <h3>➕ Ajouter une dépense</h3>
+        <div class="row">
+          <div class="field"><label>Date</label><input id="expDate" type="date"></div>
+          <div class="field"><label>Ville</label><input id="expCity" placeholder="Ex. Florence"></div>
         </div>
         <div class="row">
-          <div class="field"><label>Montant</label><input id="expAmount" type="number" min="0" step="0.01" placeholder="0.00"></div>
+          <div class="field"><label>Dépense</label><input id="expName" placeholder="Ex. Restaurant Miky"></div>
+          <div class="field"><label>Catégorie</label><select id="expCat"><option>Hébergement</option><option>Transport</option><option>Restaurants</option><option>Cafés</option><option>Activités</option><option>Épicerie</option><option>Magasinage</option><option>Essence</option><option>Divers</option></select></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>Montant</label><input id="expAmount" type="number" min="0" step="0.01" placeholder="0,00"></div>
           <div class="field"><label>Devise</label><select id="expCur"><option value="CAD">$ CA</option><option value="EUR">€</option></select></div>
         </div>
+        <div class="row">
+          <div class="field"><label>Mode de paiement</label><select id="expPayment"><option>Carte de crédit</option><option>Débit</option><option>Comptant</option><option>Autre</option></select></div>
+          <div class="field"><label>Note</label><input id="expNotes" placeholder="Facultatif"></div>
+        </div>
         <button class="btn" onclick="addExpense()">Ajouter la dépense</button>
-        <p class="subtle">Le total affiche les montants en $ CA. Les dépenses en euros utilisent un taux modifiable ci-dessous.</p>
-        <div class="field"><label>Taux utilisé : 1 € = combien de $ CA ?</label><input id="eurRate" type="number" step="0.01" value="1.60" onchange="saveRate();renderExpenses()"></div>
       </div>
-      <div class="list" id="expenseList"></div>
+
+      <div class="budget-tools">
+        <input id="expenseSearch" type="search" placeholder="Rechercher une dépense…">
+        <select id="expenseCategoryFilter"><option value="">Toutes les catégories</option></select>
+      </div>
+
+      <div class="budget-grid">
+        <div class="card trip-card"><h3>🏷️ Par catégorie</h3><div id="categoryBreakdown" class="breakdown-list"></div></div>
+        <div class="card trip-card"><h3>📍 Par ville</h3><div id="cityBreakdown" class="breakdown-list"></div></div>
+      </div>
+
+      <h2>Dépenses</h2>
+      <div class="list expense-list" id="expenseList"></div>
     </div>
   </section>
 
