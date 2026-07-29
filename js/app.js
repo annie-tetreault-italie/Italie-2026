@@ -825,7 +825,87 @@ renderBookings();
 renderExpenses();
 renderChecks();
 renderDashboard();
-\n\n/* CARTE INTERACTIVE */\nconst cityCoordinates = {\n  "rome":[41.9028,12.4964],"roma":[41.9028,12.4964],"florence":[43.7696,11.2558],"firenze":[43.7696,11.2558],\n  "venise":[45.4408,12.3155],"venezia":[45.4408,12.3155],"cinque terre":[44.1280,9.7090],"monterosso":[44.1461,9.6547],\n  "vernazza":[44.1349,9.6849],"corniglia":[44.1195,9.7088],"manarola":[44.1070,9.7270],"riomaggiore":[44.0996,9.7376],\n  "toscane":[43.7711,11.2486],"tuscany":[43.7711,11.2486],"sienne":[43.3188,11.3308],"siena":[43.3188,11.3308],\n  "panzano":[43.5441,11.3146],"chianti":[43.5800,11.3100],"pise":[43.7228,10.4017],"pisa":[43.7228,10.4017]\n};\nfunction normalizePlaceName(value=""){return String(value).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim()}\nfunction mapIcon(type=""){return ({"Itinéraire":"📍","Hébergement":"🏨","Restaurant":"🍝","Activité":"🎟️","Transport":"🚆","Favori":"❤️","Autre":"📌"})[type]||"📌"}\nfunction initTravelMap(){\n  if(travelMap || !window.L || !$("travelMap")) return;\n  travelMap=L.map("travelMap",{scrollWheelZoom:false}).setView([43.7,11.3],6);\n  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap"}).addTo(travelMap);\n  mapLayer=L.layerGroup().addTo(travelMap);\n}\nfunction itineraryMapPoints(){\n  const seen=new Set(), result=[];\n  itineraryDays.forEach(day=>{\n    const city=cityForDay(day); if(!city)return;\n    const key=normalizePlaceName(city); if(seen.has(key))return;\n    const exact=cityCoordinates[key] || Object.entries(cityCoordinates).find(([name])=>key.includes(name))?.[1];\n    if(exact){seen.add(key);result.push({id:"day-"+key,name:city,type:"Itinéraire",address:city,lat:exact[0],lng:exact[1],date:day.id,automatic:true})}\n  });\n  return result;\n}\nfunction filteredMapPlaces(){\n  return [...itineraryMapPoints(),...mapPlaces].filter(p=>{\n    const text=[p.name,p.address,p.type,p.date].join(" ").toLocaleLowerCase("fr-CA");\n    return (!mapSearchText||text.includes(mapSearchText))&&(!mapTypeValue||p.type===mapTypeValue);\n  });\n}\nfunction renderTravelMap(){\n  if(!$("mapPlaceList")) return;\n  initTravelMap();\n  const points=filteredMapPlaces();\n  $("mapPlaceCount").textContent=mapPlaces.length;\n  $("mapCityCount").textContent=itineraryMapPoints().length;\n  $("mapVisibleCount").textContent=points.length;\n  const list=$("mapPlaceList"); list.innerHTML="";\n  if(mapLayer) mapLayer.clearLayers();\n  const bounds=[];\n  points.forEach(p=>{\n    const lat=Number(p.lat), lng=Number(p.lng);\n    if(Number.isFinite(lat)&&Number.isFinite(lng)&&mapLayer){\n      const marker=L.marker([lat,lng]).addTo(mapLayer);\n      marker.bindPopup(`<strong>${esc(mapIcon(p.type)+" "+p.name)}</strong><br>${esc(p.address||"")}<br><a target="_blank" rel="noopener" href="${mapsLink(p.address||`${lat},${lng}`)}">Ouvrir dans Google Maps</a>`);\n      bounds.push([lat,lng]);\n    }\n    const card=document.createElement("article"); card.className="map-place-card";\n    const idx=mapPlaces.indexOf(p);\n    card.innerHTML=`<div class="map-place-icon">${mapIcon(p.type)}</div><div><strong>${esc(p.name||"Lieu")}</strong><small>${esc([p.type,p.address,p.date].filter(Boolean).join(" · "))}</small></div><div class="map-place-actions"><a target="_blank" rel="noopener" href="${mapsLink(p.address||`${p.lat},${p.lng}`)}">Itinéraire</a>${p.automatic?"":`<button onclick="deleteMapPlace(${idx})">Supprimer</button>`}</div>`;\n    list.appendChild(card);\n  });\n  if(!points.length) list.innerHTML='<p class="subtle">Aucun lieu ne correspond à cette recherche.</p>';\n  if(travelMap){setTimeout(()=>travelMap.invalidateSize(),80);if(bounds.length===1)travelMap.setView(bounds[0],11);else if(bounds.length>1)travelMap.fitBounds(bounds,{padding:[25,25],maxZoom:11});}\n  $("mapStatus").textContent=points.length?`${points.length} marqueur${points.length>1?"s":""} affiché${points.length>1?"s":""}. Touchez un marqueur pour voir les détails.`:"Ajoute un lieu pour commencer.";\n}\nasync function geocodeAddress(address){\n  const url=`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(address)}`;\n  const response=await fetch(url,{headers:{"Accept-Language":"fr"}}); if(!response.ok)throw new Error("Recherche impossible");\n  const data=await response.json(); return data[0]?{lat:Number(data[0].lat),lng:Number(data[0].lon)}:null;\n}\nasync function addMapPlace(){\n  const name=$("mapName").value.trim(), address=$("mapAddress").value.trim();\n  if(!name||!address){alert("Entre un nom et une adresse ou un lieu.");return;}\n  let lat=parseFloat($("mapLat").value), lng=parseFloat($("mapLng").value);\n  try{\n    if(!Number.isFinite(lat)||!Number.isFinite(lng)){$("mapStatus").textContent="Recherche de l’adresse…";const found=await geocodeAddress(address);if(!found){alert("Adresse introuvable. Ajoute la latitude et la longitude.");return;}lat=found.lat;lng=found.lng;}\n    mapPlaces.push({id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),name,type:$("mapType").value,address,lat,lng});\n    ["mapName","mapAddress","mapLat","mapLng"].forEach(id=>$(id).value="");renderTravelMap();scheduleCloudSave();\n  }catch(error){console.error(error);alert("La recherche d’adresse n’a pas fonctionné. Réessaie ou entre la latitude et la longitude.");}\n}\nwindow.addMapPlace=addMapPlace;\nfunction deleteMapPlace(i){if(i<0||!confirm("Supprimer ce lieu?"))return;mapPlaces.splice(i,1);renderTravelMap();scheduleCloudSave()}\nwindow.deleteMapPlace=deleteMapPlace;\n$("mapSearch")?.addEventListener("input",e=>{mapSearchText=e.target.value.trim().toLocaleLowerCase("fr-CA");renderTravelMap()});\n$("mapTypeFilter")?.addEventListener("change",e=>{mapTypeValue=e.target.value;renderTravelMap()});\n
+
+
+/* CARTE INTERACTIVE */
+const cityCoordinates = {
+  "rome":[41.9028,12.4964],"roma":[41.9028,12.4964],"florence":[43.7696,11.2558],"firenze":[43.7696,11.2558],
+  "venise":[45.4408,12.3155],"venezia":[45.4408,12.3155],"cinque terre":[44.1280,9.7090],"monterosso":[44.1461,9.6547],
+  "vernazza":[44.1349,9.6849],"corniglia":[44.1195,9.7088],"manarola":[44.1070,9.7270],"riomaggiore":[44.0996,9.7376],
+  "toscane":[43.7711,11.2486],"tuscany":[43.7711,11.2486],"sienne":[43.3188,11.3308],"siena":[43.3188,11.3308],
+  "panzano":[43.5441,11.3146],"chianti":[43.5800,11.3100],"pise":[43.7228,10.4017],"pisa":[43.7228,10.4017]
+};
+function normalizePlaceName(value=""){return String(value).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim()}
+function mapIcon(type=""){return ({"Itinéraire":"📍","Hébergement":"🏨","Restaurant":"🍝","Activité":"🎟️","Transport":"🚆","Favori":"❤️","Autre":"📌"})[type]||"📌"}
+function initTravelMap(){
+  if(travelMap || !window.L || !$("travelMap")) return;
+  travelMap=L.map("travelMap",{scrollWheelZoom:false}).setView([43.7,11.3],6);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap"}).addTo(travelMap);
+  mapLayer=L.layerGroup().addTo(travelMap);
+}
+function itineraryMapPoints(){
+  const seen=new Set(), result=[];
+  itineraryDays.forEach(day=>{
+    const city=cityForDay(day); if(!city)return;
+    const key=normalizePlaceName(city); if(seen.has(key))return;
+    const exact=cityCoordinates[key] || Object.entries(cityCoordinates).find(([name])=>key.includes(name))?.[1];
+    if(exact){seen.add(key);result.push({id:"day-"+key,name:city,type:"Itinéraire",address:city,lat:exact[0],lng:exact[1],date:day.id,automatic:true})}
+  });
+  return result;
+}
+function filteredMapPlaces(){
+  return [...itineraryMapPoints(),...mapPlaces].filter(p=>{
+    const text=[p.name,p.address,p.type,p.date].join(" ").toLocaleLowerCase("fr-CA");
+    return (!mapSearchText||text.includes(mapSearchText))&&(!mapTypeValue||p.type===mapTypeValue);
+  });
+}
+function renderTravelMap(){
+  if(!$("mapPlaceList")) return;
+  initTravelMap();
+  const points=filteredMapPlaces();
+  $("mapPlaceCount").textContent=mapPlaces.length;
+  $("mapCityCount").textContent=itineraryMapPoints().length;
+  $("mapVisibleCount").textContent=points.length;
+  const list=$("mapPlaceList"); list.innerHTML="";
+  if(mapLayer) mapLayer.clearLayers();
+  const bounds=[];
+  points.forEach(p=>{
+    const lat=Number(p.lat), lng=Number(p.lng);
+    if(Number.isFinite(lat)&&Number.isFinite(lng)&&mapLayer){
+      const marker=L.marker([lat,lng]).addTo(mapLayer);
+      marker.bindPopup(`<strong>${esc(mapIcon(p.type)+" "+p.name)}</strong><br>${esc(p.address||"")}<br><a target="_blank" rel="noopener" href="${mapsLink(p.address||`${lat},${lng}`)}">Ouvrir dans Google Maps</a>`);
+      bounds.push([lat,lng]);
+    }
+    const card=document.createElement("article"); card.className="map-place-card";
+    const idx=mapPlaces.indexOf(p);
+    card.innerHTML=`<div class="map-place-icon">${mapIcon(p.type)}</div><div><strong>${esc(p.name||"Lieu")}</strong><small>${esc([p.type,p.address,p.date].filter(Boolean).join(" · "))}</small></div><div class="map-place-actions"><a target="_blank" rel="noopener" href="${mapsLink(p.address||`${p.lat},${p.lng}`)}">Itinéraire</a>${p.automatic?"":`<button onclick="deleteMapPlace(${idx})">Supprimer</button>`}</div>`;
+    list.appendChild(card);
+  });
+  if(!points.length) list.innerHTML='<p class="subtle">Aucun lieu ne correspond à cette recherche.</p>';
+  if(travelMap){setTimeout(()=>travelMap.invalidateSize(),80);if(bounds.length===1)travelMap.setView(bounds[0],11);else if(bounds.length>1)travelMap.fitBounds(bounds,{padding:[25,25],maxZoom:11});}
+  $("mapStatus").textContent=points.length?`${points.length} marqueur${points.length>1?"s":""} affiché${points.length>1?"s":""}. Touchez un marqueur pour voir les détails.`:"Ajoute un lieu pour commencer.";
+}
+async function geocodeAddress(address){
+  const url=`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(address)}`;
+  const response=await fetch(url,{headers:{"Accept-Language":"fr"}}); if(!response.ok)throw new Error("Recherche impossible");
+  const data=await response.json(); return data[0]?{lat:Number(data[0].lat),lng:Number(data[0].lon)}:null;
+}
+async function addMapPlace(){
+  const name=$("mapName").value.trim(), address=$("mapAddress").value.trim();
+  if(!name||!address){alert("Entre un nom et une adresse ou un lieu.");return;}
+  let lat=parseFloat($("mapLat").value), lng=parseFloat($("mapLng").value);
+  try{
+    if(!Number.isFinite(lat)||!Number.isFinite(lng)){$("mapStatus").textContent="Recherche de l’adresse…";const found=await geocodeAddress(address);if(!found){alert("Adresse introuvable. Ajoute la latitude et la longitude.");return;}lat=found.lat;lng=found.lng;}
+    mapPlaces.push({id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),name,type:$("mapType").value,address,lat,lng});
+    ["mapName","mapAddress","mapLat","mapLng"].forEach(id=>$(id).value="");renderTravelMap();scheduleCloudSave();
+  }catch(error){console.error(error);alert("La recherche d’adresse n’a pas fonctionné. Réessaie ou entre la latitude et la longitude.");}
+}
+window.addMapPlace=addMapPlace;
+function deleteMapPlace(i){if(i<0||!confirm("Supprimer ce lieu?"))return;mapPlaces.splice(i,1);renderTravelMap();scheduleCloudSave()}
+window.deleteMapPlace=deleteMapPlace;
+$("mapSearch")?.addEventListener("input",e=>{mapSearchText=e.target.value.trim().toLocaleLowerCase("fr-CA");renderTravelMap()});
+$("mapTypeFilter")?.addEventListener("change",e=>{mapTypeValue=e.target.value;renderTravelMap()});
+
 
 document.addEventListener("touchend", function(e){
   const btn=e.target.closest("button[data-panel]");
