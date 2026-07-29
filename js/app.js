@@ -30,6 +30,8 @@ let itineraryDays = [];
 let activeDayId = "";
 let itinerarySearchText = "";
 let itineraryCityValue = "";
+let bookingSearchText = "";
+let bookingStatusValue = "";
 
 function setStatus(message, type=""){
   syncStatus.textContent = message;
@@ -281,6 +283,15 @@ function openDayDetail(dayId){
     if(block) root.appendChild(block);
   });
 
+  const linkedBookings = bookings.filter(item => item && item.date === day.id);
+  if(linkedBookings.length){
+    const block = document.createElement("article");
+    block.className = "detail-block wide linked-bookings";
+    block.innerHTML = `<h3>🎟️ Réservations de cette journée</h3>`;
+    linkedBookings.sort(compareBookings).forEach(item => block.appendChild(createBookingCard(item, bookings.indexOf(item), true)));
+    root.appendChild(block);
+  }
+
   const mapValue = firstValue(day, ["maps","map","address"]);
   if(mapValue){
     const mapBlock = renderDetailBlock("🗺️","Carte et adresse",mapValue,true);
@@ -476,47 +487,121 @@ function scheduleCloudSave(){
   }, 250);
 }
 
+function bookingIcon(type=""){
+  return ({"Hôtel":"🏨","Train":"🚆","Vol":"✈️","Voiture":"🚗","Activité":"🎟️","Restaurant":"🍝","Autre":"📌"})[type] || "📌";
+}
+
+function compareBookings(a,b){
+  return `${a.date||"9999"} ${a.time||"99:99"}`.localeCompare(`${b.date||"9999"} ${b.time||"99:99"}`);
+}
+
+function bookingMoney(item){
+  const price=Number(item.price);
+  if(!Number.isFinite(price) || price<=0) return "";
+  return new Intl.NumberFormat("fr-CA",{style:"currency",currency:item.currency||"CAD"}).format(price);
+}
+
+function statusClass(status=""){
+  return "status-" + status.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z]+/g,"-").replace(/^-|-$/g,"");
+}
+
+function safeLink(value){
+  const text=String(value||"").trim();
+  return /^https?:\/\//i.test(text) ? text : "";
+}
+
+function createBookingCard(b,i,compact=false){
+  const el=document.createElement("article");
+  el.className="booking-card" + (compact ? " compact" : "");
+  const link=safeLink(b.link);
+  el.innerHTML=`
+    <div class="booking-icon">${bookingIcon(b.type)}</div>
+    <div class="booking-main">
+      <div class="booking-topline"><strong>${esc(b.name||"Réservation")}</strong><span class="booking-status ${statusClass(b.status||"Réservé")}">${esc(b.status||"Réservé")}</span></div>
+      <div class="booking-meta">${[b.type,b.date?formatDateFr(b.date):"",b.time,b.city].filter(Boolean).map(esc).join(" · ")}</div>
+      ${b.conf?`<div class="confirmation">Confirmation : <strong>${esc(b.conf)}</strong></div>`:""}
+      ${b.notes?`<p>${esc(b.notes)}</p>`:""}
+      <div class="booking-actions">
+        ${bookingMoney(b)?`<span class="booking-price">${esc(bookingMoney(b))}</span>`:""}
+        ${link?`<a href="${esc(link)}" target="_blank" rel="noopener">Ouvrir le lien →</a>`:""}
+        ${b.date?`<button type="button" onclick="openDayDetail('${esc(b.date)}')">Voir la journée</button>`:""}
+      </div>
+    </div>
+    ${compact?"":`<button class="delete-booking" type="button" onclick="delBooking(${i})" aria-label="Supprimer">✕</button>`}`;
+  return el;
+}
+
+function renderBookingSummary(){
+  const paid=bookings.filter(b=>b.status==="Payé").length;
+  const totals=bookings.reduce((sum,b)=>{
+    const price=Number(b.price)||0;
+    if((b.currency||"CAD")==="EUR") sum.eur+=price; else sum.cad+=price;
+    return sum;
+  },{cad:0,eur:0});
+  $("bookingCount").textContent=bookings.length;
+  $("bookingPaidCount").textContent=paid;
+  const parts=[];
+  if(totals.cad) parts.push(new Intl.NumberFormat("fr-CA",{style:"currency",currency:"CAD",maximumFractionDigits:0}).format(totals.cad));
+  if(totals.eur) parts.push(new Intl.NumberFormat("fr-CA",{style:"currency",currency:"EUR",maximumFractionDigits:0}).format(totals.eur));
+  $("bookingTotal").textContent=parts.join(" + ") || "0 $";
+}
+
 function renderBookings(){
+  renderBookingSummary();
   const root = $("bookingList");
-  root.innerHTML = bookings.length ? "" :
-    '<p class="subtle">Aucune réservation ajoutée pour le moment.</p>';
-  bookings.forEach((b,i)=>{
-    const el=document.createElement("div");
-    el.className="item";
-    el.innerHTML=`<div class="grow"><strong>${esc(b.type)} · ${esc(b.name)}</strong><br>
-      <small>${esc(b.city||"")} ${b.date?"· "+esc(b.date):""}
-      ${b.conf?" · Confirmation "+esc(b.conf):""}</small>
-      ${b.notes?'<div style="margin-top:6px">'+esc(b.notes)+"</div>":""}</div>
-      <button onclick="delBooking(${i})">✕</button>`;
-    root.appendChild(el);
-  });
+  root.innerHTML="";
+  const filtered=bookings.map((b,i)=>({b,i})).filter(({b})=>{
+    const text=[b.type,b.name,b.city,b.date,b.conf,b.notes,b.status].join(" ").toLocaleLowerCase("fr-CA");
+    return (!bookingSearchText || text.includes(bookingSearchText)) && (!bookingStatusValue || b.status===bookingStatusValue);
+  }).sort((x,y)=>compareBookings(x.b,y.b));
+  if(!filtered.length){
+    root.innerHTML='<p class="subtle">Aucune réservation ne correspond à ce filtre.</p>';
+  }else{
+    filtered.forEach(({b,i})=>root.appendChild(createBookingCard(b,i)));
+  }
   renderDashboard();
 }
 
 function addBooking(){
   const b={
+    id:crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
     type:$("bookType").value,
+    status:$("bookStatus").value,
     city:$("bookCity").value.trim(),
     name:$("bookName").value.trim(),
     date:$("bookDate").value,
+    time:$("bookTime").value,
     conf:$("bookConf").value.trim(),
+    price:Number($("bookPrice").value)||0,
+    currency:$("bookCurrency").value,
+    link:$("bookLink").value.trim(),
     notes:$("bookNotes").value.trim()
   };
-  if(!b.name){ alert("Ajoute au moins un nom."); return; }
+  if(!b.name){ alert("Ajoute au moins un nom ou une compagnie."); return; }
   bookings.push(b);
+  ["bookCity","bookName","bookDate","bookTime","bookConf","bookPrice","bookLink","bookNotes"].forEach(id=>$(id).value="");
+  $("bookStatus").value="À réserver";
   renderBookings();
   scheduleCloudSave();
-  $("bookCity").value=$("bookName").value=$("bookDate").value=
-    $("bookConf").value=$("bookNotes").value="";
 }
 window.addBooking = addBooking;
 
 function delBooking(i){
+  if(!confirm("Supprimer cette réservation?")) return;
   bookings.splice(i,1);
   renderBookings();
   scheduleCloudSave();
 }
 window.delBooking = delBooking;
+
+$("bookingSearch").addEventListener("input",event=>{
+  bookingSearchText=event.target.value.trim().toLocaleLowerCase("fr-CA");
+  renderBookings();
+});
+$("bookingStatusFilter").addEventListener("change",event=>{
+  bookingStatusValue=event.target.value;
+  renderBookings();
+});
 
 function renderExpenses(){
   const rate=parseFloat(eurRateValue)||1.6;

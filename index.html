@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f7f0e6">
 <title>Notre voyage en Italie 2026</title>
-<meta name="application-version" content="3.3.0">
+<meta name="application-version" content="3.4.0">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -123,22 +123,40 @@
   </section>
 
   <section id="bookings" class="panel">
-    <div class="hero"><div class="eyebrow">Tout au même endroit</div><h1>Réservations</h1></div>
+    <div class="hero"><div class="eyebrow">Reliées à l’itinéraire</div><h1>Réservations</h1></div>
     <div class="section">
-      <div class="card trip-card">
+      <div class="booking-summary card">
+        <div><strong id="bookingCount">0</strong><span>réservations</span></div>
+        <div><strong id="bookingPaidCount">0</strong><span>payées</span></div>
+        <div><strong id="bookingTotal">0 $</strong><span>valeur inscrite</span></div>
+      </div>
+      <div class="card trip-card booking-form">
         <div class="row">
           <div class="field"><label>Type</label><select id="bookType"><option>Hôtel</option><option>Train</option><option>Vol</option><option>Voiture</option><option>Activité</option><option>Restaurant</option><option>Autre</option></select></div>
-          <div class="field"><label>Ville</label><input id="bookCity" placeholder="Ex. Florence"></div>
+          <div class="field"><label>Statut</label><select id="bookStatus"><option>À réserver</option><option>Réservé</option><option>Payé</option><option>À confirmer</option><option>Annulé</option></select></div>
         </div>
-        <div class="field"><label>Nom / compagnie</label><input id="bookName" placeholder="Ex. Hotel Roma"></div>
+        <div class="field"><label>Nom / compagnie</label><input id="bookName" placeholder="Ex. Air Canada ou Hôtel Firenze"></div>
         <div class="row">
-          <div class="field"><label>Date</label><input id="bookDate" type="date"></div>
+          <div class="field"><label>Date liée à l’itinéraire</label><input id="bookDate" type="date" min="2026-09-28" max="2026-10-16"></div>
+          <div class="field"><label>Heure</label><input id="bookTime" type="time"></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>Ville</label><input id="bookCity" placeholder="Ex. Florence"></div>
           <div class="field"><label>No de confirmation</label><input id="bookConf" placeholder="ABC123"></div>
         </div>
-        <div class="field"><label>Notes</label><textarea id="bookNotes" placeholder="Adresse, heure, détails..."></textarea></div>
+        <div class="row">
+          <div class="field"><label>Prix</label><input id="bookPrice" type="number" min="0" step="0.01" placeholder="0,00"></div>
+          <div class="field"><label>Devise</label><select id="bookCurrency"><option value="CAD">$ CA</option><option value="EUR">€</option></select></div>
+        </div>
+        <div class="field"><label>Lien vers la réservation ou le billet</label><input id="bookLink" type="url" placeholder="https://..."></div>
+        <div class="field"><label>Notes</label><textarea id="bookNotes" placeholder="Adresse, terminal, siège, heure d’arrivée, détails..."></textarea></div>
         <button class="btn" onclick="addBooking()">Ajouter la réservation</button>
       </div>
-      <div class="list" id="bookingList"></div>
+      <div class="booking-tools">
+        <input id="bookingSearch" type="search" placeholder="Rechercher une réservation…">
+        <select id="bookingStatusFilter"><option value="">Tous les statuts</option><option>À réserver</option><option>Réservé</option><option>Payé</option><option>À confirmer</option><option>Annulé</option></select>
+      </div>
+      <div class="list booking-list" id="bookingList"></div>
     </div>
   </section>
 
