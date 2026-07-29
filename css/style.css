@@ -470,3 +470,15 @@ hr{border:0;border-top:1px solid var(--line);margin:16px 0}
 #quickEditStatus{margin-top:10px;font-weight:700}
 @media(min-width:760px){.quick-edit-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media(max-width:560px){.quick-day-editor-head{align-items:flex-start}.quick-day-editor-head .btn{width:auto}.quick-edit-grid{grid-template-columns:1fr 1fr}.quick-edit-grid button{font-size:12px;padding:11px 8px}}
+
+
+/* Fenêtre d’édition rapide fiable sur iPhone et ordinateur */
+.quick-modal{position:fixed;inset:0;z-index:1000;background:rgba(25,35,30,.45);display:grid;place-items:center;padding:18px}
+.quick-modal[hidden]{display:none!important}
+.quick-modal-card{width:min(480px,100%);background:#fffaf3;border:1px solid var(--line);border-radius:20px;padding:20px;box-shadow:0 24px 70px rgba(20,35,28,.25)}
+.quick-modal-card h2{margin:0 0 14px;color:var(--green);font-family:Georgia,serif;font-size:25px}
+.quick-modal-card label{display:block;margin-bottom:7px;font-weight:800;color:var(--green)}
+.quick-modal-card input{width:100%;font-size:16px}
+.quick-modal-actions{display:flex;gap:10px;margin-top:15px}
+.quick-modal-actions .btn{width:auto}
+@media(max-width:520px){.quick-modal-actions{display:grid;grid-template-columns:1fr}.quick-modal-actions .btn{width:100%}}

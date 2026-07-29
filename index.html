@@ -400,6 +400,18 @@
   </section>
 </div>
 
+<div id="quickEditModal" class="quick-modal" hidden>
+  <div class="quick-modal-card" role="dialog" aria-modal="true" aria-labelledby="quickModalTitle">
+    <h2 id="quickModalTitle">Modifier</h2>
+    <label id="quickModalLabel" for="quickModalInput">Information</label>
+    <input id="quickModalInput" type="text" autocomplete="off">
+    <div class="quick-modal-actions">
+      <button id="quickModalSave" type="button" class="btn">Enregistrer</button>
+      <button id="quickModalCancel" type="button" class="btn secondary">Annuler</button>
+    </div>
+  </div>
+</div>
+
 <nav class="nav">
   <button class="active" data-panel="home" onclick="showPanel('home')"><span>🏠</span>Accueil</button>
   <button data-panel="today" onclick="showPanel('today')"><span>☀️</span>Aujourd’hui</button>
@@ -429,6 +441,6 @@
   });
 })();
 </script>
-<script type="module" src="js/app.js?v=itineraire-1.0"></script>
+<script type="module" src="js/app.js?v=itineraire-1.1"></script>
 </body>
 </html>

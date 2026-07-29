@@ -369,29 +369,80 @@ const quickFieldLabels = {
   budget:"Budget prévu", notes:"Notes", maps:"Adresse ou lien Google Maps"
 };
 
-document.querySelectorAll("[data-quick-field]").forEach(button=>{
-  button.addEventListener("click", async()=>{
-    const day = itineraryDays.find(item=>item.id===activeDayId);
-    if(!day) return;
-    const field = button.dataset.quickField;
-    const current = editorText(firstValue(day,[field]));
-    const value = prompt(`${quickFieldLabels[field]} :`, current);
-    if(value === null) return;
-    await saveQuickDayPatch({[field]: value.trim()});
-  });
+let quickModalMode = null;
+let quickModalField = null;
+
+function openQuickModal(mode, field){
+  const day = itineraryDays.find(item=>item.id===activeDayId);
+  if(!day) return;
+  quickModalMode = mode;
+  quickModalField = field;
+  const modal = $("quickEditModal");
+  const input = $("quickModalInput");
+  const title = $("quickModalTitle");
+  const label = $("quickModalLabel");
+
+  if(mode === "add"){
+    const isActivity = field === "activities";
+    title.textContent = isActivity ? "Ajouter une activité" : "Ajouter un restaurant";
+    label.textContent = isActivity ? "Nom de l’activité" : "Nom du restaurant";
+    input.value = "";
+  }else{
+    const text = quickFieldLabels[field] || "Information";
+    title.textContent = `Modifier : ${text}`;
+    label.textContent = text;
+    input.value = editorText(firstValue(day,[field]));
+  }
+
+  modal.hidden = false;
+  requestAnimationFrame(()=>input.focus());
+}
+
+function closeQuickModal(){
+  $("quickEditModal").hidden = true;
+  quickModalMode = null;
+  quickModalField = null;
+}
+
+async function saveQuickModal(){
+  const input = $("quickModalInput");
+  const value = input.value.trim();
+  if(!quickModalField) return;
+  const day = itineraryDays.find(item=>item.id===activeDayId);
+  if(!day) return;
+
+  if(quickModalMode === "add"){
+    if(!value){ input.focus(); return; }
+    const existing = valueItems(firstValue(day,[quickModalField]));
+    await saveQuickDayPatch({[quickModalField]: [...existing, value]});
+  }else{
+    await saveQuickDayPatch({[quickModalField]: value});
+  }
+  closeQuickModal();
+}
+
+document.addEventListener("click", event=>{
+  const fieldButton = event.target.closest("[data-quick-field]");
+  if(fieldButton){
+    event.preventDefault();
+    openQuickModal("field", fieldButton.dataset.quickField);
+    return;
+  }
+  const addButton = event.target.closest("[data-quick-add]");
+  if(addButton){
+    event.preventDefault();
+    openQuickModal("add", addButton.dataset.quickAdd);
+  }
 });
 
-document.querySelectorAll("[data-quick-add]").forEach(button=>{
-  button.addEventListener("click", async()=>{
-    const day = itineraryDays.find(item=>item.id===activeDayId);
-    if(!day) return;
-    const field = button.dataset.quickAdd;
-    const label = field === "activities" ? "Nouvelle activité" : "Nouveau restaurant";
-    const value = prompt(`${label} :`, "");
-    if(value === null || !value.trim()) return;
-    const existing = valueItems(firstValue(day,[field]));
-    await saveQuickDayPatch({[field]: [...existing, value.trim()]});
-  });
+$("quickModalSave").addEventListener("click", saveQuickModal);
+$("quickModalCancel").addEventListener("click", closeQuickModal);
+$("quickEditModal").addEventListener("click", event=>{
+  if(event.target.id === "quickEditModal") closeQuickModal();
+});
+$("quickModalInput").addEventListener("keydown", event=>{
+  if(event.key === "Enter") saveQuickModal();
+  if(event.key === "Escape") closeQuickModal();
 });
 
 function openDayDetail(dayId){
