@@ -34,11 +34,6 @@ let bookingSearchText = "";
 let bookingStatusValue = "";
 let expenseSearchText = "";
 let expenseCategoryValue = "";
-let mapPlaces = LS.get("italie_mapPlaces", []);
-let mapSearchText = "";
-let mapTypeValue = "";
-let travelMap = null;
-let mapLayer = null;
 
 function setStatus(message, type=""){
   syncStatus.textContent = message;
@@ -52,7 +47,6 @@ function showPanel(id){
     b=>b.classList.toggle("active", b.dataset.panel===id)
   );
   window.scrollTo({top:0,behavior:"smooth"});
-  if(id === "map") setTimeout(()=>{ initTravelMap(); renderTravelMap(); },120);
 }
 window.showPanel = showPanel;
 
@@ -375,7 +369,6 @@ onSnapshot(daysQuery, snapshot => {
   updateItinerarySummary();
   renderItinerary();
   renderDashboard();
-  renderTravelMap();
   setStatus("✅ Itinéraire détaillé synchronisé avec Firebase.", "ok");
 }, error => {
   console.error("Lecture de l’itinéraire impossible :", error);
@@ -481,7 +474,6 @@ function currentState(){
     notes,
     eurRate: eurRateValue,
     plannedBudget: plannedBudgetValue,
-    mapPlaces,
     updatedAt: new Date().toISOString()
   };
 }
@@ -493,7 +485,6 @@ function saveLocal(){
   LS.set("italie_notes", notes);
   LS.set("italie_eurRate", eurRateValue);
   LS.set("italie_plannedBudget", plannedBudgetValue);
-  LS.set("italie_mapPlaces", mapPlaces);
 }
 
 function scheduleCloudSave(){
@@ -794,7 +785,6 @@ function applyState(data){
   if(typeof data.notes==="string") notes=data.notes;
   if(Number.isFinite(Number(data.eurRate))) eurRateValue=Number(data.eurRate);
   if(Number.isFinite(Number(data.plannedBudget))) plannedBudgetValue=Number(data.plannedBudget);
-  if(Array.isArray(data.mapPlaces)) mapPlaces=data.mapPlaces;
 
   $("freeNotes").value=notes;
   $("eurRate").value=eurRateValue;
@@ -802,7 +792,6 @@ function applyState(data){
   renderBookings();
   renderExpenses();
   renderChecks();
-  renderTravelMap();
   saveLocal();
   applyingRemote=false;
 }
@@ -825,87 +814,6 @@ renderBookings();
 renderExpenses();
 renderChecks();
 renderDashboard();
-
-
-/* CARTE INTERACTIVE */
-const cityCoordinates = {
-  "rome":[41.9028,12.4964],"roma":[41.9028,12.4964],"florence":[43.7696,11.2558],"firenze":[43.7696,11.2558],
-  "venise":[45.4408,12.3155],"venezia":[45.4408,12.3155],"cinque terre":[44.1280,9.7090],"monterosso":[44.1461,9.6547],
-  "vernazza":[44.1349,9.6849],"corniglia":[44.1195,9.7088],"manarola":[44.1070,9.7270],"riomaggiore":[44.0996,9.7376],
-  "toscane":[43.7711,11.2486],"tuscany":[43.7711,11.2486],"sienne":[43.3188,11.3308],"siena":[43.3188,11.3308],
-  "panzano":[43.5441,11.3146],"chianti":[43.5800,11.3100],"pise":[43.7228,10.4017],"pisa":[43.7228,10.4017]
-};
-function normalizePlaceName(value=""){return String(value).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim()}
-function mapIcon(type=""){return ({"Itinéraire":"📍","Hébergement":"🏨","Restaurant":"🍝","Activité":"🎟️","Transport":"🚆","Favori":"❤️","Autre":"📌"})[type]||"📌"}
-function initTravelMap(){
-  if(travelMap || !window.L || !$("travelMap")) return;
-  travelMap=L.map("travelMap",{scrollWheelZoom:false}).setView([43.7,11.3],6);
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap"}).addTo(travelMap);
-  mapLayer=L.layerGroup().addTo(travelMap);
-}
-function itineraryMapPoints(){
-  const seen=new Set(), result=[];
-  itineraryDays.forEach(day=>{
-    const city=cityForDay(day); if(!city)return;
-    const key=normalizePlaceName(city); if(seen.has(key))return;
-    const exact=cityCoordinates[key] || Object.entries(cityCoordinates).find(([name])=>key.includes(name))?.[1];
-    if(exact){seen.add(key);result.push({id:"day-"+key,name:city,type:"Itinéraire",address:city,lat:exact[0],lng:exact[1],date:day.id,automatic:true})}
-  });
-  return result;
-}
-function filteredMapPlaces(){
-  return [...itineraryMapPoints(),...mapPlaces].filter(p=>{
-    const text=[p.name,p.address,p.type,p.date].join(" ").toLocaleLowerCase("fr-CA");
-    return (!mapSearchText||text.includes(mapSearchText))&&(!mapTypeValue||p.type===mapTypeValue);
-  });
-}
-function renderTravelMap(){
-  if(!$("mapPlaceList")) return;
-  initTravelMap();
-  const points=filteredMapPlaces();
-  $("mapPlaceCount").textContent=mapPlaces.length;
-  $("mapCityCount").textContent=itineraryMapPoints().length;
-  $("mapVisibleCount").textContent=points.length;
-  const list=$("mapPlaceList"); list.innerHTML="";
-  if(mapLayer) mapLayer.clearLayers();
-  const bounds=[];
-  points.forEach(p=>{
-    const lat=Number(p.lat), lng=Number(p.lng);
-    if(Number.isFinite(lat)&&Number.isFinite(lng)&&mapLayer){
-      const marker=L.marker([lat,lng]).addTo(mapLayer);
-      marker.bindPopup(`<strong>${esc(mapIcon(p.type)+" "+p.name)}</strong><br>${esc(p.address||"")}<br><a target="_blank" rel="noopener" href="${mapsLink(p.address||`${lat},${lng}`)}">Ouvrir dans Google Maps</a>`);
-      bounds.push([lat,lng]);
-    }
-    const card=document.createElement("article"); card.className="map-place-card";
-    const idx=mapPlaces.indexOf(p);
-    card.innerHTML=`<div class="map-place-icon">${mapIcon(p.type)}</div><div><strong>${esc(p.name||"Lieu")}</strong><small>${esc([p.type,p.address,p.date].filter(Boolean).join(" · "))}</small></div><div class="map-place-actions"><a target="_blank" rel="noopener" href="${mapsLink(p.address||`${p.lat},${p.lng}`)}">Itinéraire</a>${p.automatic?"":`<button onclick="deleteMapPlace(${idx})">Supprimer</button>`}</div>`;
-    list.appendChild(card);
-  });
-  if(!points.length) list.innerHTML='<p class="subtle">Aucun lieu ne correspond à cette recherche.</p>';
-  if(travelMap){setTimeout(()=>travelMap.invalidateSize(),80);if(bounds.length===1)travelMap.setView(bounds[0],11);else if(bounds.length>1)travelMap.fitBounds(bounds,{padding:[25,25],maxZoom:11});}
-  $("mapStatus").textContent=points.length?`${points.length} marqueur${points.length>1?"s":""} affiché${points.length>1?"s":""}. Touchez un marqueur pour voir les détails.`:"Ajoute un lieu pour commencer.";
-}
-async function geocodeAddress(address){
-  const url=`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(address)}`;
-  const response=await fetch(url,{headers:{"Accept-Language":"fr"}}); if(!response.ok)throw new Error("Recherche impossible");
-  const data=await response.json(); return data[0]?{lat:Number(data[0].lat),lng:Number(data[0].lon)}:null;
-}
-async function addMapPlace(){
-  const name=$("mapName").value.trim(), address=$("mapAddress").value.trim();
-  if(!name||!address){alert("Entre un nom et une adresse ou un lieu.");return;}
-  let lat=parseFloat($("mapLat").value), lng=parseFloat($("mapLng").value);
-  try{
-    if(!Number.isFinite(lat)||!Number.isFinite(lng)){$("mapStatus").textContent="Recherche de l’adresse…";const found=await geocodeAddress(address);if(!found){alert("Adresse introuvable. Ajoute la latitude et la longitude.");return;}lat=found.lat;lng=found.lng;}
-    mapPlaces.push({id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),name,type:$("mapType").value,address,lat,lng});
-    ["mapName","mapAddress","mapLat","mapLng"].forEach(id=>$(id).value="");renderTravelMap();scheduleCloudSave();
-  }catch(error){console.error(error);alert("La recherche d’adresse n’a pas fonctionné. Réessaie ou entre la latitude et la longitude.");}
-}
-window.addMapPlace=addMapPlace;
-function deleteMapPlace(i){if(i<0||!confirm("Supprimer ce lieu?"))return;mapPlaces.splice(i,1);renderTravelMap();scheduleCloudSave()}
-window.deleteMapPlace=deleteMapPlace;
-$("mapSearch")?.addEventListener("input",e=>{mapSearchText=e.target.value.trim().toLocaleLowerCase("fr-CA");renderTravelMap()});
-$("mapTypeFilter")?.addEventListener("change",e=>{mapTypeValue=e.target.value;renderTravelMap()});
-
 
 document.addEventListener("touchend", function(e){
   const btn=e.target.closest("button[data-panel]");
