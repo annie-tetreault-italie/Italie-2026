@@ -5,100 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f7f0e6">
 <title>Notre voyage en Italie 2026</title>
-<style>
-:root{
-  --cream:#f7f0e6;
-  --paper:#fffaf3;
-  --green:#284b3b;
-  --olive:#7a8150;
-  --terracotta:#c56f4c;
-  --teal:#4f8589;
-  --ink:#26302d;
-  --muted:#77766f;
-  --line:#e5d8c8;
-  --shadow:0 8px 24px rgba(64,48,34,.10);
-}
-*{box-sizing:border-box}
-html{background:var(--cream)}
-body{
-  margin:0;
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-  color:var(--ink);
-  background:
-    radial-gradient(circle at top right, rgba(197,111,76,.11), transparent 28%),
-    radial-gradient(circle at bottom left, rgba(79,133,137,.10), transparent 30%),
-    var(--cream);
-}
-.app{max-width:760px;margin:0 auto;min-height:100vh;padding-bottom:100px}
-.hero{padding:28px 20px 18px;text-align:center}
-.eyebrow{font-size:13px;letter-spacing:.18em;text-transform:uppercase;color:var(--terracotta);font-weight:700}
-.hero h1{font-family:Georgia,serif;margin:6px 0 8px;font-size:37px;line-height:1.05;color:var(--green)}
-.hero .dates{color:var(--muted);font-size:15px}
-.countdown{
-  margin:18px auto 0;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;max-width:440px
-}
-.countdown div{background:rgba(255,250,243,.85);border:1px solid var(--line);border-radius:16px;padding:11px 6px;box-shadow:var(--shadow)}
-.countdown strong{display:block;font-size:24px;color:var(--terracotta)}
-.countdown span{font-size:11px;color:var(--muted);text-transform:uppercase}
-.notice{
-  margin:0 16px 18px;padding:14px 16px;background:#fff8eb;border:1px solid #ead5b6;border-radius:16px;font-size:14px;line-height:1.4
-}
-.section{padding:0 16px 18px}
-.section h2{font-family:Georgia,serif;color:var(--green);font-size:25px;margin:8px 0 12px}
-.quick{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-.card, .quick button{
-  border:1px solid var(--line);background:rgba(255,250,243,.9);border-radius:18px;box-shadow:var(--shadow)
-}
-.quick button{
-  min-height:92px;
-  padding:18px 12px;
-  touch-action:manipulation;
-  -webkit-tap-highlight-color:rgba(197,111,76,.18);text-align:left;color:var(--ink);font-weight:700;font-size:15px;cursor:pointer
-}
-.quick .icon{font-size:25px;display:block;margin-bottom:8px}
-.timeline{display:grid;gap:12px}
-.trip-card{padding:16px}
-.trip-card .top{display:flex;gap:12px;align-items:center}
-.badge{
-  width:46px;height:46px;flex:0 0 46px;border-radius:50%;display:grid;place-items:center;
-  color:#fff;font-size:22px
-}
-.b1{background:var(--teal)} .b2{background:var(--olive)} .b3{background:var(--terracotta)} .b4{background:#836a78}
-.trip-card h3{margin:0;color:var(--green);font-size:18px}
-.trip-card .date{font-size:13px;color:var(--terracotta);font-weight:700;margin-top:2px}
-.trip-card p{margin:11px 0 0;font-size:14px;line-height:1.5;color:#555}
-.panel{display:none}.panel.active{display:block}
-.field{margin:10px 0}
-label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px;font-weight:700}
-input,textarea,select{
-  width:100%;border:1px solid var(--line);border-radius:13px;background:#fff;padding:12px;font:inherit;color:var(--ink)
-}
-textarea{min-height:80px;resize:vertical}
-.row{display:grid;grid-template-columns:1fr 1fr;gap:9px}
-.btn{
-  border:0;border-radius:13px;background:var(--green);color:#fff;padding:12px 15px;font-weight:700;cursor:pointer
-}
-.btn.secondary{background:#efe4d7;color:var(--green)}
-.list{display:grid;gap:8px;margin-top:12px}
-.item{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;gap:10px;align-items:flex-start}
-.item .grow{flex:1}
-.item small{color:var(--muted)}
-.item button{border:0;background:transparent;color:var(--terracotta);font-size:18px}
-.check{display:flex;gap:9px;align-items:center;padding:10px 0;border-bottom:1px solid #eee3d7}
-.check input{width:21px;height:21px;accent-color:var(--green)}
-.money-total{font-family:Georgia,serif;font-size:29px;color:var(--green);margin:6px 0 12px}
-.nav{
-  position:fixed;left:0;right:0;bottom:0;background:rgba(255,250,243,.96);backdrop-filter:blur(12px);
-  border-top:1px solid var(--line);padding:8px max(8px,env(safe-area-inset-left)) calc(8px + env(safe-area-inset-bottom));
-  display:grid;grid-template-columns:repeat(5,1fr);z-index:5
-}
-.nav button{border:0;background:transparent;color:#666;font-size:11px;padding:10px 2px;min-height:58px;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:rgba(197,111,76,.18)}
-.nav button span{display:block;font-size:20px;margin-bottom:3px}
-.nav button.active{color:var(--terracotta);font-weight:800}
-.subtle{color:var(--muted);font-size:13px;line-height:1.5}
-hr{border:0;border-top:1px solid var(--line);margin:16px 0}
-@media(min-width:650px){.quick{grid-template-columns:repeat(4,1fr)}}
-</style>
+<meta name="application-version" content="3.1.0">
+<link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 <div class="app">
@@ -106,7 +14,7 @@ hr{border:0;border-top:1px solid var(--line);margin:16px 0}
     <div class="hero">
       <div class="eyebrow">La dolce vita nous attend</div>
       <h1>Notre voyage en Italie 🇮🇹</h1>
-      <div class="dates">29 septembre — 16 octobre 2026</div>
+      <div class="dates">28 septembre — 16 octobre 2026</div>
       <div class="countdown" id="countdown">
         <div><strong id="cdDays">—</strong><span>jours</span></div>
         <div><strong id="cdHours">—</strong><span>heures</span></div>
@@ -115,8 +23,9 @@ hr{border:0;border-top:1px solid var(--line);margin:16px 0}
       </div>
     </div>
     <div class="notice">
-      ✈️ <strong>Nouvelle arrivée :</strong> Rome vers 10 h le 29 septembre, puis train directement vers les Cinque Terre.
+      ✈️ <strong>Nouvelle arrivée :</strong> Rome vers 9 h 15 le 28 septembre, puis train directement vers les Cinque Terre.
     </div>
+    <div id="syncStatus" class="sync-status">Connexion à Firebase…</div>
 
     <div class="section">
       <h2>Accès rapide</h2>
@@ -129,44 +38,56 @@ hr{border:0;border-top:1px solid var(--line);margin:16px 0}
     </div>
 
     <div class="section">
-      <div class="card trip-card">
-        <div class="top">
-          <div class="badge b3">📱</div>
-          <div>
-            <h3>Sur iPhone</h3>
-            <div class="date">Pour utiliser tous les boutons</div>
-          </div>
-        </div>
-        <p>Ouvre cette page dans Safari. Ensuite : Partager → Ajouter à l’écran d’accueil. L’application s’ouvrira alors comme un raccourci sur ton iPhone.</p>
+      <h2>Tableau de bord</h2>
+      <div class="dashboard-grid">
+        <button class="dashboard-card" onclick="showPanel('itinerary')">
+          <span class="dashboard-icon">📍</span>
+          <span class="dashboard-label">Prochaine étape</span>
+          <strong id="dashboardNextTitle">Chargement…</strong>
+          <small id="dashboardNextDetails">Lecture de Firebase</small>
+        </button>
+
+        <button class="dashboard-card" onclick="showPanel('bookings')">
+          <span class="dashboard-icon">🏨</span>
+          <span class="dashboard-label">Prochaine réservation</span>
+          <strong id="dashboardBookingTitle">Aucune réservation</strong>
+          <small id="dashboardBookingDetails">Ajoute tes réservations</small>
+        </button>
+
+        <button class="dashboard-card" onclick="showPanel('budget')">
+          <span class="dashboard-icon">💶</span>
+          <span class="dashboard-label">Dépenses enregistrées</span>
+          <strong id="dashboardBudget">0,00 $ CA</strong>
+          <small id="dashboardExpenseCount">0 dépense</small>
+        </button>
+
+        <button class="dashboard-card" onclick="showPanel('lists')">
+          <span class="dashboard-icon">🧳</span>
+          <span class="dashboard-label">Préparatifs</span>
+          <strong id="dashboardPacking">0 % terminé</strong>
+          <small id="dashboardPackingDetails">Valises et tâches</small>
+        </button>
       </div>
     </div>
 
     <div class="section">
-      <h2>Prochaine étape</h2>
-      <div class="card trip-card">
-        <div class="top">
-          <div class="badge b1">🌊</div>
-          <div>
-            <h3>Cinque Terre</h3>
-            <div class="date">29 septembre au 2 octobre · 4 nuits</div>
-          </div>
+      <div class="card today-card">
+        <div>
+          <div class="eyebrow">Voyage connecté</div>
+          <h2 id="dashboardTripName">Italie 2026</h2>
+          <p id="dashboardSummary">Les journées, réservations, dépenses et listes sont synchronisées avec Firebase.</p>
         </div>
-        <p>Arrivée à Rome, train vers La Spezia / Cinque Terre, puis découverte de Monterosso, Vernazza, Corniglia, Manarola et Riomaggiore.</p>
+        <button class="btn secondary-btn" onclick="showPanel('itinerary')">Voir l’itinéraire</button>
       </div>
     </div>
   </section>
 
   <section id="itinerary" class="panel">
     <div class="hero"><div class="eyebrow">Jour par jour</div><h1>Itinéraire</h1></div>
-    <div class="section timeline">
-      <div class="card trip-card"><div class="top"><div class="badge b1">✈️</div><div><h3>Arrivée à Rome → Cinque Terre</h3><div class="date">29 septembre</div></div></div><p>Arrivée à Rome vers 10 h. Train vers les Cinque Terre le même jour.</p></div>
-      <div class="card trip-card"><div class="top"><div class="badge b1">🌊</div><div><h3>Cinque Terre</h3><div class="date">29 septembre au 2 octobre · 4 nuits</div></div></div><p>Monterosso al Mare · Vernazza · Corniglia · Manarola · Riomaggiore.</p></div>
-      <div class="card trip-card"><div class="top"><div class="badge b2">🌸</div><div><h3>Florence</h3><div class="date">3 et 4 octobre · 2 nuits</div></div></div><p>Santa Maria del Fiore · Ponte Vecchio · Piazza della Signoria · marchés et gastronomie.</p></div>
-      <div class="card trip-card"><div class="top"><div class="badge b3">🛶</div><div><h3>Venise</h3><div class="date">5 et 6 octobre · 2 nuits</div></div></div><p>Place Saint-Marc · Palais des Doges · vaporetto · quartiers et canaux.</p></div>
-      <div class="card trip-card"><div class="top"><div class="badge b2">🚗</div><div><h3>Retour à Florence</h3><div class="date">7 octobre</div></div></div><p>Prise de la voiture de location et départ vers la Toscane.</p></div>
-      <div class="card trip-card"><div class="top"><div class="badge b4">🌿</div><div><h3>Toscane</h3><div class="date">7 au 13 octobre · 7 nuits</div></div></div><p>Val d'Orcia · Chianti · villages médiévaux · vignobles · routes panoramiques · cuisine locale.</p></div>
-      <div class="card trip-card"><div class="top"><div class="badge b3">🚆</div><div><h3>Rome</h3><div class="date">14 et 15 octobre · 2 nuits</div></div></div><p>Retour de la voiture à Florence, train vers Rome. Colisée · Forum romain · Fontaine de Trevi · Piazza Navona · Vatican selon le temps disponible.</p></div>
-      <div class="card trip-card"><div class="top"><div class="badge b1">✈️</div><div><h3>Retour à Montréal</h3><div class="date">16 octobre</div></div></div><p>Départ de Rome. Fin du voyage ❤️</p></div>
+    <div class="section">
+      <div class="timeline" id="itineraryList">
+        <div class="card loading-card">Chargement de l’itinéraire depuis Firebase…</div>
+      </div>
     </div>
   </section>
 
@@ -242,161 +163,6 @@ hr{border:0;border-top:1px solid var(--line);margin:16px 0}
   <button data-panel="notes" onclick="showPanel('notes')"><span>❤️</span>Favoris</button>
 </nav>
 
-<script>
-const LS = {
-  get(k, fallback){ try { return JSON.parse(localStorage.getItem(k)) ?? fallback } catch(e){ return fallback } },
-  set(k,v){ localStorage.setItem(k, JSON.stringify(v)) }
-};
-
-function showPanel(id){
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.panel===id));
-  window.scrollTo({top:0,behavior:'smooth'});
-}
-function updateCountdown(){
-  const target = new Date('2026-09-29T00:00:00');
-  let diff = target - new Date();
-  if(diff<0) diff=0;
-  const d=Math.floor(diff/86400000), h=Math.floor(diff/3600000)%24, m=Math.floor(diff/60000)%60, s=Math.floor(diff/1000)%60;
-  document.getElementById('cdDays').textContent=d;
-  document.getElementById('cdHours').textContent=h;
-  document.getElementById('cdMin').textContent=m;
-  document.getElementById('cdSec').textContent=s;
-}
-setInterval(updateCountdown,1000); updateCountdown();
-
-let bookings = LS.get('italie_bookings',[]);
-function addBooking(){
-  const b={type:bookType.value, city:bookCity.value.trim(), name:bookName.value.trim(), date:bookDate.value, conf:bookConf.value.trim(), notes:bookNotes.value.trim()};
-  if(!b.name){alert('Ajoute au moins un nom.');return}
-  bookings.push(b); LS.set('italie_bookings',bookings); renderBookings();
-  bookCity.value=bookName.value=bookDate.value=bookConf.value=bookNotes.value='';
-}
-function renderBookings(){
-  bookingList.innerHTML=bookings.length?'':'<p class="subtle">Aucune réservation ajoutée pour le moment.</p>';
-  bookings.forEach((b,i)=>{
-    const el=document.createElement('div'); el.className='item';
-    el.innerHTML=`<div class="grow"><strong>${esc(b.type)} · ${esc(b.name)}</strong><br><small>${esc(b.city||'')} ${b.date?'· '+esc(b.date):''}${b.conf?' · Confirmation '+esc(b.conf):''}</small>${b.notes?'<div style="margin-top:6px">'+esc(b.notes)+'</div>':''}</div><button onclick="delBooking(${i})">✕</button>`;
-    bookingList.appendChild(el);
-  });
-}
-function delBooking(i){bookings.splice(i,1);LS.set('italie_bookings',bookings);renderBookings()}
-
-let expenses=LS.get('italie_expenses',[]);
-function saveRate(){LS.set('italie_eurRate',parseFloat(eurRate.value)||1.6)}
-eurRate.value=LS.get('italie_eurRate',1.6);
-function addExpense(){
-  const amount=parseFloat(expAmount.value);
-  if(!expName.value.trim() || !Number.isFinite(amount)){alert('Entre une dépense et un montant.');return}
-  expenses.push({name:expName.value.trim(),cat:expCat.value,amount,cur:expCur.value});
-  LS.set('italie_expenses',expenses); renderExpenses(); expName.value=''; expAmount.value='';
-}
-function renderExpenses(){
-  const rate=parseFloat(eurRate.value)||1.6;
-  const total=expenses.reduce((s,e)=>s+(e.cur==='EUR'?e.amount*rate:e.amount),0);
-  budgetTotal.textContent=new Intl.NumberFormat('fr-CA',{style:'currency',currency:'CAD'}).format(total);
-  expenseList.innerHTML=expenses.length?'':'<p class="subtle">Aucune dépense ajoutée pour le moment.</p>';
-  expenses.forEach((e,i)=>{
-    const amount=new Intl.NumberFormat('fr-CA',{style:'currency',currency:e.cur}).format(e.amount);
-    const el=document.createElement('div');el.className='item';
-    el.innerHTML=`<div class="grow"><strong>${esc(e.name)}</strong><br><small>${esc(e.cat)} · ${amount}</small></div><button onclick="delExpense(${i})">✕</button>`;
-    expenseList.appendChild(el);
-  });
-}
-function delExpense(i){expenses.splice(i,1);LS.set('italie_expenses',expenses);renderExpenses()}
-
-const defaults={
- packing:['Passeports','Cartes de crédit','Argent en euros','Ordinateur de travail','Écouteurs','Bouchons d’oreilles','Costume de bain','Fer plat','Brosse','Advil','Parfum','Gourde d’eau','Savon pour le corps','Shampooing / revitalisant','Lingettes de toilette','Cure-oreilles','Éponge de douche','Polysporin','Adaptateurs électriques','Médicaments','Chaussures confortables','Lunettes de soleil','Chargeurs','Petite veste / coupe-vent'],
- todo:['Vérifier les passeports','Échanger de l’argent en euros','Télécharger les billets et réservations','Aviser la banque du voyage','Préparer les assurances voyage','Télécharger les cartes hors ligne','Confirmer le train Rome → Cinque Terre']
-};
-let checks=LS.get('italie_checks',null)||{
- packing:defaults.packing.map(t=>({t,done:false})),
- todo:defaults.todo.map(t=>({t,done:false}))
-};
-function renderChecks(){
-  for(const kind of ['packing','todo']){
-    const root=document.getElementById(kind==='packing'?'packingList':'todoList');
-    root.innerHTML='';
-    checks[kind].forEach((x,i)=>{
-      const row=document.createElement('div');row.className='check';
-      row.innerHTML=`<input type="checkbox" ${x.done?'checked':''} onchange="toggleCheck('${kind}',${i},this.checked)"><div class="grow" style="${x.done?'text-decoration:line-through;color:#999':''}">${esc(x.t)}</div><button style="border:0;background:transparent;color:var(--terracotta)" onclick="delCheck('${kind}',${i})">✕</button>`;
-      root.appendChild(row);
-    });
-  }
-}
-function toggleCheck(k,i,v){checks[k][i].done=v;LS.set('italie_checks',checks);renderChecks()}
-function addChecklist(k,inputId){
-  const inp=document.getElementById(inputId),t=inp.value.trim();if(!t)return;
-  checks[k].push({t,done:false});inp.value='';LS.set('italie_checks',checks);renderChecks()
-}
-function delCheck(k,i){checks[k].splice(i,1);LS.set('italie_checks',checks);renderChecks()}
-
-freeNotes.value=LS.get('italie_notes','');
-function saveNotes(){LS.set('italie_notes',freeNotes.value);alert('Notes enregistrées sur cet appareil.')}
-function esc(s=''){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
-
-renderBookings();renderExpenses();renderChecks();
-
-// Amélioration tactile iPhone : évite certains problèmes de clic dans les aperçus intégrés.
-document.addEventListener('touchend', function(e){
-  const btn=e.target.closest('button[data-panel]');
-  if(btn){
-    e.preventDefault();
-    showPanel(btn.dataset.panel);
-  }
-},{passive:false});
-</script>
-<script type="module">
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
-import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
-
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyAF2wvWyL0mWBu-kpoUK6vCrrCV7VYh9x4",
-  authDomain: "italie-2026-342a1.firebaseapp.com",
-  projectId: "italie-2026-342a1",
-  storageBucket: "italie-2026-342a1.firebasestorage.app",
-  messagingSenderId: "450395285544",
-  appId: "1:450395285544:web:b97e350611a45cf2c92d1d"
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig)
-const db = getFirestore(app);
-const bookingsRef = doc(db, "italie", "bookings");
-
-// --- Firestore sync for bookings ---
-let syncing=false;
-async function saveBookingsRemote(){
-  if(syncing) return;
-  try{
-    await setDoc(bookingsRef,{items:bookings});
-  }catch(e){console.error("Firestore save failed",e);}
-}
-onSnapshot(bookingsRef,(snap)=>{
-  const data=snap.data();
-  syncing=true;
-  bookings=Array.isArray(data?.items)?data.items:[];
-  LS.set('italie_bookings',bookings);
-  renderBookings();
-  syncing=false;
-},(e)=>console.error(e));
-
-const _oldAdd=addBooking;
-addBooking=function(){
-  _oldAdd();
-  saveBookingsRemote();
-}
-const _oldDel=delBooking;
-delBooking=function(i){
-  _oldDel(i);
-  saveBookingsRemote();
-}
-
-</script>
+<script type="module" src="js/app.js"></script>
 </body>
 </html>
