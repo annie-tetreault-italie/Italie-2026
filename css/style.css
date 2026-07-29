@@ -482,3 +482,28 @@ hr{border:0;border-top:1px solid var(--line);margin:16px 0}
 .quick-modal-actions{display:flex;gap:10px;margin-top:15px}
 .quick-modal-actions .btn{width:auto}
 @media(max-width:520px){.quick-modal-actions{display:grid;grid-template-columns:1fr}.quick-modal-actions .btn{width:100%}}
+
+
+/* Module Souvenirs */
+.day-memory{margin:0 0 14px;padding:18px;background:linear-gradient(145deg,#fff9f1,#f8f1e8)}
+.day-memory-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px}
+.day-memory-head h2{margin:3px 0 0;color:var(--green);font-family:Georgia,serif;font-size:24px}
+.day-memory textarea{min-height:140px}
+.memory-saved-badge{background:#f0e7db;color:var(--muted);border-radius:999px;padding:7px 10px;font-size:11px;font-weight:900;white-space:nowrap}
+.memory-saved-badge.saved{background:#dff0e6;color:#23613e}
+.memory-summary{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:15px;margin-bottom:14px}
+.memory-summary div{text-align:center;padding:10px}
+.memory-summary strong{display:block;font-family:Georgia,serif;font-size:30px;color:var(--green)}
+.memory-summary span{font-size:10px;text-transform:uppercase;color:var(--muted);font-weight:900}
+.memory-list{display:grid;gap:12px;margin-bottom:16px}
+.memory-card{padding:18px}
+.memory-card-date{font-size:11px;color:var(--terracotta);font-weight:900;text-transform:uppercase;letter-spacing:.06em}
+.memory-card-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.memory-card-top h2{margin:6px 0 8px;color:var(--green);font-family:Georgia,serif}
+.memory-card-top span{font-size:24px}
+.memory-card p{white-space:pre-wrap;line-height:1.55;margin:10px 0 15px}
+.memory-favorite{background:#fff0e7;border-radius:14px;padding:10px 12px;margin:8px 0;color:#7a3f31;font-weight:800}
+.memory-open-day{width:auto}
+.general-notes-card{margin-top:18px}
+.general-notes-card h2{color:var(--green);margin-top:0}
+@media(max-width:520px){.day-memory-head{display:block}.memory-saved-badge{display:inline-block;margin-top:9px}.memory-open-day{width:100%}}

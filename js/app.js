@@ -1,4 +1,4 @@
-// Mon Carnet de Voyages — Module Itinéraire modifiable
+// Mon Carnet de Voyages — Module Souvenirs
 window.__ITALIE_APP_STARTED__ = true;
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
@@ -445,11 +445,79 @@ $("quickModalInput").addEventListener("keydown", event=>{
   if(event.key === "Escape") closeQuickModal();
 });
 
+
+function memoryHasContent(day){
+  return [day.journal, day.favorite, day.mood].some(value => String(value || "").trim());
+}
+
+function fillDayMemory(day){
+  $("dayMemoryMood").value = String(day.mood || "");
+  $("dayMemoryFavorite").value = String(day.favorite || "");
+  $("dayMemoryJournal").value = String(day.journal || "");
+  $("dayMemoryStatus").textContent = "";
+  const badge = $("memorySavedBadge");
+  if(memoryHasContent(day)){
+    badge.textContent = "Souvenir enregistré";
+    badge.classList.add("saved");
+  }else{
+    badge.textContent = "À compléter";
+    badge.classList.remove("saved");
+  }
+}
+
+async function saveActiveDayMemory(){
+  if(!activeDayId) return;
+  const status = $("dayMemoryStatus");
+  const button = $("saveDayMemory");
+  status.textContent = "Enregistrement…";
+  button.disabled = true;
+  try{
+    const patch = {
+      mood: $("dayMemoryMood").value,
+      favorite: $("dayMemoryFavorite").value.trim(),
+      journal: $("dayMemoryJournal").value.trim()
+    };
+    await setDoc(doc(db,"Trips","italy-2026","Days",activeDayId), patch, {merge:true});
+    status.textContent = "✅ Souvenir enregistré et synchronisé.";
+  }catch(error){
+    console.error("Souvenir impossible à enregistrer :", error);
+    status.textContent = "⚠️ Enregistrement impossible.";
+  }finally{
+    button.disabled = false;
+  }
+}
+
+function renderMemories(){
+  const root = $("memoryList");
+  const empty = $("memoryEmpty");
+  if(!root || !empty) return;
+  const days = itineraryDays.filter(memoryHasContent);
+  $("memoryDayCount").textContent = days.filter(day => String(day.journal || "").trim()).length;
+  $("memoryFavoriteCount").textContent = days.filter(day => String(day.favorite || "").trim()).length;
+  root.innerHTML = "";
+  empty.hidden = days.length > 0;
+  days.forEach(day => {
+    const card = document.createElement("article");
+    card.className = "memory-card card";
+    card.innerHTML = `
+      <div class="memory-card-date">${esc(formatDateFr(day.id))}</div>
+      <div class="memory-card-top"><h2>${esc(cityForDay(day) || firstValue(day,["title","name"]) || "Journée en Italie")}</h2><span>${esc(day.mood || "📖")}</span></div>
+      ${day.favorite ? `<div class="memory-favorite">❤️ ${esc(day.favorite)}</div>` : ""}
+      ${day.journal ? `<p>${esc(day.journal)}</p>` : ""}
+      <button type="button" class="btn secondary memory-open-day">Ouvrir cette journée</button>`;
+    card.querySelector(".memory-open-day").addEventListener("click",()=>openDayDetail(day.id));
+    root.appendChild(card);
+  });
+}
+
+$("saveDayMemory").addEventListener("click", saveActiveDayMemory);
+
 function openDayDetail(dayId){
   const day = itineraryDays.find(item => item.id === dayId);
   if(!day) return;
   activeDayId = dayId;
   toggleDayEditor(false);
+  fillDayMemory(day);
 
   const title = firstValue(day, ["title","name"]) || "Journée en Italie";
   const city = cityForDay(day);
@@ -568,6 +636,7 @@ onSnapshot(daysQuery, snapshot => {
   updateItinerarySummary();
   renderItinerary();
   renderDashboard();
+  renderMemories();
   setStatus("✅ Itinéraire détaillé synchronisé avec Firebase.", "ok");
 }, error => {
   console.error("Lecture de l’itinéraire impossible :", error);

@@ -1,15 +1,3 @@
-# Mon Carnet de Voyages — Module Itinéraire rapide corrigé modifiable
+# Mon Carnet de Voyages — Module Souvenirs
 
-Cette étape conserve tous les modules déjà stables et ajoute une seule fonction : la modification directe d’une journée depuis sa fiche.
-
-Champs modifiables :
-- titre et ville;
-- arrivée et transport;
-- hébergement;
-- activités et restaurants;
-- horaire;
-- budget prévu;
-- carte/adresse;
-- notes.
-
-Les changements sont enregistrés dans `Trips / italy-2026 / Days / AAAA-MM-JJ` avec Firebase et se synchronisent entre l’ordinateur et l’iPhone.
+Ajoute un journal, une humeur et un coup de cœur à chaque journée. Les souvenirs sont enregistrés dans Firebase dans les documents Days existants.

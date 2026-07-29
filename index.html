@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f7f0e6">
 <title>Mon Carnet de Voyages — Italie 2026</title>
-<meta name="application-version" content="accueil-1.1">
-<link rel="stylesheet" href="css/style.css?v=accueil-1.1">
+<meta name="application-version" content="souvenirs-1.0">
+<link rel="stylesheet" href="css/style.css?v=souvenirs-1.0">
 </head>
 <body>
 <div class="app">
@@ -260,6 +260,23 @@
         </div>
         <div id="dayEditStatus" class="subtle" role="status"></div>
       </form>
+      <div class="day-memory card">
+        <div class="day-memory-head">
+          <div><div class="eyebrow">Souvenirs de cette journée</div><h2>Mon petit journal</h2></div>
+          <span id="memorySavedBadge" class="memory-saved-badge">À compléter</span>
+        </div>
+        <div class="row">
+          <div class="field"><label>Mon humeur</label>
+            <select id="dayMemoryMood">
+              <option value="">Choisir…</option><option>😍 Magnifique</option><option>😊 Très belle journée</option><option>🙂 Agréable</option><option>😴 Fatigante</option><option>🌧️ Plus difficile</option>
+            </select>
+          </div>
+          <div class="field"><label>Mon coup de cœur</label><input id="dayMemoryFavorite" placeholder="Ex. Le coucher de soleil à Vernazza"></div>
+        </div>
+        <div class="field"><label>Journal de la journée</label><textarea id="dayMemoryJournal" placeholder="Ce que j’ai aimé, ce qui m’a surprise, les petits moments à ne pas oublier…"></textarea></div>
+        <button id="saveDayMemory" class="btn" type="button">💾 Enregistrer mon souvenir</button>
+        <div id="dayMemoryStatus" class="subtle" role="status"></div>
+      </div>
       <div id="dayDetailContent" class="day-detail-grid"></div>
       <div class="day-navigation">
         <button id="previousDayButton" class="btn secondary" type="button">← Journée précédente</button>
@@ -390,10 +407,17 @@
   </section>
 
   <section id="notes" class="panel">
-    <div class="hero"><div class="eyebrow">Mes coups de cœur</div><h1>Notes & favoris</h1></div>
+    <div class="hero"><div class="eyebrow">Revivre le voyage</div><h1>Souvenirs</h1></div>
     <div class="section">
-      <div class="card trip-card">
-        <div class="field"><label>Notes personnelles</label><textarea id="freeNotes" style="min-height:320px" placeholder="Restaurants à essayer, adresses, souvenirs à acheter, idées..."></textarea></div>
+      <div class="memory-summary card">
+        <div><strong id="memoryDayCount">0</strong><span>journées racontées</span></div>
+        <div><strong id="memoryFavoriteCount">0</strong><span>coups de cœur</span></div>
+      </div>
+      <div id="memoryList" class="memory-list"></div>
+      <div id="memoryEmpty" class="card loading-card">Tes souvenirs apparaîtront ici dès que tu écriras dans une journée.</div>
+      <div class="card trip-card general-notes-card">
+        <h2>📝 Notes générales du voyage</h2>
+        <div class="field"><textarea id="freeNotes" style="min-height:220px" placeholder="Idées générales, souvenirs à acheter, phrases à retenir…"></textarea></div>
         <button class="btn" onclick="saveNotes()">Enregistrer</button>
       </div>
     </div>
@@ -418,7 +442,7 @@
   <button data-panel="itinerary" onclick="showPanel('itinerary')"><span>🗺️</span>Voyage</button>
   <button data-panel="bookings" onclick="showPanel('bookings')"><span>🎟️</span>Réserv.</button>
   <button data-panel="budget" onclick="showPanel('budget')"><span>💶</span>Budget</button>
-  <button data-panel="notes" onclick="showPanel('notes')"><span>❤️</span>Favoris</button>
+  <button data-panel="notes" onclick="showPanel('notes')"><span>📖</span>Souvenirs</button>
 </nav>
 
 <script>
@@ -441,6 +465,6 @@
   });
 })();
 </script>
-<script type="module" src="js/app.js?v=itineraire-1.1"></script>
+<script type="module" src="js/app.js?v=souvenirs-1.0"></script>
 </body>
 </html>
