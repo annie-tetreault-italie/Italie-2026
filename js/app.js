@@ -650,6 +650,38 @@ function updateCategoryFilter(){
   select.innerHTML='<option value="">Toutes les catégories</option>'+cats.map(c=>`<option>${esc(c)}</option>`).join("");
   if(cats.includes(current)) select.value=current;
 }
+
+function renderBudgetChart(){
+  const donut=$("expenseDonut"), legend=$("donutLegend"), totalEl=$("donutTotal");
+  const totals={};
+  expenses.forEach(e=>{const key=e.cat||"Divers";totals[key]=(totals[key]||0)+expenseCad(e)});
+  const rows=Object.entries(totals).sort((a,b)=>b[1]-a[1]);
+  const grand=rows.reduce((s,r)=>s+r[1],0);
+  totalEl.textContent=moneyCAD(grand);
+  legend.innerHTML="";
+  if(!grand){donut.style.background="#eadfd2";legend.innerHTML='<p class="subtle">Ajoute une dépense pour afficher le graphique.</p>';return;}
+  const colors=["#1f5a4b","#c56f4c","#9c8f56","#5c8191","#836a78","#d6a85f","#6f8c68","#b56f7b","#7f786e"];
+  let start=0; const stops=[];
+  rows.forEach(([name,total],i)=>{const end=start+(total/grand*100);stops.push(`${colors[i%colors.length]} ${start.toFixed(2)}% ${end.toFixed(2)}%`);start=end;const item=document.createElement("div");item.className="legend-item";item.innerHTML=`<span class="legend-dot" style="background:${colors[i%colors.length]}"></span><span>${expenseIcon(name)} ${esc(name)}</span><strong>${Math.round(total/grand*100)} %</strong>`;legend.appendChild(item)});
+  donut.style.background=`conic-gradient(${stops.join(",")})`;
+}
+function renderBudgetInsights(spent,planned){
+  const root=$("budgetInsights");
+  const days=[...new Set(expenses.map(e=>e.date).filter(Boolean))];
+  const average=days.length?spent/days.length:0;
+  const top=[...expenses].sort((a,b)=>expenseCad(b)-expenseCad(a))[0];
+  const remaining=planned-spent;
+  root.innerHTML=`<div class="insight-row"><span>📅 Moyenne par journée</span><strong>${moneyCAD(average)}</strong></div><div class="insight-row"><span>🧾 Plus grosse dépense</span><strong>${top?esc(top.name)+" · "+moneyCAD(expenseCad(top)):"—"}</strong></div><div class="insight-row"><span>${remaining>=0?"✅":"⚠️"} Situation</span><strong>${planned? (remaining>=0?moneyCAD(remaining)+" disponibles":moneyCAD(Math.abs(remaining))+" au-dessus"):"Budget à définir"}</strong></div>`;
+}
+function editExpense(i){
+  const e=expenses[i]; if(!e)return;
+  $("expDate").value=e.date||""; $("expCity").value=e.city||""; $("expName").value=e.name||""; $("expCat").value=e.cat||"Divers"; $("expAmount").value=e.amount||""; $("expCur").value=e.cur||"CAD"; $("expPayment").value=e.payment||"Carte de crédit"; $("expNotes").value=e.notes||"";
+  expenses.splice(i,1); renderExpenses(); scheduleCloudSave();
+  document.querySelector(".budget-form").scrollIntoView({behavior:"smooth",block:"start"});
+  $("expName").focus();
+}
+window.editExpense=editExpense;
+
 function renderExpenses(){
   const spent=expenses.reduce((s,e)=>s+expenseCad(e),0);
   const planned=Number(plannedBudgetValue)||0;
@@ -661,7 +693,7 @@ function renderExpenses(){
   $("budgetPercentCard").textContent=`${percent} %`;
   $("budgetProgressBar").style.width=`${Math.min(Math.max(percent,0),100)}%`;
   $("budgetProgressBar").style.background=percent>100?"var(--terracotta)":"var(--green)";
-  updateCategoryFilter(); renderBreakdown("categoryBreakdown","cat"); renderBreakdown("cityBreakdown","city");
+  updateCategoryFilter(); renderBreakdown("categoryBreakdown","cat"); renderBreakdown("cityBreakdown","city"); renderBudgetChart(); renderBudgetInsights(spent,planned);
   const root=$("expenseList"); root.innerHTML="";
   const filtered=expenses.map((e,i)=>({e,i})).filter(({e})=>{
     const text=[e.name,e.cat,e.city,e.date,e.payment,e.notes].join(" ").toLocaleLowerCase("fr-CA");
@@ -671,7 +703,7 @@ function renderExpenses(){
   filtered.forEach(({e,i})=>{
     const el=document.createElement("article"); el.className="expense-card";
     const cad=e.cur==="EUR"?` · ${moneyCAD(expenseCad(e))}`:"";
-    el.innerHTML=`<div class="expense-icon">${expenseIcon(e.cat)}</div><div><div class="expense-title">${esc(e.name||"Dépense")}</div><div class="expense-meta">${[e.date?formatDateFr(e.date):"",e.city,e.cat,e.payment].filter(Boolean).map(esc).join(" · ")}</div>${e.notes?`<div class="expense-note">${esc(e.notes)}</div>`:""}</div><div class="expense-amount">${esc(expenseOriginalMoney(e))}${esc(cad)}</div><button class="expense-delete" onclick="delExpense(${i})" aria-label="Supprimer">✕</button>`;
+    el.innerHTML=`<div class="expense-icon">${expenseIcon(e.cat)}</div><div><div class="expense-title">${esc(e.name||"Dépense")}</div><div class="expense-meta">${[e.date?formatDateFr(e.date):"",e.city,e.cat,e.payment].filter(Boolean).map(esc).join(" · ")}</div>${e.notes?`<div class="expense-note">${esc(e.notes)}</div>`:""}<div class="expense-actions"><button onclick="editExpense(${i})">✏️ Modifier</button><button class="danger" onclick="delExpense(${i})">🗑️ Supprimer</button></div></div><div class="expense-amount">${esc(expenseOriginalMoney(e))}${esc(cad)}</div>`;
     root.appendChild(el);
   });
   renderDashboard();

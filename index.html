@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f7f0e6">
 <title>Notre voyage en Italie 2026</title>
-<meta name="application-version" content="3.4.0">
+<meta name="application-version" content="3.5.1">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -206,9 +206,11 @@
         <select id="expenseCategoryFilter"><option value="">Toutes les catégories</option></select>
       </div>
 
-      <div class="budget-grid">
+      <div class="budget-pro-grid">
+        <div class="card trip-card budget-chart-card"><h3>📊 Répartition des dépenses</h3><div class="donut-wrap"><div id="expenseDonut" class="expense-donut"><div><strong id="donutTotal">0 $</strong><span>Total</span></div></div><div id="donutLegend" class="donut-legend"></div></div></div>
         <div class="card trip-card"><h3>🏷️ Par catégorie</h3><div id="categoryBreakdown" class="breakdown-list"></div></div>
         <div class="card trip-card"><h3>📍 Par ville</h3><div id="cityBreakdown" class="breakdown-list"></div></div>
+        <div class="card trip-card budget-insights"><h3>🧠 Résumé intelligent</h3><div id="budgetInsights"></div></div>
       </div>
 
       <h2>Dépenses</h2>
