@@ -83,6 +83,78 @@ function firstValue(data, names){
   return "";
 }
 
+
+function displayValue(value){
+  if(Array.isArray(value)) return value.join(" · ");
+  if(value && typeof value === "object") return JSON.stringify(value, null, 2);
+  return String(value ?? "");
+}
+
+function mapsLink(value){
+  const text = String(value || "").trim();
+  if(!text) return "";
+  if(/^https?:\/\//i.test(text)) return text;
+  return "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(text);
+}
+
+function openDayDetail(dayId){
+  const day = itineraryDays.find(item => item.id === dayId);
+  if(!day) return;
+
+  const title = firstValue(day, ["title","name"]) || "Journée en Italie";
+  $("dayDetailTitle").textContent = title;
+  $("dayDetailDate").textContent = formatDateFr(day.id);
+
+  const fields = [
+    ["✈️", "Arrivée", firstValue(day, ["arrivalCity","arrival","flight"])],
+    ["📍", "Ville", firstValue(day, ["city","destination"])],
+    ["🚆", "Transport", firstValue(day, ["transport","train"])],
+    ["🏨", "Hébergement", firstValue(day, ["hotel","accommodation","lodging"])],
+    ["🎟️", "Activités", firstValue(day, ["activities","activity"])],
+    ["🍝", "Restaurants", firstValue(day, ["restaurants","restaurant"])],
+    ["🕐", "Horaire", firstValue(day, ["schedule","time","hours"])],
+    ["💶", "Budget prévu", firstValue(day, ["budget","plannedBudget"])],
+    ["📝", "Notes", firstValue(day, ["notes","description"])],
+    ["📍", "Carte", firstValue(day, ["maps","map","address"])]
+  ];
+
+  const root = $("dayDetailContent");
+  root.innerHTML = "";
+
+  fields.forEach(([icon,label,value]) => {
+    if(value === "" || value === undefined || value === null) return;
+
+    const block = document.createElement("article");
+    block.className = "detail-block" + (label === "Notes" ? " wide" : "");
+
+    const heading = document.createElement("h3");
+    heading.textContent = `${icon} ${label}`;
+    block.appendChild(heading);
+
+    const paragraph = document.createElement("p");
+    paragraph.textContent = displayValue(value);
+    block.appendChild(paragraph);
+
+    if(label === "Carte"){
+      const link = document.createElement("a");
+      link.href = mapsLink(value);
+      link.target = "_blank";
+      link.rel = "noopener";
+      link.textContent = "Ouvrir dans Google Maps →";
+      block.appendChild(link);
+    }
+
+    root.appendChild(block);
+  });
+
+  if(!root.children.length){
+    root.innerHTML = '<div class="detail-block detail-empty wide">Cette journée existe dans Firebase, mais ses détails restent à compléter.</div>';
+  }
+
+  showPanel("dayDetail");
+}
+window.openDayDetail = openDayDetail;
+
 /* ITINÉRAIRE FIREBASE :
    Trips / italy-2026 / Days / AAAA-MM-JJ */
 const daysQuery = query(
@@ -123,8 +195,11 @@ onSnapshot(daysQuery, snapshot => {
     }
     if(notes) details.push(`<div>📝 ${esc(notes)}</div>`);
 
-    const card = document.createElement("div");
+    const card = document.createElement("article");
     card.className = "card trip-card day-card";
+    card.tabIndex = 0;
+    card.setAttribute("role", "button");
+    card.setAttribute("aria-label", `Ouvrir les détails du ${formatDateFr(date)}`);
     card.innerHTML = `
       <div class="top">
         <div class="badge b1">📅</div>
@@ -135,7 +210,15 @@ onSnapshot(daysQuery, snapshot => {
         </div>
       </div>
       ${details.length ? `<div class="details">${details.join("")}</div>` : ""}
+      <div class="open-day">Voir la journée →</div>
     `;
+    card.addEventListener("click", ()=>openDayDetail(date));
+    card.addEventListener("keydown", event=>{
+      if(event.key === "Enter" || event.key === " "){
+        event.preventDefault();
+        openDayDetail(date);
+      }
+    });
     root.appendChild(card);
   });
 

@@ -160,3 +160,79 @@ hr{border:0;border-top:1px solid var(--line);margin:16px 0}
   .today-card{align-items:flex-start;flex-direction:column}
   .secondary-btn{width:100%}
 }
+
+
+/* Itinéraire détaillé — Version 3.2 */
+.day-card{
+  cursor:pointer;
+  transition:transform .15s ease, box-shadow .15s ease;
+}
+.day-card:hover{
+  transform:translateY(-2px);
+  box-shadow:0 12px 28px rgba(64,48,34,.14);
+}
+.day-card .open-day{
+  margin-top:14px;
+  color:var(--green);
+  font-size:13px;
+  font-weight:800;
+}
+.detail-header{
+  padding:34px 18px 8px;
+  max-width:760px;
+  margin:0 auto;
+}
+.detail-header h1{
+  margin:8px 0 4px;
+  font-family:Georgia,"Times New Roman",serif;
+  color:var(--green);
+  font-size:clamp(34px,8vw,54px);
+  line-height:1.05;
+}
+.back-button{
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.78);
+  color:var(--ink);
+  border-radius:999px;
+  padding:10px 15px;
+  font-weight:800;
+  margin-bottom:22px;
+}
+.day-detail-grid{
+  display:grid;
+  gap:12px;
+}
+.detail-block{
+  background:rgba(255,255,255,.82);
+  border:1px solid var(--line);
+  border-radius:20px;
+  padding:18px;
+  box-shadow:var(--shadow);
+}
+.detail-block h3{
+  margin:0 0 8px;
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:20px;
+  color:var(--green);
+}
+.detail-block p{
+  margin:0;
+  line-height:1.55;
+  white-space:pre-wrap;
+}
+.detail-block a{
+  display:inline-block;
+  margin-top:10px;
+  color:var(--green);
+  font-weight:800;
+  text-decoration:none;
+}
+.detail-empty{
+  text-align:center;
+  color:var(--muted);
+  padding:26px;
+}
+@media(min-width:700px){
+  .day-detail-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .detail-block.wide{grid-column:1/-1}
+}

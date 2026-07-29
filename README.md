@@ -1,4 +1,4 @@
-# Italie 2026 — Version 3.1
+# Italie 2026 — Version 3.2
 
 Cette version reprend les fonctions de la Version 2, mais le projet est maintenant organisé en plusieurs fichiers.
 
@@ -40,3 +40,23 @@ L’écran d’accueil contient maintenant un tableau de bord dynamique :
 - progression des valises et des tâches.
 
 Ces informations se mettent à jour à partir de Firebase.
+
+
+## Nouveauté 3.2
+
+Les cartes de l’itinéraire sont maintenant cliquables.
+
+Chaque journée ouvre une fiche détaillée qui peut afficher automatiquement les champs Firebase suivants :
+
+- `arrivalCity`
+- `city`
+- `transport` ou `train`
+- `hotel` ou `accommodation`
+- `activities`
+- `restaurants`
+- `schedule`
+- `budget`
+- `notes`
+- `maps` ou `address`
+
+Le bouton de carte ouvre Google Maps dans un nouvel onglet.

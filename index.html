@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f7f0e6">
 <title>Notre voyage en Italie 2026</title>
-<meta name="application-version" content="3.1.0">
+<meta name="application-version" content="3.2.0">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -88,6 +88,19 @@
       <div class="timeline" id="itineraryList">
         <div class="card loading-card">Chargement de l’itinéraire depuis Firebase…</div>
       </div>
+    </div>
+  </section>
+
+  <section id="dayDetail" class="panel">
+    <div class="detail-header">
+      <button class="back-button" onclick="showPanel('itinerary')">← Retour</button>
+      <div class="eyebrow">Détails de la journée</div>
+      <h1 id="dayDetailTitle">Journée en Italie</h1>
+      <div id="dayDetailDate" class="dates"></div>
+    </div>
+
+    <div class="section">
+      <div id="dayDetailContent" class="day-detail-grid"></div>
     </div>
   </section>
 
