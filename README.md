@@ -1,22 +1,10 @@
-# Italie 2026 — Version 4.0 stable
+# Italie 2026 — Version 4.1
 
-Reconstruction propre à partir de la dernière base fonctionnelle.
+Base stable avec nouvel écran **Aujourd’hui**.
 
-## Inclus
-- Tableau de bord
-- Itinéraire Firebase et fiches journalières
-- Réservations
-- Budget Pro
-- Valises, tâches, notes et favoris
-- Synchronisation Firebase avec mode local de secours
-- Détection visible des erreurs de chargement
-- Fichiers versionnés pour éviter le cache Safari
-
-## Publication GitHub Pages
-Remplacer exactement :
-- `index.html`
-- `README.md`
-- `css/style.css`
-- `js/app.js`
-
-La carte interactive sera réintroduite seulement après validation de cette base stable.
+## Nouveauté
+- Affiche automatiquement la journée actuelle pendant le voyage.
+- Avant le départ, montre la prochaine journée prévue.
+- Programme, destination, hébergement, transport, réservations, dépenses et notes.
+- Navigation vers la journée précédente ou suivante.
+- Les données proviennent de Firebase et de l’état synchronisé existant.

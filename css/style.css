@@ -332,3 +332,41 @@ hr{border:0;border-top:1px solid var(--line);margin:16px 0}
 /* Budget Pro — Version 3.5.1 */
 .budget-pro-grid{display:grid;grid-template-columns:1.25fr 1fr;gap:12px;margin:12px 0}.budget-pro-grid>.card:nth-child(3),.budget-pro-grid>.card:nth-child(4){grid-column:auto}.budget-chart-card{min-height:300px}.donut-wrap{display:grid;grid-template-columns:190px 1fr;gap:22px;align-items:center}.expense-donut{width:180px;height:180px;border-radius:50%;display:grid;place-items:center;position:relative;background:#eadfd2;box-shadow:inset 0 0 0 1px rgba(0,0,0,.04)}.expense-donut:after{content:"";position:absolute;width:108px;height:108px;border-radius:50%;background:#fffaf4}.expense-donut>div{position:relative;z-index:1;text-align:center;max-width:95px}.expense-donut strong{display:block;color:var(--green);font-size:17px}.expense-donut span{font-size:10px;text-transform:uppercase;color:var(--muted);font-weight:800}.donut-legend{display:grid;gap:9px}.legend-item{display:grid;grid-template-columns:12px 1fr auto;gap:8px;align-items:center;font-size:12px}.legend-dot{width:10px;height:10px;border-radius:50%}.legend-item strong{color:var(--green)}.budget-insights #budgetInsights{display:grid;gap:10px}.insight-row{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);font-size:13px}.insight-row:last-child{border-bottom:0}.insight-row strong{text-align:right;color:var(--green)}.expense-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.expense-actions button{border:0;border-radius:9px;background:#edf3ef;color:var(--green);padding:7px 9px;font-weight:800;font-size:11px;cursor:pointer}.expense-actions .danger{background:#fff0ec;color:#9b4438}.expense-delete{display:none}.expense-card{box-shadow:0 8px 24px rgba(64,48,34,.07);transition:transform .15s ease,box-shadow .15s ease}.expense-card:hover{transform:translateY(-1px);box-shadow:0 12px 28px rgba(64,48,34,.1)}
 @media(max-width:760px){.budget-pro-grid{grid-template-columns:1fr}.donut-wrap{grid-template-columns:1fr;justify-items:center}.donut-legend{width:100%}}
+
+
+/* Écran Aujourd’hui — Version 4.1 */
+.today-hero{padding-bottom:28px}
+.today-main-card{padding:18px;margin-bottom:12px;background:linear-gradient(135deg,#fffaf3,#eef5f1)}
+.today-location-row{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.today-location-row h2{margin:5px 0 3px;font-size:29px}
+.today-location-row p{margin:0;color:var(--muted)}
+.today-kicker{display:block;font-size:11px;text-transform:uppercase;font-weight:900;color:var(--terracotta);letter-spacing:.05em}
+.today-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.today-section-card{padding:16px;min-width:0}
+.today-section-card.wide{grid-column:1/-1}
+.today-section-card h3{margin:0 0 12px;color:var(--green);font-size:17px}
+.today-value{line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere}
+.today-empty-value{color:var(--muted);font-style:italic;font-size:13px}
+.today-timeline{display:grid;gap:8px}
+.today-event{display:grid;grid-template-columns:58px 1fr;gap:10px;align-items:start;padding:10px 0;border-bottom:1px solid var(--line)}
+.today-event:last-child{border-bottom:0}
+.today-event-time{font-weight:900;color:var(--terracotta)}
+.today-mini-list{display:grid;gap:8px}
+.today-mini-item{padding:9px 10px;background:#fffaf4;border-radius:12px;border:1px solid var(--line)}
+.today-mini-item strong,.today-mini-item span{display:block}
+.today-mini-item strong{color:var(--green);font-size:13px}
+.today-mini-item span{font-size:12px;color:var(--muted);margin-top:3px}
+.today-budget strong{display:block;font-family:Georgia,serif;font-size:26px;color:var(--green)}
+.today-budget span{font-size:12px;color:var(--muted)}
+.today-switcher{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.today-switcher button:disabled{opacity:.35}
+.nav{grid-template-columns:repeat(6,1fr)}
+.nav button{font-size:10px}
+@media(max-width:560px){
+  .today-grid{grid-template-columns:1fr}
+  .today-section-card.wide{grid-column:auto}
+  .today-location-row{align-items:flex-start;flex-direction:column}
+  .today-location-row .btn{width:100%}
+  .today-switcher{grid-template-columns:1fr}
+  .nav button{font-size:9px;padding-left:0;padding-right:0}
+}

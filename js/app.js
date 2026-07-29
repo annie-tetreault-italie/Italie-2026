@@ -1,4 +1,4 @@
-// Italie 2026 — Version 4.0 stable
+// Italie 2026 — Version 4.1 — écran Aujourd’hui
 window.__ITALIE_APP_STARTED__ = true;
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
@@ -37,6 +37,7 @@ let bookingSearchText = "";
 let bookingStatusValue = "";
 let expenseSearchText = "";
 let expenseCategoryValue = "";
+let todaySelectedDayId = "";
 
 function setStatus(message, type=""){
   if(!syncStatus) return;
@@ -386,6 +387,102 @@ onSnapshot(daysQuery, snapshot => {
   setStatus("⚠️ Firebase bloque la lecture de l’itinéraire.", "error");
 });
 
+
+function localDateKey(date = new Date()){
+  const year = date.getFullYear();
+  const month = String(date.getMonth()+1).padStart(2,"0");
+  const day = String(date.getDate()).padStart(2,"0");
+  return `${year}-${month}-${day}`;
+}
+
+function selectedTodayDay(){
+  if(!itineraryDays.length) return null;
+  const nowKey = localDateKey();
+  if(todaySelectedDayId){
+    const selected = itineraryDays.find(day => day.id === todaySelectedDayId);
+    if(selected) return selected;
+  }
+  const exact = itineraryDays.find(day => day.id === nowKey);
+  if(exact) return exact;
+  const upcoming = itineraryDays.find(day => day.id > nowKey);
+  return upcoming || itineraryDays[itineraryDays.length - 1];
+}
+
+function emptyTodayValue(text="À compléter"){
+  return `<span class="today-empty-value">${esc(text)}</span>`;
+}
+
+function scheduleEntries(day){
+  const schedule = day.schedule;
+  if(Array.isArray(schedule)) return schedule.map(displayValue).filter(Boolean);
+  if(schedule && typeof schedule === "object"){
+    return Object.entries(schedule).map(([time,label]) => `${time} — ${displayValue(label)}`).filter(Boolean);
+  }
+  const scheduleItems = valueItems(schedule);
+  if(scheduleItems.length) return scheduleItems;
+  return valueItems(firstValue(day,["activities","activity"]));
+}
+
+function renderToday(){
+  const day = selectedTodayDay();
+  const empty = $("todayEmpty");
+  const content = $("todayContent");
+  if(!empty || !content) return;
+  if(!day){
+    empty.hidden = false;
+    content.hidden = true;
+    return;
+  }
+  empty.hidden = true;
+  content.hidden = false;
+  todaySelectedDayId = day.id;
+  const nowKey = localDateKey();
+  const firstId = itineraryDays[0]?.id;
+  const lastId = itineraryDays[itineraryDays.length-1]?.id;
+  let mode = "Prochaine journée";
+  if(day.id === nowKey) mode = "Aujourd’hui";
+  else if(nowKey > lastId) mode = "Dernière journée du voyage";
+  else if(nowKey < firstId) mode = "Aperçu avant le départ";
+  $("todayModeLabel").textContent = mode;
+  $("todayHeading").textContent = day.id === nowKey ? "Aujourd’hui" : "Ma journée";
+  $("todayDateLabel").textContent = formatDateFr(day.id);
+  $("todayCity").textContent = cityForDay(day) || "Destination à compléter";
+  $("todayTitle").textContent = firstValue(day,["title","name"]) || "Journée en Italie";
+  $("todayOpenDay").onclick = () => openDayDetail(day.id);
+
+  const entries = scheduleEntries(day);
+  $("todaySchedule").innerHTML = entries.length ? entries.map((entry,index)=>{
+    const match = String(entry).match(/^\s*([0-2]?\d[:h][0-5]\d)\s*[—–-]?\s*(.*)$/i);
+    const time = match ? match[1].replace("h",":") : "";
+    const label = match ? match[2] : entry;
+    return `<div class="today-event"><span class="today-event-time">${time ? esc(time) : String(index+1).padStart(2,"0")}</span><span>${esc(label)}</span></div>`;
+  }).join("") : emptyTodayValue("Aucune activité inscrite");
+
+  const hotel = firstValue(day,["hotel","accommodation"]);
+  $("todayHotel").innerHTML = hotel ? esc(displayValue(hotel)) : emptyTodayValue();
+  const transport = firstValue(day,["transport","train","flight"]);
+  $("todayTransport").innerHTML = transport ? esc(displayValue(transport)) : emptyTodayValue();
+  const notes = firstValue(day,["notes","description"]);
+  $("todayNotes").innerHTML = notes ? esc(displayValue(notes)) : emptyTodayValue("Aucune note");
+
+  const linkedBookings = bookings.filter(item => item && item.date === day.id).sort(compareBookings);
+  $("todayBookings").innerHTML = linkedBookings.length ? linkedBookings.map(item => `
+    <div class="today-mini-item"><strong>${esc(item.type || "Réservation")}</strong><span>${esc(item.name || "Détails à compléter")}${item.time ? ` · ${esc(item.time)}` : ""}</span></div>`).join("") : emptyTodayValue("Aucune réservation liée");
+
+  const linkedExpenses = expenses.filter(item => item && item.date === day.id);
+  const totalCad = linkedExpenses.reduce((sum,item)=>sum+expenseCad(item),0);
+  $("todayBudget").innerHTML = `<strong>${dashboardMoney(totalCad)}</strong><span>${linkedExpenses.length} dépense${linkedExpenses.length===1?"":"s"} enregistrée${linkedExpenses.length===1?"":"s"}</span>`;
+
+  const index = itineraryDays.findIndex(item => item.id === day.id);
+  const previous = $("todayPrevious");
+  const next = $("todayNext");
+  previous.disabled = index <= 0;
+  next.disabled = index < 0 || index >= itineraryDays.length-1;
+  previous.onclick = () => { if(index>0){ todaySelectedDayId=itineraryDays[index-1].id; renderToday(); window.scrollTo({top:0,behavior:"smooth"}); }};
+  next.onclick = () => { if(index<itineraryDays.length-1){ todaySelectedDayId=itineraryDays[index+1].id; renderToday(); window.scrollTo({top:0,behavior:"smooth"}); }};
+}
+window.renderToday = renderToday;
+
 function dashboardMoney(value){
   return new Intl.NumberFormat("fr-CA",{
     style:"currency", currency:"CAD"
@@ -393,6 +490,7 @@ function dashboardMoney(value){
 }
 
 function renderDashboard(){
+  renderToday();
   const nowKey = new Date().toISOString().slice(0,10);
   const nextDay =
     itineraryDays.find(day => day.id >= nowKey) ||
@@ -801,6 +899,7 @@ function applyState(data){
   renderBookings();
   renderExpenses();
   renderChecks();
+  renderToday();
   saveLocal();
   applyingRemote=false;
 }

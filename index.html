@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f7f0e6">
 <title>Notre voyage en Italie 2026</title>
-<meta name="application-version" content="4.0.0">
-<link rel="stylesheet" href="css/style.css?v=4.0.0">
+<meta name="application-version" content="4.1.0">
+<link rel="stylesheet" href="css/style.css?v=4.1.0">
 </head>
 <body>
 <div class="app">
@@ -30,6 +30,7 @@
     <div class="section">
       <h2>Accès rapide</h2>
       <div class="quick">
+        <button onclick="showPanel('today')"><span class="icon">☀️</span>Aujourd’hui</button>
         <button onclick="showPanel('itinerary')"><span class="icon">🗺️</span>Itinéraire</button>
         <button onclick="showPanel('bookings')"><span class="icon">🎟️</span>Réservations</button>
         <button onclick="showPanel('budget')"><span class="icon">💶</span>Budget</button>
@@ -78,6 +79,61 @@
           <p id="dashboardSummary">Les journées, réservations, dépenses et listes sont synchronisées avec Firebase.</p>
         </div>
         <button class="btn secondary-btn" onclick="showPanel('itinerary')">Voir l’itinéraire</button>
+      </div>
+    </div>
+  </section>
+
+
+  <section id="today" class="panel">
+    <div class="hero today-hero">
+      <div class="eyebrow" id="todayModeLabel">Votre journée de voyage</div>
+      <h1 id="todayHeading">Aujourd’hui</h1>
+      <div class="dates" id="todayDateLabel">Chargement…</div>
+    </div>
+    <div class="section">
+      <div id="todayEmpty" class="card loading-card" hidden>Aucune journée n’est encore disponible dans l’itinéraire.</div>
+      <div id="todayContent">
+        <div class="card today-main-card">
+          <div class="today-location-row">
+            <div>
+              <span class="today-kicker">📍 Destination</span>
+              <h2 id="todayCity">—</h2>
+              <p id="todayTitle">—</p>
+            </div>
+            <button id="todayOpenDay" class="btn secondary" type="button">Voir la fiche</button>
+          </div>
+        </div>
+
+        <div class="today-grid">
+          <article class="card today-section-card wide">
+            <h3>🕘 Programme</h3>
+            <div id="todaySchedule" class="today-timeline"></div>
+          </article>
+          <article class="card today-section-card">
+            <h3>🏨 Hébergement</h3>
+            <div id="todayHotel" class="today-value"></div>
+          </article>
+          <article class="card today-section-card">
+            <h3>🚆 Transport</h3>
+            <div id="todayTransport" class="today-value"></div>
+          </article>
+          <article class="card today-section-card">
+            <h3>🎟️ Réservations</h3>
+            <div id="todayBookings" class="today-mini-list"></div>
+          </article>
+          <article class="card today-section-card">
+            <h3>💶 Dépenses du jour</h3>
+            <div id="todayBudget" class="today-budget"></div>
+          </article>
+          <article class="card today-section-card wide">
+            <h3>📝 Notes</h3>
+            <div id="todayNotes" class="today-value"></div>
+          </article>
+        </div>
+        <div class="today-switcher">
+          <button id="todayPrevious" class="btn secondary" type="button">← Journée précédente</button>
+          <button id="todayNext" class="btn" type="button">Journée suivante →</button>
+        </div>
       </div>
     </div>
   </section>
@@ -243,6 +299,7 @@
 
 <nav class="nav">
   <button class="active" data-panel="home" onclick="showPanel('home')"><span>🏠</span>Accueil</button>
+  <button data-panel="today" onclick="showPanel('today')"><span>☀️</span>Aujourd’hui</button>
   <button data-panel="itinerary" onclick="showPanel('itinerary')"><span>🗺️</span>Voyage</button>
   <button data-panel="bookings" onclick="showPanel('bookings')"><span>🎟️</span>Réserv.</button>
   <button data-panel="budget" onclick="showPanel('budget')"><span>💶</span>Budget</button>
@@ -269,6 +326,6 @@
   });
 })();
 </script>
-<script type="module" src="js/app.js?v=4.0.0"></script>
+<script type="module" src="js/app.js?v=4.1.0"></script>
 </body>
 </html>
