@@ -1,3 +1,3 @@
-# Italie 2026 — Version 3.5.1
+# Italie 2026 — Version 3.6
 
-Budget Pro : tableau de bord, graphique circulaire, statistiques, modification et suppression des dépenses.
+Carte interactive avec les villes de l’itinéraire, ajout de lieux personnalisés, recherche, filtres et ouverture dans Google Maps.
