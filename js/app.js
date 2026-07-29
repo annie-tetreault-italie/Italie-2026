@@ -1,4 +1,4 @@
-// Mon Carnet de Voyages — Module Souvenirs
+// Mon Carnet de Voyages — Module Photos et Souvenirs
 window.__ITALIE_APP_STARTED__ = true;
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
@@ -447,7 +447,7 @@ $("quickModalInput").addEventListener("keydown", event=>{
 
 
 function memoryHasContent(day){
-  return [day.journal, day.favorite, day.mood].some(value => String(value || "").trim());
+  return [day.journal, day.favorite, day.mood].some(value => String(value || "").trim()) || (Array.isArray(day.photos) && day.photos.length > 0);
 }
 
 function fillDayMemory(day){
@@ -455,6 +455,8 @@ function fillDayMemory(day){
   $("dayMemoryFavorite").value = String(day.favorite || "");
   $("dayMemoryJournal").value = String(day.journal || "");
   $("dayMemoryStatus").textContent = "";
+  $("dayPhotoStatus").textContent = "";
+  renderDayPhotos(day);
   const badge = $("memorySavedBadge");
   if(memoryHasContent(day)){
     badge.textContent = "Souvenir enregistré";
@@ -464,6 +466,105 @@ function fillDayMemory(day){
     badge.classList.remove("saved");
   }
 }
+
+
+function currentDayPhotos(){
+  const day = itineraryDays.find(item => item.id === activeDayId);
+  return Array.isArray(day?.photos) ? day.photos.filter(Boolean) : [];
+}
+
+function renderDayPhotos(day){
+  const root = $("dayPhotoGrid");
+  if(!root) return;
+  const photos = Array.isArray(day?.photos) ? day.photos.filter(Boolean) : [];
+  root.innerHTML = "";
+  if(!photos.length){
+    root.innerHTML = '<div class="day-photo-empty">Aucune photo pour cette journée.</div>';
+    return;
+  }
+  photos.forEach((src,index)=>{
+    const item = document.createElement("figure");
+    item.className = "day-photo-item";
+    item.innerHTML = `<button type="button" class="day-photo-open" aria-label="Ouvrir la photo"><img src="${src}" alt="Souvenir du ${esc(formatDateFr(day.id))}"></button><button type="button" class="day-photo-delete" aria-label="Supprimer la photo">×</button>`;
+    item.querySelector(".day-photo-open").addEventListener("click",()=>window.open(src,"_blank"));
+    item.querySelector(".day-photo-delete").addEventListener("click",()=>deleteDayPhoto(index));
+    root.appendChild(item);
+  });
+}
+
+function imageFromFile(file){
+  return new Promise((resolve,reject)=>{
+    const reader = new FileReader();
+    reader.onerror = ()=>reject(new Error("Lecture de la photo impossible"));
+    reader.onload = ()=>{
+      const image = new Image();
+      image.onerror = ()=>reject(new Error("Image invalide"));
+      image.onload = ()=>resolve(image);
+      image.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function compressPhoto(file){
+  if(!file?.type?.startsWith("image/")) throw new Error("Choisis une image");
+  const image = await imageFromFile(file);
+  let maxSide = 900;
+  let quality = 0.58;
+  for(let attempt=0; attempt<3; attempt++){
+    const scale = Math.min(1, maxSide / Math.max(image.width,image.height));
+    const width = Math.max(1, Math.round(image.width*scale));
+    const height = Math.max(1, Math.round(image.height*scale));
+    const canvas = document.createElement("canvas");
+    canvas.width = width; canvas.height = height;
+    const ctx = canvas.getContext("2d",{alpha:false});
+    ctx.drawImage(image,0,0,width,height);
+    const dataUrl = canvas.toDataURL("image/jpeg",quality);
+    if(dataUrl.length < 240000) return dataUrl;
+    maxSide -= 150; quality -= 0.1;
+  }
+  throw new Error("La photo est encore trop lourde");
+}
+
+async function addSelectedDayPhoto(file){
+  if(!activeDayId || !file) return;
+  const status = $("dayPhotoStatus");
+  const photos = currentDayPhotos();
+  if(photos.length >= 3){
+    status.textContent = "Maximum de 3 photos atteint pour cette journée.";
+    return;
+  }
+  status.textContent = "Préparation de la photo…";
+  try{
+    const compressed = await compressPhoto(file);
+    const nextPhotos = [...photos, compressed];
+    await setDoc(doc(db,"Trips","italy-2026","Days",activeDayId),{photos:nextPhotos},{merge:true});
+    status.textContent = "✅ Photo ajoutée et synchronisée.";
+  }catch(error){
+    console.error("Ajout de photo impossible :",error);
+    status.textContent = "⚠️ Photo impossible à ajouter. Essaie une autre image.";
+  }finally{
+    $("dayPhotoInput").value = "";
+  }
+}
+
+async function deleteDayPhoto(index){
+  if(!activeDayId) return;
+  const photos = currentDayPhotos();
+  const nextPhotos = photos.filter((_,i)=>i!==index);
+  const status = $("dayPhotoStatus");
+  status.textContent = "Suppression…";
+  try{
+    await setDoc(doc(db,"Trips","italy-2026","Days",activeDayId),{photos:nextPhotos},{merge:true});
+    status.textContent = "✅ Photo supprimée.";
+  }catch(error){
+    console.error("Suppression impossible :",error);
+    status.textContent = "⚠️ Suppression impossible.";
+  }
+}
+
+$("addDayPhoto").addEventListener("click",()=>$("dayPhotoInput").click());
+$("dayPhotoInput").addEventListener("change",event=>addSelectedDayPhoto(event.target.files?.[0]));
 
 async function saveActiveDayMemory(){
   if(!activeDayId) return;
@@ -503,6 +604,7 @@ function renderMemories(){
       <div class="memory-card-date">${esc(formatDateFr(day.id))}</div>
       <div class="memory-card-top"><h2>${esc(cityForDay(day) || firstValue(day,["title","name"]) || "Journée en Italie")}</h2><span>${esc(day.mood || "📖")}</span></div>
       ${day.favorite ? `<div class="memory-favorite">❤️ ${esc(day.favorite)}</div>` : ""}
+      ${Array.isArray(day.photos) && day.photos.length ? `<div class="memory-photo-strip">${day.photos.slice(0,3).map(src=>`<img src="${src}" alt="Photo souvenir">`).join("")}</div>` : ""}
       ${day.journal ? `<p>${esc(day.journal)}</p>` : ""}
       <button type="button" class="btn secondary memory-open-day">Ouvrir cette journée</button>`;
     card.querySelector(".memory-open-day").addEventListener("click",()=>openDayDetail(day.id));

@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f7f0e6">
 <title>Mon Carnet de Voyages — Italie 2026</title>
-<meta name="application-version" content="souvenirs-1.0">
-<link rel="stylesheet" href="css/style.css?v=souvenirs-1.0">
+<meta name="application-version" content="photos-1.0">
+<link rel="stylesheet" href="css/style.css?v=photos-1.0">
 </head>
 <body>
 <div class="app">
@@ -274,6 +274,15 @@
           <div class="field"><label>Mon coup de cœur</label><input id="dayMemoryFavorite" placeholder="Ex. Le coucher de soleil à Vernazza"></div>
         </div>
         <div class="field"><label>Journal de la journée</label><textarea id="dayMemoryJournal" placeholder="Ce que j’ai aimé, ce qui m’a surprise, les petits moments à ne pas oublier…"></textarea></div>
+        <div class="day-photo-section">
+          <div class="day-photo-head">
+            <div><strong>📸 Photos de la journée</strong><small>Maximum 3 photos légères par journée</small></div>
+            <button id="addDayPhoto" class="btn secondary" type="button">➕ Ajouter une photo</button>
+          </div>
+          <input id="dayPhotoInput" type="file" accept="image/*" capture="environment" hidden>
+          <div id="dayPhotoGrid" class="day-photo-grid"></div>
+          <div id="dayPhotoStatus" class="subtle" role="status"></div>
+        </div>
         <button id="saveDayMemory" class="btn" type="button">💾 Enregistrer mon souvenir</button>
         <div id="dayMemoryStatus" class="subtle" role="status"></div>
       </div>
@@ -465,6 +474,6 @@
   });
 })();
 </script>
-<script type="module" src="js/app.js?v=souvenirs-1.0"></script>
+<script type="module" src="js/app.js?v=photos-1.0"></script>
 </body>
 </html>
