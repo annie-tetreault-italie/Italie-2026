@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f7f0e6">
 <title>Notre voyage en Italie 2026</title>
-<meta name="application-version" content="4.2.0">
-<link rel="stylesheet" href="css/style.css?v=4.2.0">
+<meta name="application-version" content="4.3.0">
+<link rel="stylesheet" href="css/style.css?v=4.3.0">
 </head>
 <body>
 <div class="app">
@@ -303,7 +303,20 @@
       <h2>Valise</h2>
       <div class="card trip-card" id="packingList"></div>
       <div class="row" style="margin-top:10px"><input id="packNew" placeholder="Ajouter un article"><button class="btn" onclick="addChecklist('packing','packNew')">Ajouter</button></div>
-      <h2 style="margin-top:24px">Avant de partir</h2>
+      <h2 style="margin-top:24px">Assistant avant le départ</h2>
+      <div class="card trip-card prep-assistant-card">
+        <div class="prep-assistant-head">
+          <div>
+            <div class="eyebrow">Rappels automatiques</div>
+            <h3 id="prepAssistantTitle">Préparation du voyage</h3>
+            <p id="prepAssistantSubtitle">Calcul des prochaines étapes…</p>
+          </div>
+          <div class="prep-days-badge"><strong id="prepDaysLeft">—</strong><span>jours</span></div>
+        </div>
+        <div id="prepAutomaticList" class="prep-automatic-list"></div>
+      </div>
+
+      <h2 style="margin-top:24px">Mes tâches personnelles</h2>
       <div class="card trip-card" id="todoList"></div>
       <div class="row" style="margin-top:10px"><input id="todoNew" placeholder="Ajouter une tâche"><button class="btn" onclick="addChecklist('todo','todoNew')">Ajouter</button></div>
     </div>
@@ -349,6 +362,6 @@
   });
 })();
 </script>
-<script type="module" src="js/app.js?v=4.2.0"></script>
+<script type="module" src="js/app.js?v=4.3.0"></script>
 </body>
 </html>

@@ -614,6 +614,21 @@ let checks = LS.get("italie_checks", null) || {
 let notes = LS.get("italie_notes", "");
 let eurRateValue = LS.get("italie_eurRate", 1.6);
 let plannedBudgetValue = LS.get("italie_plannedBudget", 0);
+let prepAutomatic = LS.get("italie_prepAutomatic", {});
+
+const automaticPreparationTasks = [
+  {id:"passport", icon:"🛂", days:120, text:"Vérifier la validité des passeports"},
+  {id:"insurance", icon:"🛡️", days:90, text:"Choisir ou confirmer l’assurance voyage"},
+  {id:"car", icon:"🚗", days:60, text:"Confirmer la voiture de location en Toscane"},
+  {id:"bookings", icon:"🎟️", days:30, text:"Télécharger les billets et confirmations"},
+  {id:"bank", icon:"💳", days:14, text:"Aviser la banque et vérifier les cartes"},
+  {id:"euros", icon:"💶", days:10, text:"Préparer ou commander des euros"},
+  {id:"offline", icon:"🗺️", days:7, text:"Télécharger les cartes hors ligne"},
+  {id:"packing", icon:"🧳", days:5, text:"Finaliser les valises"},
+  {id:"weather", icon:"🌤️", days:3, text:"Vérifier la météo et ajuster les vêtements"},
+  {id:"checkin", icon:"✈️", days:1, text:"Faire le check-in du vol dès qu’il ouvre"},
+  {id:"charge", icon:"🔋", days:1, text:"Charger les appareils et la batterie externe"}
+];
 
 function currentState(){
   return {
@@ -623,6 +638,7 @@ function currentState(){
     notes,
     eurRate: eurRateValue,
     plannedBudget: plannedBudgetValue,
+    prepAutomatic,
     updatedAt: new Date().toISOString()
   };
 }
@@ -634,6 +650,7 @@ function saveLocal(){
   LS.set("italie_notes", notes);
   LS.set("italie_eurRate", eurRateValue);
   LS.set("italie_plannedBudget", plannedBudgetValue);
+  LS.set("italie_prepAutomatic", prepAutomatic);
 }
 
 function scheduleCloudSave(){
@@ -874,6 +891,51 @@ function saveBudgetSettings(){
 window.saveBudgetSettings=saveBudgetSettings;
 $("expenseSearch").addEventListener("input",e=>{expenseSearchText=e.target.value.trim().toLocaleLowerCase("fr-CA");renderExpenses()});
 $("expenseCategoryFilter").addEventListener("change",e=>{expenseCategoryValue=e.target.value;renderExpenses()});
+function daysUntilDeparture(){
+  const today=new Date();
+  today.setHours(0,0,0,0);
+  const departure=new Date("2026-09-28T00:00:00");
+  return Math.ceil((departure-today)/86400000);
+}
+
+function renderPreparationAssistant(){
+  const root=$("prepAutomaticList");
+  if(!root) return;
+  const days=daysUntilDeparture();
+  $("prepDaysLeft").textContent=days>0?days:0;
+  const title=$("prepAssistantTitle");
+  const subtitle=$("prepAssistantSubtitle");
+  if(days>0){
+    title.textContent="Avant le départ";
+    subtitle.textContent=days>30?"Les prochaines tâches apparaîtront au bon moment.":"Voici ce qui mérite ton attention maintenant.";
+  }else{
+    title.textContent="Voyage en cours ou terminé";
+    subtitle.textContent="Tes rappels de préparation restent disponibles comme référence.";
+  }
+  const visible=automaticPreparationTasks.filter(task=>days<=task.days || prepAutomatic[task.id]);
+  root.innerHTML="";
+  if(!visible.length){
+    root.innerHTML='<p class="subtle">Aucune action urgente pour le moment. Tout est sous contrôle.</p>';
+    return;
+  }
+  visible.forEach(task=>{
+    const done=Boolean(prepAutomatic[task.id]);
+    const row=document.createElement("label");
+    row.className="prep-auto-item"+(done?" complete":"");
+    const timing=days>task.days?`Dans ${days-task.days} jours`:(days>0?"À faire maintenant":"À vérifier");
+    row.innerHTML=`<input type="checkbox" ${done?"checked":""} onchange="toggleAutomaticPrep('${task.id}',this.checked)"><span class="prep-auto-icon">${task.icon}</span><span class="prep-auto-copy"><strong>${esc(task.text)}</strong><small>${done?"Terminé":timing}</small></span>`;
+    root.appendChild(row);
+  });
+}
+
+function toggleAutomaticPrep(id,value){
+  prepAutomatic[id]=Boolean(value);
+  renderPreparationAssistant();
+  renderDashboard();
+  scheduleCloudSave();
+}
+window.toggleAutomaticPrep=toggleAutomaticPrep;
+
 function renderChecks(){
   for(const kind of ["packing","todo"]){
     const root=$(kind==="packing" ? "packingList" : "todoList");
@@ -891,6 +953,7 @@ function renderChecks(){
       root.appendChild(row);
     });
   }
+  renderPreparationAssistant();
   renderDashboard();
 }
 
@@ -934,6 +997,7 @@ function applyState(data){
   if(typeof data.notes==="string") notes=data.notes;
   if(Number.isFinite(Number(data.eurRate))) eurRateValue=Number(data.eurRate);
   if(Number.isFinite(Number(data.plannedBudget))) plannedBudgetValue=Number(data.plannedBudget);
+  if(data.prepAutomatic && typeof data.prepAutomatic==="object") prepAutomatic=data.prepAutomatic;
 
   $("freeNotes").value=notes;
   $("eurRate").value=eurRateValue;
@@ -963,6 +1027,7 @@ $("eurRate").value=eurRateValue;
 renderBookings();
 renderExpenses();
 renderChecks();
+renderPreparationAssistant();
 renderDashboard();
 
 document.addEventListener("touchend", function(e){

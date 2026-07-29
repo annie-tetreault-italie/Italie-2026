@@ -390,3 +390,23 @@ hr{border:0;border-top:1px solid var(--line);margin:16px 0}
 .dashboard-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 @media(min-width:850px){.dashboard-grid{grid-template-columns:repeat(5,minmax(0,1fr))}}
 @media(max-width:560px){.control-center-top{align-items:flex-start}.preparation-score{width:68px;height:68px;flex-basis:68px;border-width:7px}.preparation-details{grid-template-columns:1fr}.control-center h2{font-size:22px}}
+
+
+/* Assistant avant le départ — Version 4.3 */
+.prep-assistant-card{padding:18px;background:linear-gradient(145deg,#fffaf3,#f0f7f3)}
+.prep-assistant-head{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:14px}
+.prep-assistant-head h3{margin:4px 0 4px;color:var(--green);font-size:22px}
+.prep-assistant-head p{margin:0;color:var(--muted);font-size:13px;line-height:1.4}
+.prep-days-badge{width:72px;height:72px;flex:0 0 72px;border-radius:50%;display:grid;place-content:center;text-align:center;background:#fff;border:7px solid #dcebe4;box-shadow:var(--shadow)}
+.prep-days-badge strong{font-size:21px;line-height:1;color:var(--green)}
+.prep-days-badge span{font-size:9px;text-transform:uppercase;font-weight:900;color:var(--muted);margin-top:3px}
+.prep-automatic-list{display:grid;gap:8px}
+.prep-auto-item{display:grid;grid-template-columns:22px 38px 1fr;gap:9px;align-items:center;padding:11px 12px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.78);cursor:pointer}
+.prep-auto-item input{width:20px;height:20px;accent-color:var(--green);margin:0}
+.prep-auto-icon{width:36px;height:36px;border-radius:11px;background:#f1e9de;display:grid;place-items:center;font-size:18px}
+.prep-auto-copy strong,.prep-auto-copy small{display:block}
+.prep-auto-copy strong{font-size:13px;color:var(--green)}
+.prep-auto-copy small{margin-top:3px;color:var(--muted);font-size:11px}
+.prep-auto-item.complete{background:#f1f8f4;border-color:#cfe2d8}
+.prep-auto-item.complete .prep-auto-copy strong{text-decoration:line-through;color:#6b8b7e}
+@media(max-width:560px){.prep-assistant-head{align-items:flex-start}.prep-days-badge{width:64px;height:64px;flex-basis:64px;border-width:6px}.prep-auto-item{grid-template-columns:22px 34px 1fr;padding:10px}.prep-auto-icon{width:32px;height:32px}}

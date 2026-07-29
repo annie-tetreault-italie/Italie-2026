@@ -1,10 +1,9 @@
-# Italie 2026 — Version 4.2
+# Italie 2026 — Version 4.3
 
-Version stable avec tableau de bord intelligent.
+Version stable avec assistant automatique avant le départ.
 
 Nouveautés :
-- centre de contrôle de la préparation;
-- progression automatique du voyage;
-- réservations confirmées;
-- bouton contextuel pour ouvrir la journée;
-- conservation de Firebase, itinéraire, réservations, budget et écran Aujourd’hui.
+- rappels affichés selon le nombre de jours avant le départ;
+- tâches automatiques pour passeports, assurances, billets, euros, cartes hors ligne, valises et check-in;
+- cases cochées synchronisées entre l’ordinateur et l’iPhone;
+- conservation du tableau de bord, de Firebase, de l’itinéraire, des réservations, du budget et de l’écran Aujourd’hui.
