@@ -5,8 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f7f0e6">
 <title>Mon Carnet de Voyages — Italie 2026</title>
-<meta name="application-version" content="location-1.0">
-<link rel="stylesheet" href="css/style.css?v=location-1.0">
+<meta name="application-version" content="map-1.0">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+<link rel="stylesheet" href="css/style.css?v=map-1.0">
 </head>
 <body>
 <div class="app">
@@ -320,6 +321,36 @@
     </div>
   </section>
 
+
+  <section id="map" class="panel">
+    <div class="hero map-hero"><div class="eyebrow">Voir le voyage d’un coup d’œil</div><h1>Carte interactive</h1><div class="dates">Itinéraire, position actuelle et endroits « Je suis ici »</div></div>
+    <div class="section">
+      <div class="card map-control-card">
+        <div>
+          <h2>🗺️ Mon voyage en Italie</h2>
+          <p id="mapStatus">La carte se prépare…</p>
+        </div>
+        <div class="map-actions">
+          <button id="mapLocateButton" class="btn" type="button">📍 Afficher ma position</button>
+          <button id="mapFitButton" class="btn secondary" type="button">Voir tout le trajet</button>
+        </div>
+      </div>
+      <div id="tripMap" class="trip-map" aria-label="Carte interactive du voyage"></div>
+      <div class="map-legend card">
+        <span><i class="legend-dot route-dot"></i> Étape du voyage</span>
+        <span><i class="legend-dot here-dot"></i> Je suis ici</span>
+        <span><i class="legend-dot me-dot"></i> Ma position actuelle</span>
+      </div>
+      <div class="map-stats">
+        <div class="card"><strong id="mapStageCount">0</strong><span>étapes</span></div>
+        <div class="card"><strong id="mapHereCount">0</strong><span>endroits enregistrés</span></div>
+        <div class="card"><strong id="mapPhotoCount">0</strong><span>photos</span></div>
+        <div class="card"><strong id="mapMemoryCount">0</strong><span>journées racontées</span></div>
+      </div>
+      <div id="mapPlacesList" class="map-places-list"></div>
+    </div>
+  </section>
+
   <section id="bookings" class="panel">
     <div class="hero"><div class="eyebrow">Reliées à l’itinéraire</div><h1>Réservations</h1></div>
     <div class="section">
@@ -500,7 +531,8 @@
 <nav class="nav">
   <button class="active" data-panel="home" onclick="showPanel('home')"><span>🏠</span>Accueil</button>
   <button data-panel="today" onclick="showPanel('today')"><span>☀️</span>Aujourd’hui</button>
-  <button data-panel="itinerary" onclick="showPanel('itinerary')"><span>🗺️</span>Voyage</button>
+  <button data-panel="itinerary" onclick="showPanel('itinerary')"><span>🗓️</span>Voyage</button>
+  <button data-panel="map" onclick="showPanel('map')"><span>🗺️</span>Carte</button>
   <button data-panel="bookings" onclick="showPanel('bookings')"><span>🎟️</span>Réserv.</button>
   <button data-panel="budget" onclick="showPanel('budget')"><span>💶</span>Budget</button>
   <button data-panel="notes" onclick="showPanel('notes')"><span>📖</span>Souvenirs</button>
@@ -526,6 +558,7 @@
   });
 })();
 </script>
-<script type="module" src="js/app.js?v=here-1.0"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script type="module" src="js/app.js?v=map-1.0"></script>
 </body>
 </html>

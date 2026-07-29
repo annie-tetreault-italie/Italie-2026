@@ -57,6 +57,7 @@ function showPanel(id){
     b=>b.classList.toggle("active", b.dataset.panel===id)
   );
   window.scrollTo({top:0,behavior:"smooth"});
+  if(id === "map") setTimeout(initTripMap, 80);
 }
 window.showPanel = showPanel;
 
@@ -852,6 +853,7 @@ onSnapshot(daysQuery, snapshot => {
   renderItinerary();
   renderDashboard();
   renderMemories();
+  renderTripMapData();
   setStatus("✅ Itinéraire détaillé synchronisé avec Firebase.", "ok");
 }, error => {
   console.error("Lecture de l’itinéraire impossible :", error);
@@ -1576,6 +1578,7 @@ function renderCurrentPosition(position){
   $("stopLocationButton").hidden=false;
   $("locateMeButton").textContent="🔄 Actualiser ma position";
   setCurrentLocationMessage("Position trouvée. Le suivi se met à jour lorsque tu te déplaces.","active");
+  updateMapCurrentPosition(latitude, longitude, accuracy);
 }
 
 function currentLocationError(error){
@@ -1692,6 +1695,131 @@ $("stopLocationButton")?.addEventListener("click",stopCurrentLocation);
 window.addEventListener("pagehide",()=>{
   if(currentLocationWatchId!==null) navigator.geolocation.clearWatch(currentLocationWatchId);
 });
+
+
+
+// Carte interactive du voyage
+let tripMap = null;
+let tripRouteLayer = null;
+let tripMarkersLayer = null;
+let hereMarkersLayer = null;
+let mapCurrentMarker = null;
+let mapCurrentAccuracy = null;
+
+const ITALY_CITY_COORDS = {
+  "rome":[41.9028,12.4964], "roma":[41.9028,12.4964],
+  "cinque terre":[44.1461,9.6439], "monterosso":[44.1462,9.6546],
+  "vernazza":[44.1349,9.6849], "corniglia":[44.1203,9.7095],
+  "manarola":[44.1075,9.7274], "riomaggiore":[44.0999,9.7387],
+  "florence":[43.7696,11.2558], "firenze":[43.7696,11.2558],
+  "venise":[45.4408,12.3155], "venezia":[45.4408,12.3155],
+  "toscane":[43.3188,11.3308], "tuscany":[43.3188,11.3308],
+  "greve in chianti":[43.5851,11.3167], "panzano":[43.5447,11.3141],
+  "sienne":[43.3188,11.3308], "siena":[43.3188,11.3308],
+  "pise":[43.7228,10.4017], "pisa":[43.7228,10.4017],
+  "milan":[45.4642,9.1900], "milano":[45.4642,9.1900],
+  "naples":[40.8518,14.2681], "napoli":[40.8518,14.2681]
+};
+
+function normalizedPlaceName(value=""){
+  return String(value).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
+}
+function coordinatesForDay(day){
+  const lat=Number(day.latitude ?? day.lat);
+  const lng=Number(day.longitude ?? day.lng ?? day.lon);
+  if(Number.isFinite(lat)&&Number.isFinite(lng)) return [lat,lng];
+  const city=normalizedPlaceName(cityForDay(day));
+  if(ITALY_CITY_COORDS[city]) return ITALY_CITY_COORDS[city];
+  const found=Object.keys(ITALY_CITY_COORDS).find(key=>city.includes(key)||key.includes(city));
+  return found?ITALY_CITY_COORDS[found]:null;
+}
+function mapStageData(){
+  const groups=[];
+  itineraryDays.forEach(day=>{
+    const city=cityForDay(day);
+    const coords=coordinatesForDay(day);
+    if(!city||!coords) return;
+    const key=normalizedPlaceName(city);
+    let group=groups.find(item=>item.key===key);
+    if(!group){ group={key,city:String(city),coords,days:[]}; groups.push(group); }
+    group.days.push(day);
+  });
+  return groups;
+}
+function allHerePlaces(){
+  return itineraryDays.flatMap(day=>(Array.isArray(day.herePlaces)?day.herePlaces:[]).map(place=>({...place,dayId:day.id,city:cityForDay(day)})));
+}
+function initTripMap(){
+  const root=$("tripMap");
+  if(!root) return;
+  if(!window.L){ $("mapStatus").textContent="La carte n’a pas pu charger. Vérifie ta connexion Internet."; return; }
+  if(!tripMap){
+    tripMap=L.map(root,{zoomControl:true}).setView([43.7,11.7],6);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{
+      maxZoom:19, attribution:"&copy; OpenStreetMap"
+    }).addTo(tripMap);
+    tripRouteLayer=L.layerGroup().addTo(tripMap);
+    tripMarkersLayer=L.layerGroup().addTo(tripMap);
+    hereMarkersLayer=L.layerGroup().addTo(tripMap);
+  }
+  setTimeout(()=>tripMap.invalidateSize(),100);
+  renderTripMapData(true);
+}
+function stagePopup(stage,index){
+  const first=stage.days[0], last=stage.days[stage.days.length-1];
+  const photos=stage.days.reduce((n,d)=>n+(Array.isArray(d.photos)?d.photos.length:0),0);
+  const hotels=[...new Set(stage.days.map(d=>displayValue(firstValue(d,["hotel","accommodation"]))).filter(Boolean))];
+  return `<div class="map-popup"><strong>${index+1}. ${esc(stage.city)}</strong><span>${esc(formatDateFr(first.id))}${last.id!==first.id?` au ${esc(formatDateFr(last.id))}`:""}</span>${hotels.length?`<span>🏨 ${esc(hotels[0])}</span>`:""}<span>📸 ${photos} photo${photos===1?"":"s"}</span><button type="button" onclick="openDayDetail('${first.id}')">Voir la journée →</button></div>`;
+}
+function renderTripMapData(fit=false){
+  const stages=mapStageData();
+  const places=allHerePlaces();
+  $("mapStageCount") && ($("mapStageCount").textContent=stages.length);
+  $("mapHereCount") && ($("mapHereCount").textContent=places.length);
+  $("mapPhotoCount") && ($("mapPhotoCount").textContent=itineraryDays.reduce((n,d)=>n+(Array.isArray(d.photos)?d.photos.length:0),0));
+  $("mapMemoryCount") && ($("mapMemoryCount").textContent=itineraryDays.filter(d=>d.memoryText||d.journal||d.memory||d.favoriteMoment).length);
+  renderMapPlacesList(places);
+  if(!tripMap||!tripMarkersLayer) return;
+  tripMarkersLayer.clearLayers(); hereMarkersLayer.clearLayers(); tripRouteLayer.clearLayers();
+  const route=[];
+  stages.forEach((stage,index)=>{
+    route.push(stage.coords);
+    L.marker(stage.coords,{title:stage.city}).addTo(tripMarkersLayer).bindPopup(stagePopup(stage,index));
+  });
+  if(route.length>1) L.polyline(route,{color:"#1f6b52",weight:4,opacity:.75,dashArray:"9 8"}).addTo(tripRouteLayer);
+  places.forEach(place=>{
+    const lat=Number(place.latitude),lng=Number(place.longitude);
+    if(!Number.isFinite(lat)||!Number.isFinite(lng)) return;
+    const icon=L.divIcon({className:"here-map-icon",html:"<span>📌</span>",iconSize:[34,34],iconAnchor:[17,32]});
+    L.marker([lat,lng],{icon,title:place.name||"Je suis ici"}).addTo(hereMarkersLayer).bindPopup(`<div class="map-popup"><strong>📌 ${esc(place.name||"Je suis ici")}</strong><span>${esc(formatDateFr(place.dayId))}${place.time?` · ${esc(place.time)}`:""}</span>${place.note?`<p>${esc(place.note)}</p>`:""}<a href="https://www.google.com/maps?q=${encodeURIComponent(lat+","+lng)}" target="_blank" rel="noopener">Ouvrir dans Google Maps</a></div>`);
+  });
+  $("mapStatus").textContent=stages.length?`${stages.length} étape${stages.length===1?"":"s"} et ${places.length} endroit${places.length===1?"":"s"} personnel${places.length===1?"":"s"} affichés.`:"Ajoute des destinations dans l’itinéraire pour les voir sur la carte.";
+  if(fit) fitTripMap();
+}
+function fitTripMap(){
+  if(!tripMap) return;
+  const points=[...mapStageData().map(s=>s.coords),...allHerePlaces().map(p=>[Number(p.latitude),Number(p.longitude)]).filter(c=>c.every(Number.isFinite))];
+  if(currentPositionSnapshot) points.push([currentPositionSnapshot.coords.latitude,currentPositionSnapshot.coords.longitude]);
+  if(points.length===1) tripMap.setView(points[0],11);
+  else if(points.length>1) tripMap.fitBounds(points,{padding:[35,35]});
+  else tripMap.setView([43.7,11.7],6);
+}
+function updateMapCurrentPosition(latitude,longitude,accuracy=0){
+  if(!tripMap) return;
+  if(mapCurrentMarker) mapCurrentMarker.setLatLng([latitude,longitude]);
+  else mapCurrentMarker=L.marker([latitude,longitude],{title:"Ma position actuelle"}).addTo(tripMap).bindPopup("<strong>📍 Ma position actuelle</strong>");
+  if(mapCurrentAccuracy) mapCurrentAccuracy.setLatLng([latitude,longitude]).setRadius(accuracy||0);
+  else mapCurrentAccuracy=L.circle([latitude,longitude],{radius:accuracy||0,color:"#2878d0",fillOpacity:.08,weight:1}).addTo(tripMap);
+}
+function renderMapPlacesList(places){
+  const root=$("mapPlacesList"); if(!root) return;
+  if(!places.length){ root.innerHTML='<div class="card loading-card">Les endroits enregistrés avec « Je suis ici » apparaîtront ici.</div>'; return; }
+  root.innerHTML=`<h2>📌 Mes endroits enregistrés</h2><div class="map-place-grid">${places.slice().reverse().map(place=>`<article class="card map-place-card"><div><strong>${esc(place.name||"Endroit")}</strong><span>${esc(formatDateFr(place.dayId))}${place.city?` · ${esc(place.city)}`:""}</span>${place.note?`<p>${esc(place.note)}</p>`:""}</div><a href="https://www.google.com/maps?q=${encodeURIComponent(place.latitude+","+place.longitude)}" target="_blank" rel="noopener">Voir →</a></article>`).join("")}</div>`;
+}
+$("mapFitButton")?.addEventListener("click",fitTripMap);
+$("mapLocateButton")?.addEventListener("click",()=>{ startCurrentLocation(); setTimeout(()=>{ if(currentPositionSnapshot&&tripMap){ const c=currentPositionSnapshot.coords; updateMapCurrentPosition(c.latitude,c.longitude,c.accuracy); tripMap.setView([c.latitude,c.longitude],14); } },800); });
+window.renderTripMapData=renderTripMapData;
+
 
 document.addEventListener("click",e=>{
   const button = e.target.closest(".memory-photo-open");
