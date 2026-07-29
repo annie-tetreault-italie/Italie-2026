@@ -5,130 +5,67 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f7f0e6">
 <title>Mon Carnet de Voyages — Italie 2026</title>
-<meta name="application-version" content="map-1.0">
+<meta name="application-version" content="home-premium-2.0">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
-<link rel="stylesheet" href="css/style.css?v=map-1.0">
+<link rel="stylesheet" href="css/style.css?v=home-premium-2.0">
 </head>
 <body>
 <div class="app">
   <section id="home" class="panel active">
-    <div class="hero home-identity-hero">
-      <div class="app-brand" aria-label="Mon Carnet de Voyages">
-        <div class="app-brand-mark" aria-hidden="true">🌍</div>
-        <div>
-          <div class="app-brand-name">Mon Carnet de Voyages</div>
-          <div class="app-brand-slogan">Préparer · Voyager · Revivre</div>
-        </div>
+    <div class="premium-home-hero">
+      <div class="premium-hero-overlay"></div>
+      <div class="premium-hero-content">
+        <div class="app-brand premium-brand"><div class="app-brand-mark">🌍</div><div><div class="app-brand-name">Mon Carnet de Voyages</div><div class="app-brand-slogan">Préparer · Voyager · Revivre</div></div></div>
+        <div class="premium-trip-pill">🇮🇹 Italie 2026</div>
+        <div class="premium-greeting">Bonjour Annie 👋</div>
+        <h1 id="premiumCurrentCity">Ton voyage approche</h1>
+        <p id="premiumCurrentDate">28 septembre au 16 octobre 2026</p>
+        <div class="premium-countdown" id="countdown"><div><strong id="cdDays">—</strong><span>jours</span></div><div><strong id="cdHours">—</strong><span>heures</span></div><div><strong id="cdMin">—</strong><span>min</span></div><div><strong id="cdSec">—</strong><span>sec</span></div></div>
       </div>
-      <div class="trip-pill">🇮🇹 Voyage actif</div>
-      <h1>Italie 2026</h1>
-      <div class="dates">28 septembre — 16 octobre 2026</div>
-      <div class="countdown" id="countdown">
-        <div><strong id="cdDays">—</strong><span>jours</span></div>
-        <div><strong id="cdHours">—</strong><span>heures</span></div>
-        <div><strong id="cdMin">—</strong><span>minutes</span></div>
-        <div><strong id="cdSec">—</strong><span>secondes</span></div>
-      </div>
-    </div>
-    <div class="notice home-next-message">
-      <span class="notice-icon">✈️</span>
-      <div><strong>Première étape :</strong> arrivée à Rome vers 9 h 15 le 28 septembre, puis train vers les Cinque Terre.</div>
     </div>
     <div id="syncStatus" class="sync-status">Connexion à Firebase…</div>
+    <div class="section premium-dashboard">
+      <article class="card premium-progress-card">
+        <div class="premium-card-head"><div><span class="eyebrow">Progression du voyage</span><h2 id="premiumProgressTitle">Préparation en cours</h2></div><strong id="premiumProgressPercent">0 %</strong></div>
+        <div class="premium-progress-track"><div id="premiumProgressBar"></div></div>
+        <div class="premium-progress-meta"><span id="premiumProgressLeft">18 jours de voyage</span><span id="premiumProgressRight">Départ le 28 septembre</span></div>
+      </article>
 
-    <div class="section">
-      <h2>Accès rapide</h2>
-      <div class="quick">
-        <button onclick="showPanel('today')"><span class="icon">☀️</span>Aujourd’hui</button>
-        <button onclick="showPanel('itinerary')"><span class="icon">🗺️</span>Itinéraire</button>
-        <button onclick="showPanel('bookings')"><span class="icon">🎟️</span>Réservations</button>
-        <button onclick="showPanel('budget')"><span class="icon">💶</span>Budget</button>
-        <button onclick="showPanel('lists')"><span class="icon">✅</span>Valises & tâches</button>
+      <div class="premium-grid">
+        <article class="card premium-today-card">
+          <div class="premium-card-head"><div><span class="eyebrow">📍 Aujourd’hui</span><h2 id="premiumTodayTitle">Préparer le voyage</h2></div><button class="premium-arrow" onclick="showPanel('today')">→</button></div>
+          <div id="premiumTodayDetails" class="premium-list"></div>
+          <button class="btn premium-main-action" onclick="showPanel('today')">▶ Continuer ma journée</button>
+        </article>
+        <article class="card premium-next-card">
+          <span class="eyebrow">🚆 Prochaine étape</span><h2 id="dashboardNextTitle">Chargement…</h2><p id="dashboardNextDetails">Lecture de Firebase</p>
+          <div id="premiumNextTransport" class="premium-mini-note">Itinéraire synchronisé</div>
+          <button class="btn secondary" onclick="showPanel('itinerary')">Voir l’itinéraire</button>
+        </article>
       </div>
-    </div>
 
-    <div class="section">
-      <div class="control-center card">
-        <div class="control-center-top">
-          <div>
-            <div class="eyebrow">Centre de contrôle</div>
-            <h2>Préparation du voyage</h2>
-            <p id="preparationSummary">Calcul de la progression…</p>
-          </div>
-          <div class="preparation-score" aria-label="Progression du voyage"><strong id="preparationPercent">0 %</strong><span>prêt</span></div>
-        </div>
-        <div class="preparation-progress" aria-hidden="true"><div id="preparationProgressBar"></div></div>
-        <div id="preparationDetails" class="preparation-details"></div>
-        <button id="startDayButton" class="start-day-button" type="button" onclick="showPanel('today')">▶️ Commencer ma journée</button>
+      <div class="premium-grid four">
+        <button class="card premium-stat" onclick="showPanel('budget')"><span>💶</span><strong id="premiumBudgetRemaining">0,00 $ CA</strong><small>Budget restant</small></button>
+        <button class="card premium-stat" onclick="showPanel('memories')"><span>📸</span><strong id="premiumPhotoCount">0</strong><small>Photos</small></button>
+        <button class="card premium-stat" onclick="showPanel('memories')"><span>❤️</span><strong id="premiumFavoriteCount">0</strong><small>Coups de cœur</small></button>
+        <button class="card premium-stat" onclick="showPanel('map')"><span>📌</span><strong id="premiumPlaceCount">0</strong><small>Lieux enregistrés</small></button>
       </div>
-    </div>
 
-    <div class="section">
-      <div class="weekly-focus card">
-        <div class="weekly-focus-head">
-          <div>
-            <div class="eyebrow">À faire maintenant</div>
-            <h2>Mes priorités</h2>
-            <p id="weeklyFocusSummary">Chargement de tes prochaines actions…</p>
-          </div>
-          <button class="weekly-focus-link" type="button" onclick="showPanel('lists')">Tout voir →</button>
-        </div>
+      <article class="card premium-reminders-card">
+        <div class="premium-card-head"><div><span class="eyebrow">🔔 À ne pas oublier</span><h2>Mes rappels</h2></div><button class="premium-arrow" onclick="showPanel('lists')">→</button></div>
+        <p id="weeklyFocusSummary">Chargement de tes prochaines actions…</p>
         <div id="weeklyFocusList" class="weekly-focus-list"></div>
+      </article>
+
+      <div class="premium-quick-grid">
+        <button onclick="showPanel('itinerary')"><span>🗺️</span>Itinéraire</button><button onclick="showPanel('map')"><span>📍</span>Carte</button><button onclick="showPanel('bookings')"><span>🎟️</span>Réservations</button><button onclick="showPanel('budget')"><span>💳</span>Budget</button><button onclick="showPanel('lists')"><span>✅</span>Listes</button><button onclick="showPanel('memories')"><span>📖</span>Souvenirs</button>
       </div>
-    </div>
 
-    <div class="section">
-      <h2>Tableau de bord</h2>
-      <div class="dashboard-grid">
-        <button class="dashboard-card" onclick="showPanel('itinerary')">
-          <span class="dashboard-icon">📍</span>
-          <span class="dashboard-label">Prochaine étape</span>
-          <strong id="dashboardNextTitle">Chargement…</strong>
-          <small id="dashboardNextDetails">Lecture de Firebase</small>
-        </button>
-
-        <button class="dashboard-card" onclick="showPanel('bookings')">
-          <span class="dashboard-icon">🏨</span>
-          <span class="dashboard-label">Prochaine réservation</span>
-          <strong id="dashboardBookingTitle">Aucune réservation</strong>
-          <small id="dashboardBookingDetails">Ajoute tes réservations</small>
-        </button>
-
-        <button class="dashboard-card" onclick="showPanel('budget')">
-          <span class="dashboard-icon">💶</span>
-          <span class="dashboard-label">Dépenses enregistrées</span>
-          <strong id="dashboardBudget">0,00 $ CA</strong>
-          <small id="dashboardExpenseCount">0 dépense</small>
-        </button>
-
-        <button class="dashboard-card" onclick="showPanel('lists')">
-          <span class="dashboard-icon">🧳</span>
-          <span class="dashboard-label">Préparatifs</span>
-          <strong id="dashboardPacking">0 % terminé</strong>
-          <small id="dashboardPackingDetails">Valises et tâches</small>
-        </button>
-
-        <button class="dashboard-card" onclick="showPanel('bookings')">
-          <span class="dashboard-icon">✅</span>
-          <span class="dashboard-label">Réservations confirmées</span>
-          <strong id="dashboardConfirmedBookings">0 confirmée</strong>
-          <small id="dashboardConfirmedDetails">Sur 0 réservation</small>
-        </button>
-      </div>
-    </div>
-
-    <div class="section">
-      <div class="card today-card">
-        <div>
-          <div class="eyebrow">Voyage connecté</div>
-          <h2 id="dashboardTripName">Italie 2026</h2>
-          <p id="dashboardSummary">Les journées, réservations, dépenses et listes sont synchronisées avec Firebase.</p>
-        </div>
-        <button class="btn secondary-btn" onclick="showPanel('itinerary')">Voir l’itinéraire</button>
+      <div hidden>
+        <span id="dashboardBookingTitle"></span><span id="dashboardBookingDetails"></span><span id="dashboardBudget"></span><span id="dashboardExpenseCount"></span><span id="dashboardPacking"></span><span id="dashboardPackingDetails"></span><span id="dashboardConfirmedBookings"></span><span id="dashboardConfirmedDetails"></span><span id="preparationPercent"></span><span id="preparationSummary"></span><div id="preparationProgressBar"></div><div id="preparationDetails"></div><button id="startDayButton"></button><span id="dashboardTripName"></span><span id="dashboardSummary"></span>
       </div>
     </div>
   </section>
-
 
   <section id="today" class="panel">
     <div class="hero today-hero">

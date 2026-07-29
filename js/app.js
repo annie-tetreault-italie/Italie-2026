@@ -1005,6 +1005,27 @@ function renderHomePriorities(){
   });
 }
 
+
+function renderPremiumHome(){
+  const today=selectedTodayDay();
+  const first=itineraryDays[0], last=itineraryDays[itineraryDays.length-1];
+  const nowKey=localDateKey();
+  const tripStarted=first && nowKey>=first.id;
+  const tripFinished=last && nowKey>last.id;
+  let progress=0, title="Préparation en cours", left=`${itineraryDays.length || 18} jours de voyage`, right="Départ le 28 septembre";
+  if(tripStarted && !tripFinished){
+    const idx=Math.max(0,itineraryDays.findIndex(d=>d.id>=nowKey)); progress=Math.round(((idx+1)/Math.max(1,itineraryDays.length))*100); title=`Jour ${idx+1} sur ${itineraryDays.length}`; left=`${idx+1} jours commencés`; right=`${Math.max(0,itineraryDays.length-idx-1)} jours restants`;
+  }else if(tripFinished){progress=100;title="Voyage terminé";left="De magnifiques souvenirs";right="À revivre quand tu veux";}
+  else { const prep=Number(($("preparationPercent")?.textContent||"0").replace(/\D/g,""))||0; progress=prep; }
+  $("premiumProgressPercent").textContent=`${progress} %`; $("premiumProgressBar").style.width=`${progress}%`; $("premiumProgressTitle").textContent=title; $("premiumProgressLeft").textContent=left; $("premiumProgressRight").textContent=right;
+  if(today){
+    const city=cityForDay(today)||"Italie"; $("premiumCurrentCity").textContent=tripStarted?city:"Ton voyage approche"; $("premiumCurrentDate").textContent=tripStarted?formatDateFr(today.id):"28 septembre au 16 octobre 2026"; $("premiumTodayTitle").textContent=tripStarted?city:"Préparer le voyage";
+    const items=[]; const hotel=firstValue(today,["hotel","accommodation"]); const transport=firstValue(today,["transport","train","flight"]); const acts=valueItems(firstValue(today,["activities","activity","schedule"])); if(hotel)items.push(["🏨",displayValue(hotel)]); if(transport)items.push(["🚆",displayValue(transport)]); if(acts[0])items.push(["🥾",acts[0]]); $("premiumTodayDetails").innerHTML=(items.length?items:[["✨","Consulte ta journée et complète les détails"]]).map(i=>`<div><span>${i[0]}</span><span>${esc(i[1])}</span></div>`).join("");
+  }
+  const spent=expenses.reduce((sum,item)=>sum+expenseCad(item),0); const planned=Number(plannedBudgetValue)||0; $("premiumBudgetRemaining").textContent=dashboardMoney(Math.max(0,planned-spent));
+  $("premiumPhotoCount").textContent=itineraryDays.reduce((n,d)=>n+(Array.isArray(d.photos)?d.photos.length:0),0); $("premiumFavoriteCount").textContent=itineraryDays.filter(d=>Number.isInteger(Number(d.favoritePhotoIndex))&&Number(d.favoritePhotoIndex)>=0).length; $("premiumPlaceCount").textContent=itineraryDays.reduce((n,d)=>n+(Array.isArray(d.herePlaces)?d.herePlaces.length:0),0);
+}
+
 function renderDashboard(){
   renderToday();
   renderHomePriorities();
@@ -1101,6 +1122,7 @@ function renderDashboard(){
         ? "📖 Revoir mon voyage"
         : "▶️ Commencer ma journée";
   }
+  renderPremiumHome();
 }
 
 /* ÉTAT PARTAGÉ :
