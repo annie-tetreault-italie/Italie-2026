@@ -839,12 +839,66 @@ const daysQuery = query(
 
 
 
-// ===== Timeline Premium 3.0 =====
+// ===== Timeline vivante 3.1 =====
 let timelineHighlightsOnly = false;
+let timelinePlaybackTimer = null;
+let timelinePlaybackIndex = 0;
+const ITALY_SIGNATURE_QUOTE = "Aujourd’hui restera l’un de mes plus beaux souvenirs d’Italie.";
+
 function timelineMemoryForDay(day){ return firstValue(day,["memoryText","journal","memory","favoriteMoment","notes"]); }
 function timelineRating(day){ return Number(day.rating||day.dayRating||0); }
 function timelineBudget(day){ return firstValue(day,["budget","dailyBudget"]); }
+function timelineReflection(day){
+  const saved = firstValue(day,["timelineReflection","reflection","dayQuote"]);
+  if(saved) return saved;
+  const city = String(cityForDay(day)||"").toLocaleLowerCase("fr-CA");
+  return city.includes("cinque") || city.includes("manarola") ? ITALY_SIGNATURE_QUOTE : "";
+}
+
+function stopTimelinePlayback(){
+  if(timelinePlaybackTimer) clearInterval(timelinePlaybackTimer);
+  timelinePlaybackTimer = null;
+  document.querySelectorAll('.timeline-day-card').forEach(card=>card.classList.remove('timeline-playing'));
+  const button=$("timelinePlayButton");
+  if(button) button.textContent="▶️ Revivre le voyage";
+}
+
+function startTimelinePlayback(){
+  const cards=[...document.querySelectorAll('.timeline-day-card')];
+  if(!cards.length) return;
+  if(timelinePlaybackTimer){ stopTimelinePlayback(); return; }
+  timelinePlaybackIndex=0;
+  const button=$("timelinePlayButton");
+  if(button) button.textContent="⏸️ Arrêter";
+  const showCurrent=()=>{
+    cards.forEach(card=>card.classList.remove('timeline-playing'));
+    const card=cards[timelinePlaybackIndex];
+    if(!card){ stopTimelinePlayback(); return; }
+    card.classList.add('timeline-playing');
+    card.scrollIntoView({behavior:"smooth",block:"center"});
+    timelinePlaybackIndex += 1;
+    if(timelinePlaybackIndex>=cards.length){
+      setTimeout(stopTimelinePlayback,4200);
+    }
+  };
+  showCurrent();
+  timelinePlaybackTimer=setInterval(showCurrent,5000);
+}
+
+async function saveTimelineReflection(dayId, text, statusElement){
+  const value=String(text||"").trim();
+  if(statusElement) statusElement.textContent="Enregistrement…";
+  try{
+    await setDoc(doc(db,"Trips","italy-2026","Days",dayId),{timelineReflection:value},{merge:true});
+    if(statusElement) statusElement.textContent="Enregistré ✓";
+  }catch(error){
+    console.error(error);
+    if(statusElement) statusElement.textContent="Impossible d’enregistrer.";
+  }
+}
+
 function renderTimeline(){
+  stopTimelinePlayback();
   const root=$("timelineList"); if(!root) return;
   const days=timelineHighlightsOnly ? itineraryDays.filter(day=>timelineRating(day)>=5 || day.favoritePhotoIndex!==undefined || firstValue(day,["favoriteMoment","memoryFavorite"])) : itineraryDays;
   root.innerHTML=""; $("timelineEmpty").hidden=days.length>0;
@@ -853,19 +907,24 @@ function renderTimeline(){
   const percent=itineraryDays.length?Math.round(((currentIndex+1)/itineraryDays.length)*100):0;
   $("timelineProgressBar").style.width=percent+"%"; $("timelineProgressLabel").textContent=`Jour ${Math.min(currentIndex+1,itineraryDays.length||1)} sur ${itineraryDays.length||0}`; $("timelineProgressPercent").textContent=percent+" %";
   days.forEach((day,index)=>{
-    const city=cityForDay(day)||"Italie"; const photos=Array.isArray(day.photos)?day.photos:[]; const places=Array.isArray(day.herePlaces)?day.herePlaces:[]; const memory=timelineMemoryForDay(day); const rating=timelineRating(day); const budget=timelineBudget(day);
+    const city=cityForDay(day)||"Italie"; const photos=Array.isArray(day.photos)?day.photos:[]; const places=Array.isArray(day.herePlaces)?day.herePlaces:[]; const memory=timelineMemoryForDay(day); const rating=timelineRating(day); const budget=timelineBudget(day); const reflection=timelineReflection(day);
     const activities=valueItems(firstValue(day,["activities","activity","schedule"])); const restaurants=valueItems(firstValue(day,["restaurants","restaurant"]));
     const card=document.createElement("article"); card.className="card timeline-day-card"+(rating>=5?" timeline-highlight":""); card.dataset.timelineDay=day.id;
     const cover=photos[0]||"assets/manarola-sunset.jpg";
-    card.innerHTML=`<div class="timeline-day-cover" style="background-image:linear-gradient(180deg,rgba(0,0,0,.06),rgba(0,0,0,.72)),url('${cover}')"><div><div class="timeline-day-date">${esc(formatDateFr(day.id))}</div><h2>${esc(city)}</h2><div>Jour ${itineraryDays.findIndex(d=>d.id===day.id)+1} sur ${itineraryDays.length}</div></div></div><div class="timeline-day-body"><div class="timeline-day-kpis"><div><strong>${photos.length}</strong><span>📸 Photos</span></div><div><strong>${places.length}</strong><span>📌 Lieux</span></div><div><strong>${rating?"★".repeat(rating):"—"}</strong><span>Note</span></div><div><strong>${budget?esc(displayValue(budget)):"—"}</strong><span>💶 Budget</span></div></div>${memory?`<div class="timeline-memory"><strong>❤️ Mon souvenir</strong><br>${esc(displayValue(memory))}</div>`:""}${activities.length?`<p><strong>🥾 Activités :</strong> ${esc(activities.slice(0,3).join(" · "))}</p>`:""}${restaurants.length?`<p><strong>🍝 Restaurants :</strong> ${esc(restaurants.slice(0,3).join(" · "))}</p>`:""}${photos.length?`<div class="timeline-photo-strip">${photos.slice(0,8).map((src,i)=>`<button type="button" data-timeline-photo="${i}"><img src="${src}" alt="Souvenir du ${esc(formatDateFr(day.id))}"></button>`).join("")}</div>`:""}<div class="timeline-day-actions"><button class="btn" type="button" data-open-timeline-day="${day.id}">Voir la journée</button><button class="btn secondary" type="button" data-map-timeline-day="${day.id}">📍 Voir sur la carte</button></div></div>`;
+    card.innerHTML=`<div class="timeline-day-cover" style="background-image:linear-gradient(180deg,rgba(0,0,0,.06),rgba(0,0,0,.72)),url('${cover}')"><div><div class="timeline-day-date">${esc(formatDateFr(day.id))}</div><h2>${esc(city)}</h2><div>Jour ${itineraryDays.findIndex(d=>d.id===day.id)+1} sur ${itineraryDays.length}</div></div></div><div class="timeline-day-body"><div class="timeline-day-kpis"><div><strong>${photos.length}</strong><span>📸 Photos</span></div><div><strong>${places.length}</strong><span>📌 Lieux</span></div><div><strong>${rating?"★".repeat(rating):"—"}</strong><span>Note</span></div><div><strong>${budget?esc(displayValue(budget)):"—"}</strong><span>💶 Budget</span></div></div>${memory?`<div class="timeline-memory"><strong>❤️ Mon souvenir</strong><br>${esc(displayValue(memory))}</div>`:""}${activities.length?`<p><strong>🥾 Activités :</strong> ${esc(activities.slice(0,3).join(" · "))}</p>`:""}${restaurants.length?`<p><strong>🍝 Restaurants :</strong> ${esc(restaurants.slice(0,3).join(" · "))}</p>`:""}${photos.length?`<div class="timeline-photo-strip">${photos.slice(0,8).map((src,i)=>`<button type="button" data-timeline-photo="${i}"><img src="${src}" alt="Souvenir du ${esc(formatDateFr(day.id))}"></button>`).join("")}</div>`:""}<section class="timeline-reflection"><div class="timeline-reflection-label">🌅 Ce que je retiens aujourd’hui</div><blockquote>${reflection?esc(reflection):"Ajoute une phrase qui résume cette journée."}</blockquote><button class="timeline-reflection-edit" type="button">✏️ Modifier la phrase</button><div class="timeline-reflection-form" hidden><textarea maxlength="260" aria-label="Phrase souvenir">${esc(reflection)}</textarea><div><button class="btn timeline-reflection-save" type="button">Enregistrer</button><button class="btn secondary timeline-reflection-cancel" type="button">Annuler</button></div><small class="timeline-reflection-status"></small></div></section><div class="timeline-day-actions"><button class="btn" type="button" data-open-timeline-day="${day.id}">Voir la journée</button><button class="btn secondary" type="button" data-map-timeline-day="${day.id}">📍 Voir sur la carte</button></div></div>`;
     card.querySelectorAll("[data-timeline-photo]").forEach(btn=>btn.addEventListener("click",()=>openPhotoViewer(photos,Number(btn.dataset.timelinePhoto)||0,`${formatDateFr(day.id)} — ${city}`)));
     card.querySelector("[data-open-timeline-day]")?.addEventListener("click",()=>openDayDetail(day.id));
     card.querySelector("[data-map-timeline-day]")?.addEventListener("click",()=>{ showPanel("map"); setTimeout(()=>{ const coords=coordinatesForDay(day); if(coords&&tripMap) tripMap.setView(coords,11); },180); });
+    const edit=card.querySelector('.timeline-reflection-edit'); const form=card.querySelector('.timeline-reflection-form'); const area=card.querySelector('textarea'); const status=card.querySelector('.timeline-reflection-status');
+    edit?.addEventListener('click',()=>{ form.hidden=false; edit.hidden=true; area.focus(); });
+    card.querySelector('.timeline-reflection-cancel')?.addEventListener('click',()=>{ form.hidden=true; edit.hidden=false; area.value=reflection; status.textContent=""; });
+    card.querySelector('.timeline-reflection-save')?.addEventListener('click',async()=>{ await saveTimelineReflection(day.id,area.value,status); });
     root.appendChild(card);
   });
 }
 $("timelineHighlightsButton")?.addEventListener("click",()=>{ timelineHighlightsOnly=!timelineHighlightsOnly; $("timelineHighlightsButton").textContent=timelineHighlightsOnly?"Voir toutes les journées":"⭐ Meilleurs moments"; renderTimeline(); });
 $("timelineTodayButton")?.addEventListener("click",()=>{ renderTimeline(); const now=new Date(); const id=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`; let target=document.querySelector(`[data-timeline-day="${id}"]`); if(!target){ target=document.querySelector('.timeline-day-card'); } target?.scrollIntoView({behavior:"smooth",block:"center"}); });
+$("timelinePlayButton")?.addEventListener("click",startTimelinePlayback);
 window.renderTimeline=renderTimeline;
 onSnapshot(daysQuery, snapshot => {
   itineraryDays = [];
