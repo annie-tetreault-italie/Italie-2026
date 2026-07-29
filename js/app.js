@@ -489,8 +489,49 @@ function dashboardMoney(value){
   }).format(value || 0);
 }
 
+function renderHomePriorities(){
+  const root = $("weeklyFocusList");
+  const summary = $("weeklyFocusSummary");
+  if(!root || !summary) return;
+
+  const priorities = [];
+  const days = daysUntilDeparture();
+
+  automaticPreparationTasks
+    .filter(task => !prepAutomatic[task.id] && days <= task.days)
+    .slice(0, 2)
+    .forEach(task => priorities.push({
+      kind:"automatic", id:task.id, icon:task.icon, text:task.text
+    }));
+
+  (checks.todo || []).forEach((item,index) => {
+    if(!item.done && priorities.length < 5){
+      priorities.push({kind:"todo", index, icon:"✓", text:item.t});
+    }
+  });
+
+  root.innerHTML = "";
+  if(!priorities.length){
+    summary.textContent = "Tout est à jour pour le moment.";
+    root.innerHTML = '<div class="weekly-focus-empty">🎉 Aucune priorité urgente. Profite de ce moment!</div>';
+    return;
+  }
+
+  summary.textContent = `${priorities.length} action${priorities.length === 1 ? "" : "s"} à faire en priorité.`;
+  priorities.forEach(item => {
+    const label = document.createElement("label");
+    label.className = "weekly-focus-item";
+    const action = item.kind === "automatic"
+      ? `toggleAutomaticPrep('${item.id}',this.checked)`
+      : `toggleCheck('todo',${item.index},this.checked)`;
+    label.innerHTML = `<input type="checkbox" onchange="${action}"><span class="weekly-focus-icon">${item.icon}</span><span>${esc(item.text)}</span>`;
+    root.appendChild(label);
+  });
+}
+
 function renderDashboard(){
   renderToday();
+  renderHomePriorities();
   const nowKey = new Date().toISOString().slice(0,10);
   const nextDay =
     itineraryDays.find(day => day.id >= nowKey) ||

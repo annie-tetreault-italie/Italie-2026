@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f7f0e6">
 <title>Mon Carnet de Voyages — Italie 2026</title>
-<meta name="application-version" content="accueil-1.0">
-<link rel="stylesheet" href="css/style.css?v=accueil-1.0">
+<meta name="application-version" content="accueil-1.1">
+<link rel="stylesheet" href="css/style.css?v=accueil-1.1">
 </head>
 <body>
 <div class="app">
@@ -59,6 +59,20 @@
         <div class="preparation-progress" aria-hidden="true"><div id="preparationProgressBar"></div></div>
         <div id="preparationDetails" class="preparation-details"></div>
         <button id="startDayButton" class="start-day-button" type="button" onclick="showPanel('today')">▶️ Commencer ma journée</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="weekly-focus card">
+        <div class="weekly-focus-head">
+          <div>
+            <div class="eyebrow">À faire maintenant</div>
+            <h2>Mes priorités</h2>
+            <p id="weeklyFocusSummary">Chargement de tes prochaines actions…</p>
+          </div>
+          <button class="weekly-focus-link" type="button" onclick="showPanel('lists')">Tout voir →</button>
+        </div>
+        <div id="weeklyFocusList" class="weekly-focus-list"></div>
       </div>
     </div>
 
@@ -370,6 +384,6 @@
   });
 })();
 </script>
-<script type="module" src="js/app.js?v=accueil-1.0"></script>
+<script type="module" src="js/app.js?v=accueil-1.1"></script>
 </body>
 </html>
