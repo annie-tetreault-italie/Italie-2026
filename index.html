@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f7f0e6">
 <title>Mon Carnet de Voyages — Italie 2026</title>
-<meta name="application-version" content="photos-1.0">
-<link rel="stylesheet" href="css/style.css?v=photos-1.0">
+<meta name="application-version" content="rating-1.0">
+<link rel="stylesheet" href="css/style.css?v=rating-1.0">
 </head>
 <body>
 <div class="app">
@@ -273,6 +273,7 @@
           </div>
           <div class="field"><label>Mon coup de cœur</label><input id="dayMemoryFavorite" placeholder="Ex. Le coucher de soleil à Vernazza"></div>
         </div>
+        <div class="day-rating-block"><div><strong>⭐ Note de la journée</strong><small id="dayRatingLabel">Pas encore notée</small></div><div id="dayRatingStars" class="day-rating-stars" role="group" aria-label="Noter la journée"><button type="button" data-rating="1" aria-label="1 étoile">★</button><button type="button" data-rating="2" aria-label="2 étoiles">★</button><button type="button" data-rating="3" aria-label="3 étoiles">★</button><button type="button" data-rating="4" aria-label="4 étoiles">★</button><button type="button" data-rating="5" aria-label="5 étoiles">★</button></div></div>
         <div class="field"><label>Journal de la journée</label><textarea id="dayMemoryJournal" placeholder="Ce que j’ai aimé, ce qui m’a surprise, les petits moments à ne pas oublier…"></textarea></div>
         <div class="day-photo-section">
           <div class="day-photo-head">
@@ -420,7 +421,7 @@
     <div class="section">
       <div class="memory-summary card">
         <div><strong id="memoryDayCount">0</strong><span>journées racontées</span></div>
-        <div><strong id="memoryFavoriteCount">0</strong><span>coups de cœur</span></div>
+        <div><strong id="memoryFavoriteCount">0</strong><span>coups de cœur</span></div><div><strong id="memoryFiveStarCount">0</strong><span>journées 5 étoiles</span></div>
       </div>
       <div id="memoryList" class="memory-list"></div>
       <div id="memoryEmpty" class="card loading-card">Tes souvenirs apparaîtront ici dès que tu écriras dans une journée.</div>

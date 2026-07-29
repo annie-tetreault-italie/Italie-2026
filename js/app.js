@@ -1,4 +1,4 @@
-// Mon Carnet de Voyages — Module Photos et Souvenirs
+// Mon Carnet de Voyages — Notes, étoiles et photo préférée
 window.__ITALIE_APP_STARTED__ = true;
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
@@ -447,13 +447,14 @@ $("quickModalInput").addEventListener("keydown", event=>{
 
 
 function memoryHasContent(day){
-  return [day.journal, day.favorite, day.mood].some(value => String(value || "").trim()) || (Array.isArray(day.photos) && day.photos.length > 0);
+  return [day.journal, day.favorite, day.mood].some(value => String(value || "").trim()) || Number(day.rating || 0) > 0 || (Array.isArray(day.photos) && day.photos.length > 0);
 }
 
 function fillDayMemory(day){
   $("dayMemoryMood").value = String(day.mood || "");
   $("dayMemoryFavorite").value = String(day.favorite || "");
   $("dayMemoryJournal").value = String(day.journal || "");
+  renderDayRating(Number(day.rating || 0));
   $("dayMemoryStatus").textContent = "";
   $("dayPhotoStatus").textContent = "";
   renderDayPhotos(day);
@@ -484,9 +485,10 @@ function renderDayPhotos(day){
   }
   photos.forEach((src,index)=>{
     const item = document.createElement("figure");
-    item.className = "day-photo-item";
-    item.innerHTML = `<button type="button" class="day-photo-open" aria-label="Ouvrir la photo"><img src="${src}" alt="Souvenir du ${esc(formatDateFr(day.id))}"></button><button type="button" class="day-photo-delete" aria-label="Supprimer la photo">×</button>`;
+    item.className = "day-photo-item" + (Number(day.favoritePhotoIndex) === index ? " favorite" : "");
+    item.innerHTML = `<button type="button" class="day-photo-open" aria-label="Ouvrir la photo"><img src="${src}" alt="Souvenir du ${esc(formatDateFr(day.id))}"></button><button type="button" class="day-photo-favorite" aria-label="Choisir comme photo préférée" title="Photo préférée">${Number(day.favoritePhotoIndex) === index ? "❤️" : "🤍"}</button><button type="button" class="day-photo-delete" aria-label="Supprimer la photo">×</button>`;
     item.querySelector(".day-photo-open").addEventListener("click",()=>window.open(src,"_blank"));
+    item.querySelector(".day-photo-favorite").addEventListener("click",()=>setFavoriteDayPhoto(index));
     item.querySelector(".day-photo-delete").addEventListener("click",()=>deleteDayPhoto(index));
     root.appendChild(item);
   });
@@ -548,14 +550,60 @@ async function addSelectedDayPhoto(file){
   }
 }
 
+
+async function setFavoriteDayPhoto(index){
+  if(!activeDayId) return;
+  const day = itineraryDays.find(item => item.id === activeDayId);
+  const nextIndex = Number(day?.favoritePhotoIndex) === index ? -1 : index;
+  const status = $("dayPhotoStatus");
+  status.textContent = nextIndex >= 0 ? "Choix de la photo préférée…" : "Retrait du favori…";
+  try{
+    await setDoc(doc(db,"Trips","italy-2026","Days",activeDayId),{favoritePhotoIndex:nextIndex},{merge:true});
+    status.textContent = nextIndex >= 0 ? "✅ Photo préférée enregistrée." : "✅ Photo préférée retirée.";
+  }catch(error){
+    console.error("Photo préférée impossible :",error);
+    status.textContent = "⚠️ Impossible d’enregistrer ce choix.";
+  }
+}
+
+function renderDayRating(value){
+  const root = $("dayRatingStars");
+  if(!root) return;
+  const rating = Math.max(0,Math.min(5,Number(value)||0));
+  root.querySelectorAll("button").forEach(button=>{
+    const star = Number(button.dataset.rating);
+    button.classList.toggle("selected",star <= rating);
+    button.setAttribute("aria-pressed",String(star === rating));
+  });
+  $("dayRatingLabel").textContent = rating ? `${rating} sur 5` : "Pas encore notée";
+}
+
+async function saveDayRating(value){
+  if(!activeDayId) return;
+  renderDayRating(value);
+  const status = $("dayMemoryStatus");
+  status.textContent = "Enregistrement de la note…";
+  try{
+    await setDoc(doc(db,"Trips","italy-2026","Days",activeDayId),{rating:Number(value)},{merge:true});
+    status.textContent = `✅ Journée notée ${value}/5.`;
+  }catch(error){
+    console.error("Note impossible :",error);
+    status.textContent = "⚠️ Impossible d’enregistrer la note.";
+  }
+}
+
 async function deleteDayPhoto(index){
   if(!activeDayId) return;
   const photos = currentDayPhotos();
   const nextPhotos = photos.filter((_,i)=>i!==index);
+  const day = itineraryDays.find(item => item.id === activeDayId);
+  let favoritePhotoIndex = Number(day?.favoritePhotoIndex);
+  if(favoritePhotoIndex === index) favoritePhotoIndex = -1;
+  else if(favoritePhotoIndex > index) favoritePhotoIndex -= 1;
   const status = $("dayPhotoStatus");
   status.textContent = "Suppression…";
   try{
-    await setDoc(doc(db,"Trips","italy-2026","Days",activeDayId),{photos:nextPhotos},{merge:true});
+    await setDoc(doc(db,"Trips","italy-2026","Days",activeDayId),{photos:nextPhotos,favoritePhotoIndex},{merge:true});
     status.textContent = "✅ Photo supprimée.";
   }catch(error){
     console.error("Suppression impossible :",error);
@@ -565,6 +613,10 @@ async function deleteDayPhoto(index){
 
 $("addDayPhoto").addEventListener("click",()=>$("dayPhotoInput").click());
 $("dayPhotoInput").addEventListener("change",event=>addSelectedDayPhoto(event.target.files?.[0]));
+$("dayRatingStars").addEventListener("click",event=>{
+  const button = event.target.closest("button[data-rating]");
+  if(button) saveDayRating(Number(button.dataset.rating));
+});
 
 async function saveActiveDayMemory(){
   if(!activeDayId) return;
@@ -595,6 +647,7 @@ function renderMemories(){
   const days = itineraryDays.filter(memoryHasContent);
   $("memoryDayCount").textContent = days.filter(day => String(day.journal || "").trim()).length;
   $("memoryFavoriteCount").textContent = days.filter(day => String(day.favorite || "").trim()).length;
+  $("memoryFiveStarCount").textContent = days.filter(day => Number(day.rating || 0) === 5).length;
   root.innerHTML = "";
   empty.hidden = days.length > 0;
   days.forEach(day => {
@@ -603,6 +656,8 @@ function renderMemories(){
     card.innerHTML = `
       <div class="memory-card-date">${esc(formatDateFr(day.id))}</div>
       <div class="memory-card-top"><h2>${esc(cityForDay(day) || firstValue(day,["title","name"]) || "Journée en Italie")}</h2><span>${esc(day.mood || "📖")}</span></div>
+      ${Number(day.rating || 0) ? `<div class="memory-rating" aria-label="${Number(day.rating)} étoiles">${"★".repeat(Number(day.rating))}${"☆".repeat(5-Number(day.rating))}</div>` : ""}
+      ${Array.isArray(day.photos) && Number(day.favoritePhotoIndex) >= 0 && day.photos[Number(day.favoritePhotoIndex)] ? `<div class="memory-cover"><img src="${day.photos[Number(day.favoritePhotoIndex)]}" alt="Photo préférée de cette journée"><span>❤️ Photo préférée</span></div>` : ""}
       ${day.favorite ? `<div class="memory-favorite">❤️ ${esc(day.favorite)}</div>` : ""}
       ${Array.isArray(day.photos) && day.photos.length ? `<div class="memory-photo-strip">${day.photos.slice(0,3).map(src=>`<img src="${src}" alt="Photo souvenir">`).join("")}</div>` : ""}
       ${day.journal ? `<p>${esc(day.journal)}</p>` : ""}
