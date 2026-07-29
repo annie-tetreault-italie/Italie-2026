@@ -1,4 +1,4 @@
-// Italie 2026 — Version 4.1 — écran Aujourd’hui
+// Italie 2026 — Version 4.2 — tableau de bord intelligent
 window.__ITALIE_APP_STARTED__ = true;
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
@@ -542,6 +542,48 @@ function renderDashboard(){
   $("dashboardPacking").textContent = `${percent} % terminé`;
   $("dashboardPackingDetails").textContent =
     `${completed} sur ${allChecks.length} éléments prêts`;
+
+  const confirmedStatuses = new Set(["Réservé","Payé"]);
+  const confirmedBookings = bookings.filter(item => item && confirmedStatuses.has(item.status)).length;
+  const confirmedLabel = confirmedBookings === 1 ? "confirmée" : "confirmées";
+  const bookingLabel = bookings.length === 1 ? "réservation" : "réservations";
+  $("dashboardConfirmedBookings").textContent = `${confirmedBookings} ${confirmedLabel}`;
+  $("dashboardConfirmedDetails").textContent = `Sur ${bookings.length} ${bookingLabel}`;
+
+  const detailedDays = itineraryDays.filter(dayIsDetailed).length;
+  const dayScore = itineraryDays.length ? detailedDays / itineraryDays.length : 0;
+  const bookingScore = bookings.length ? confirmedBookings / bookings.length : 0;
+  const checklistScore = allChecks.length ? completed / allChecks.length : 0;
+  const budgetScore = Number(plannedBudgetValue) > 0 ? 1 : 0;
+  const preparationPercent = Math.round((dayScore * 35) + (bookingScore * 30) + (checklistScore * 25) + (budgetScore * 10));
+  $("preparationPercent").textContent = `${preparationPercent} %`;
+  $("preparationProgressBar").style.width = `${preparationPercent}%`;
+  $("preparationSummary").textContent = preparationPercent >= 80
+    ? "Le voyage est presque prêt. Il reste seulement quelques détails à finaliser."
+    : preparationPercent >= 45
+      ? "La préparation avance bien. Continue les réservations et les listes."
+      : "Commence par compléter l’itinéraire, les réservations et les préparatifs.";
+
+  const detailItems = [
+    ["🗓️", `${detailedDays}/${itineraryDays.length || 0} journées détaillées`, dayScore],
+    ["🎟️", `${confirmedBookings}/${bookings.length || 0} réservations confirmées`, bookingScore],
+    ["🧳", `${completed}/${allChecks.length || 0} préparatifs terminés`, checklistScore],
+    ["💶", Number(plannedBudgetValue) > 0 ? "Budget défini" : "Budget à définir", budgetScore]
+  ];
+  $("preparationDetails").innerHTML = detailItems.map(([icon,label,score]) =>
+    `<div class="preparation-item ${score >= 1 ? "complete" : ""}"><span>${icon}</span><strong>${esc(label)}</strong></div>`
+  ).join("");
+
+  const startButton = $("startDayButton");
+  if(startButton){
+    const firstId = itineraryDays[0]?.id || "";
+    const lastId = itineraryDays[itineraryDays.length-1]?.id || "";
+    startButton.textContent = nowKey < firstId
+      ? "▶️ Voir ma prochaine journée"
+      : nowKey > lastId && lastId
+        ? "📖 Revoir mon voyage"
+        : "▶️ Commencer ma journée";
+  }
 }
 
 /* ÉTAT PARTAGÉ :

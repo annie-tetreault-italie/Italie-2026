@@ -1,10 +1,10 @@
-# Italie 2026 — Version 4.1
+# Italie 2026 — Version 4.2
 
-Base stable avec nouvel écran **Aujourd’hui**.
+Version stable avec tableau de bord intelligent.
 
-## Nouveauté
-- Affiche automatiquement la journée actuelle pendant le voyage.
-- Avant le départ, montre la prochaine journée prévue.
-- Programme, destination, hébergement, transport, réservations, dépenses et notes.
-- Navigation vers la journée précédente ou suivante.
-- Les données proviennent de Firebase et de l’état synchronisé existant.
+Nouveautés :
+- centre de contrôle de la préparation;
+- progression automatique du voyage;
+- réservations confirmées;
+- bouton contextuel pour ouvrir la journée;
+- conservation de Firebase, itinéraire, réservations, budget et écran Aujourd’hui.
