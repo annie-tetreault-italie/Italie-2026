@@ -168,8 +168,10 @@
             <button id="locateMeButton" class="btn" type="button">📍 Afficher ma position</button>
             <button id="stopLocationButton" class="btn secondary" type="button" hidden>Arrêter le suivi</button>
             <a id="openCurrentLocationMap" class="btn secondary current-map-link" href="#" target="_blank" rel="noopener" hidden>🗺️ Ouvrir dans Google Maps</a>
+            <button id="saveHereButton" class="btn here-button" type="button" hidden>📌 Je suis ici</button>
           </div>
-          <p class="location-privacy">Ta position reste sur ton appareil et n’est pas enregistrée dans Firebase.</p>
+          <p class="location-privacy">La position en direct reste sur ton appareil. Elle est enregistrée dans Firebase seulement lorsque tu appuies sur « Je suis ici ».</p>
+          <div id="savedHereList" class="saved-here-list"></div>
         </article>
 
         <div class="today-grid">
@@ -469,6 +471,21 @@
   </div>
 </div>
 
+<div id="hereModal" class="quick-modal" hidden>
+  <div class="quick-modal-card" role="dialog" aria-modal="true" aria-labelledby="hereModalTitle">
+    <h2 id="hereModalTitle">📌 Enregistrer cet endroit</h2>
+    <label for="herePlaceName">Nom de l’endroit</label>
+    <input id="herePlaceName" type="text" placeholder="Ex. Belvédère, vignoble, restaurant…" autocomplete="off">
+    <label for="herePlaceNote">Petit souvenir (facultatif)</label>
+    <textarea id="herePlaceNote" placeholder="Pourquoi cet endroit est spécial?"></textarea>
+    <div class="quick-modal-actions">
+      <button id="hereModalSave" type="button" class="btn">Enregistrer</button>
+      <button id="hereModalCancel" type="button" class="btn secondary">Annuler</button>
+    </div>
+    <div id="hereModalStatus" class="subtle" role="status"></div>
+  </div>
+</div>
+
 <div id="photoViewerModal" class="photo-viewer" hidden>
   <div class="photo-viewer-backdrop" data-close-photo-viewer></div>
   <div class="photo-viewer-card" role="dialog" aria-modal="true" aria-label="Photo en gros plan">
@@ -509,6 +526,6 @@
   });
 })();
 </script>
-<script type="module" src="js/app.js?v=location-1.0"></script>
+<script type="module" src="js/app.js?v=here-1.0"></script>
 </body>
 </html>

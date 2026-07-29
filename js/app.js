@@ -909,6 +909,7 @@ function renderToday(){
   empty.hidden = true;
   content.hidden = false;
   todaySelectedDayId = day.id;
+  setTimeout(renderSavedHerePlaces,0);
   const nowKey = localDateKey();
   const firstId = itineraryDays[0]?.id;
   const lastId = itineraryDays[itineraryDays.length-1]?.id;
@@ -1547,6 +1548,7 @@ renderDashboard();
 
 // Position actuelle — localisation privée sur l’appareil
 let currentLocationWatchId = null;
+let currentPositionSnapshot = null;
 
 function setCurrentLocationMessage(message, state=""){
   const status=$("currentLocationStatus");
@@ -1560,6 +1562,7 @@ function formatLocationTime(timestamp){
 }
 
 function renderCurrentPosition(position){
+  currentPositionSnapshot = position;
   const {latitude,longitude,accuracy}=position.coords;
   $("currentLatitude").textContent=latitude.toFixed(6);
   $("currentLongitude").textContent=longitude.toFixed(6);
@@ -1569,6 +1572,7 @@ function renderCurrentPosition(position){
   const mapLink=$("openCurrentLocationMap");
   mapLink.href=`https://www.google.com/maps?q=${encodeURIComponent(latitude+","+longitude)}`;
   mapLink.hidden=false;
+  $("saveHereButton").hidden=false;
   $("stopLocationButton").hidden=false;
   $("locateMeButton").textContent="🔄 Actualiser ma position";
   setCurrentLocationMessage("Position trouvée. Le suivi se met à jour lorsque tu te déplaces.","active");
@@ -1615,6 +1619,73 @@ function stopCurrentLocation(){
   $("locateMeButton").textContent="📍 Afficher ma position";
   setCurrentLocationMessage("Suivi arrêté. La dernière position reste affichée.");
 }
+
+
+function renderSavedHerePlaces(){
+  const root=$("savedHereList");
+  if(!root) return;
+  const day=itineraryDays.find(item=>item.id===todaySelectedDayId);
+  const places=Array.isArray(day?.herePlaces)?day.herePlaces:[];
+  if(!places.length){
+    root.innerHTML="";
+    return;
+  }
+  root.innerHTML=`<h3>📌 Endroits enregistrés aujourd’hui</h3>${places.slice().reverse().map(place=>`
+    <article class="saved-here-item">
+      <div><strong>${esc(place.name||"Endroit sans nom")}</strong><small>${esc(place.time||"")}${place.note?` · ${esc(place.note)}`:""}</small></div>
+      <a href="https://www.google.com/maps?q=${encodeURIComponent(place.latitude+","+place.longitude)}" target="_blank" rel="noopener">Voir sur la carte</a>
+    </article>`).join("")}`;
+}
+
+function openHereModal(){
+  if(!currentPositionSnapshot){
+    setCurrentLocationMessage("Affiche d’abord ta position actuelle.","error");
+    return;
+  }
+  const modal=$("hereModal");
+  $("herePlaceName").value="";
+  $("herePlaceNote").value="";
+  $("hereModalStatus").textContent="";
+  modal.hidden=false;
+  setTimeout(()=>$("herePlaceName").focus(),50);
+}
+
+function closeHereModal(){ $("hereModal").hidden=true; }
+
+async function saveHerePlace(){
+  if(!currentPositionSnapshot || !todaySelectedDayId) return;
+  const name=$("herePlaceName").value.trim();
+  const note=$("herePlaceNote").value.trim();
+  if(!name){
+    $("hereModalStatus").textContent="Écris un nom pour cet endroit.";
+    return;
+  }
+  const day=itineraryDays.find(item=>item.id===todaySelectedDayId);
+  const existing=Array.isArray(day?.herePlaces)?day.herePlaces:[];
+  const {latitude,longitude,accuracy}=currentPositionSnapshot.coords;
+  const timestamp=Date.now();
+  const place={
+    name,note,latitude,longitude,accuracy:Math.round(accuracy||0),timestamp,
+    time:new Intl.DateTimeFormat("fr-CA",{hour:"2-digit",minute:"2-digit"}).format(new Date(timestamp))
+  };
+  $("hereModalSave").disabled=true;
+  $("hereModalStatus").textContent="Enregistrement…";
+  try{
+    await setDoc(doc(db,"Trips","italy-2026","Days",todaySelectedDayId),{herePlaces:[...existing,place]},{merge:true});
+    $("hereModalStatus").textContent="✅ Endroit enregistré.";
+    setTimeout(closeHereModal,500);
+  }catch(error){
+    console.error("Enregistrement de l’endroit impossible :",error);
+    $("hereModalStatus").textContent="⚠️ Impossible d’enregistrer. Réessaie.";
+  }finally{
+    $("hereModalSave").disabled=false;
+  }
+}
+
+$("saveHereButton")?.addEventListener("click",openHereModal);
+$("hereModalSave")?.addEventListener("click",saveHerePlace);
+$("hereModalCancel")?.addEventListener("click",closeHereModal);
+$("hereModal")?.addEventListener("click",e=>{if(e.target.id==="hereModal") closeHereModal();});
 
 $("locateMeButton")?.addEventListener("click",startCurrentLocation);
 $("stopLocationButton")?.addEventListener("click",stopCurrentLocation);

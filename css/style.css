@@ -577,3 +577,12 @@ body.photo-viewer-open{overflow:hidden}
   .current-location-details{grid-template-columns:repeat(2,minmax(0,1fr))}
   .current-location-actions .btn,.current-map-link{width:100%}
 }
+
+
+/* Bouton Je suis ici — Version here-1.0 */
+.here-button{background:var(--terracotta)!important}
+.saved-here-list{margin-top:14px}.saved-here-list h3{font-size:14px;margin:0 0 8px;color:var(--green)}
+.saved-here-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;margin-top:7px;border:1px solid var(--line);border-radius:13px;background:rgba(255,255,255,.86)}
+.saved-here-item strong,.saved-here-item small{display:block}.saved-here-item small{margin-top:3px;color:var(--muted);font-size:11px}.saved-here-item a{font-size:11px;font-weight:900;color:var(--green);white-space:nowrap}
+#herePlaceNote{min-height:92px}
+@media(max-width:620px){.saved-here-item{align-items:flex-start}.saved-here-item a{white-space:normal;text-align:right}}
