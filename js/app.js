@@ -27,6 +27,9 @@ const LS = {
 const $ = id => document.getElementById(id);
 const syncStatus = $("syncStatus");
 let itineraryDays = [];
+let activeDayId = "";
+let itinerarySearchText = "";
+let itineraryCityValue = "";
 
 function setStatus(message, type=""){
   syncStatus.textContent = message;
@@ -86,8 +89,17 @@ function firstValue(data, names){
 
 function displayValue(value){
   if(Array.isArray(value)) return value.join(" · ");
-  if(value && typeof value === "object") return JSON.stringify(value, null, 2);
+  if(value && typeof value === "object"){
+    return Object.values(value).filter(Boolean).join(" · ");
+  }
   return String(value ?? "");
+}
+
+function valueItems(value){
+  if(value === "" || value === undefined || value === null) return [];
+  if(Array.isArray(value)) return value.map(item => displayValue(item)).filter(Boolean);
+  if(value && typeof value === "object") return Object.values(value).map(item => displayValue(item)).filter(Boolean);
+  return String(value).split(/\n|\s*·\s*/).map(item => item.trim()).filter(Boolean);
 }
 
 function mapsLink(value){
@@ -97,121 +109,109 @@ function mapsLink(value){
   return "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(text);
 }
 
-function openDayDetail(dayId){
-  const day = itineraryDays.find(item => item.id === dayId);
-  if(!day) return;
+function cityForDay(day){
+  return firstValue(day, ["city","destination","arrivalCity"]);
+}
 
-  const title = firstValue(day, ["title","name"]) || "Journée en Italie";
-  $("dayDetailTitle").textContent = title;
-  $("dayDetailDate").textContent = formatDateFr(day.id);
+function daySearchText(day){
+  return Object.values(day).map(value => displayValue(value)).join(" ").toLocaleLowerCase("fr-CA");
+}
 
-  const fields = [
-    ["✈️", "Arrivée", firstValue(day, ["arrivalCity","arrival","flight"])],
-    ["📍", "Ville", firstValue(day, ["city","destination"])],
-    ["🚆", "Transport", firstValue(day, ["transport","train"])],
-    ["🏨", "Hébergement", firstValue(day, ["hotel","accommodation","lodging"])],
-    ["🎟️", "Activités", firstValue(day, ["activities","activity"])],
-    ["🍝", "Restaurants", firstValue(day, ["restaurants","restaurant"])],
-    ["🕐", "Horaire", firstValue(day, ["schedule","time","hours"])],
-    ["💶", "Budget prévu", firstValue(day, ["budget","plannedBudget"])],
-    ["📝", "Notes", firstValue(day, ["notes","description"])],
-    ["📍", "Carte", firstValue(day, ["maps","map","address"])]
-  ];
+function dayIsDetailed(day){
+  return ["transport","train","hotel","accommodation","activities","restaurants","schedule","budget","notes","maps","address"]
+    .some(field => day[field] !== undefined && day[field] !== null && displayValue(day[field]).trim() !== "");
+}
 
-  const root = $("dayDetailContent");
+function formatShortDate(dateText){
+  const date = new Date(dateText + "T12:00:00");
+  return {
+    day:new Intl.DateTimeFormat("fr-CA",{day:"numeric"}).format(date),
+    month:new Intl.DateTimeFormat("fr-CA",{month:"short"}).format(date).replace(".",""),
+    weekday:new Intl.DateTimeFormat("fr-CA",{weekday:"short"}).format(date).replace(".","")
+  };
+}
+
+function renderDateStrip(){
+  const root = $("itineraryDateStrip");
+  root.innerHTML = "";
+  itineraryDays.forEach(day => {
+    const short = formatShortDate(day.id);
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "date-chip" + (day.id === activeDayId ? " active" : "");
+    button.innerHTML = `<span>${esc(short.weekday)}</span><strong>${esc(short.day)}</strong><small>${esc(short.month)}</small>`;
+    button.addEventListener("click",()=>{
+      const card = document.querySelector(`[data-day-id="${day.id}"]`);
+      if(card) card.scrollIntoView({behavior:"smooth",block:"center"});
+    });
+    root.appendChild(button);
+  });
+}
+
+function updateItinerarySummary(){
+  const cities = new Set(itineraryDays.map(cityForDay).filter(Boolean).map(city => String(city).trim().toLocaleLowerCase("fr-CA")));
+  $("itineraryDayCount").textContent = itineraryDays.length;
+  $("itineraryCityCount").textContent = cities.size;
+  $("itineraryFilledCount").textContent = itineraryDays.filter(dayIsDetailed).length;
+
+  const select = $("itineraryCityFilter");
+  const current = select.value;
+  const cityNames = [...new Set(itineraryDays.map(cityForDay).filter(Boolean).map(String))].sort((a,b)=>a.localeCompare(b,"fr"));
+  select.innerHTML = '<option value="">Toutes les villes</option>' + cityNames.map(city => `<option value="${esc(city)}">${esc(city)}</option>`).join("");
+  if(cityNames.includes(current)) select.value = current;
+}
+
+function renderItinerary(){
+  const root = $("itineraryList");
+  const empty = $("itineraryEmpty");
   root.innerHTML = "";
 
-  fields.forEach(([icon,label,value]) => {
-    if(value === "" || value === undefined || value === null) return;
-
-    const block = document.createElement("article");
-    block.className = "detail-block" + (label === "Notes" ? " wide" : "");
-
-    const heading = document.createElement("h3");
-    heading.textContent = `${icon} ${label}`;
-    block.appendChild(heading);
-
-    const paragraph = document.createElement("p");
-    paragraph.textContent = displayValue(value);
-    block.appendChild(paragraph);
-
-    if(label === "Carte"){
-      const link = document.createElement("a");
-      link.href = mapsLink(value);
-      link.target = "_blank";
-      link.rel = "noopener";
-      link.textContent = "Ouvrir dans Google Maps →";
-      block.appendChild(link);
-    }
-
-    root.appendChild(block);
+  const filtered = itineraryDays.filter(day => {
+    const matchesSearch = !itinerarySearchText || daySearchText(day).includes(itinerarySearchText);
+    const matchesCity = !itineraryCityValue || cityForDay(day) === itineraryCityValue;
+    return matchesSearch && matchesCity;
   });
 
-  if(!root.children.length){
-    root.innerHTML = '<div class="detail-block detail-empty wide">Cette journée existe dans Firebase, mais ses détails restent à compléter.</div>';
-  }
+  empty.hidden = filtered.length > 0;
 
-  showPanel("dayDetail");
-}
-window.openDayDetail = openDayDetail;
-
-/* ITINÉRAIRE FIREBASE :
-   Trips / italy-2026 / Days / AAAA-MM-JJ */
-const daysQuery = query(
-  collection(db, "Trips", "italy-2026", "Days"),
-  orderBy("__name__")
-);
-
-onSnapshot(daysQuery, snapshot => {
-  const root = $("itineraryList");
-  itineraryDays = [];
-  root.innerHTML = "";
-
-  if(snapshot.empty){
-    root.innerHTML = '<div class="card loading-card">Aucune journée trouvée dans Firebase.</div>';
-    return;
-  }
-
-  snapshot.forEach(dayDoc => {
-    const data = dayDoc.data();
-    const date = dayDoc.id;
-    itineraryDays.push({ id: date, ...data });
-    const title = firstValue(data, ["title", "name"]) || "Journée en Italie";
-    const city = firstValue(data, ["city", "destination"]);
-    const arrivalCity = firstValue(data, ["arrivalCity"]);
-    const hotel = firstValue(data, ["hotel", "accommodation"]);
-    const activities = firstValue(data, ["activities", "activity"]);
-    const notes = firstValue(data, ["notes", "description"]);
-    const transport = firstValue(data, ["transport", "train", "flight"]);
+  filtered.forEach((day,index) => {
+    const date = day.id;
+    const title = firstValue(day, ["title", "name"]) || "Journée en Italie";
+    const city = cityForDay(day);
+    const arrivalCity = firstValue(day, ["arrivalCity"]);
+    const hotel = firstValue(day, ["hotel", "accommodation"]);
+    const activities = valueItems(firstValue(day, ["activities", "activity"]));
+    const restaurants = valueItems(firstValue(day, ["restaurants", "restaurant"]));
+    const transport = firstValue(day, ["transport", "train", "flight"]);
 
     const details = [];
-    if(arrivalCity) details.push(`<div>✈️ Arrivée : ${esc(arrivalCity)}</div>`);
-    if(city) details.push(`<div>📍 ${esc(city)}</div>`);
-    if(transport) details.push(`<div>🚆 ${esc(transport)}</div>`);
-    if(hotel) details.push(`<div>🏨 ${esc(hotel)}</div>`);
-    if(activities){
-      const text = Array.isArray(activities) ? activities.join(" · ") : activities;
-      details.push(`<div>🎟️ ${esc(text)}</div>`);
-    }
-    if(notes) details.push(`<div>📝 ${esc(notes)}</div>`);
+    if(arrivalCity) details.push(`<span>✈️ ${esc(arrivalCity)}</span>`);
+    if(city) details.push(`<span>📍 ${esc(city)}</span>`);
+    if(transport) details.push(`<span>🚆 ${esc(displayValue(transport))}</span>`);
+    if(hotel) details.push(`<span>🏨 ${esc(displayValue(hotel))}</span>`);
 
     const card = document.createElement("article");
     card.className = "card trip-card day-card";
+    card.dataset.dayId = date;
     card.tabIndex = 0;
     card.setAttribute("role", "button");
     card.setAttribute("aria-label", `Ouvrir les détails du ${formatDateFr(date)}`);
+    const short = formatShortDate(date);
     card.innerHTML = `
-      <div class="top">
-        <div class="badge b1">📅</div>
-        <div>
+      <div class="day-card-layout">
+        <div class="day-date-badge"><span>${esc(short.weekday)}</span><strong>${esc(short.day)}</strong><small>${esc(short.month)}</small></div>
+        <div class="day-card-main">
+          <div class="day-position">Jour ${index + 1} sur ${itineraryDays.length}</div>
           <h3>${esc(title)}</h3>
           <div class="date">${esc(formatDateFr(date))}</div>
-          <div class="day-number">${esc(date)}</div>
+          ${details.length ? `<div class="day-tags">${details.join("")}</div>` : ""}
+          <div class="day-counts">
+            ${activities.length ? `<span>🎟️ ${activities.length} activité${activities.length > 1 ? "s" : ""}</span>` : ""}
+            ${restaurants.length ? `<span>🍝 ${restaurants.length} restaurant${restaurants.length > 1 ? "s" : ""}</span>` : ""}
+          </div>
+          <div class="open-day">Ouvrir la fiche complète →</div>
         </div>
-      </div>
-      ${details.length ? `<div class="details">${details.join("")}</div>` : ""}
-      <div class="open-day">Voir la journée →</div>
-    `;
+      </div>`;
     card.addEventListener("click", ()=>openDayDetail(date));
     card.addEventListener("keydown", event=>{
       if(event.key === "Enter" || event.key === " "){
@@ -221,16 +221,138 @@ onSnapshot(daysQuery, snapshot => {
     });
     root.appendChild(card);
   });
+  renderDateStrip();
+}
 
+function renderDetailBlock(icon,label,value,wide=false){
+  const items = valueItems(value);
+  if(!items.length) return null;
+  const block = document.createElement("article");
+  block.className = "detail-block" + (wide ? " wide" : "");
+  block.innerHTML = `<h3>${icon} ${esc(label)}</h3>`;
+  if(items.length === 1){
+    const paragraph = document.createElement("p");
+    paragraph.textContent = items[0];
+    block.appendChild(paragraph);
+  }else{
+    const list = document.createElement("ul");
+    list.className = "detail-list";
+    items.forEach(item => {
+      const li = document.createElement("li");
+      li.textContent = item;
+      list.appendChild(li);
+    });
+    block.appendChild(list);
+  }
+  return block;
+}
+
+function openDayDetail(dayId){
+  const day = itineraryDays.find(item => item.id === dayId);
+  if(!day) return;
+  activeDayId = dayId;
+
+  const title = firstValue(day, ["title","name"]) || "Journée en Italie";
+  const city = cityForDay(day);
+  $("dayDetailTitle").textContent = title;
+  $("dayDetailDate").textContent = formatDateFr(day.id);
+  $("dayDetailOverview").innerHTML = [
+    city ? `<span>📍 ${esc(city)}</span>` : "",
+    firstValue(day,["hotel","accommodation"]) ? `<span>🏨 Hébergement prévu</span>` : "",
+    valueItems(firstValue(day,["activities","activity"])).length ? `<span>🎟️ ${valueItems(firstValue(day,["activities","activity"])).length} activité(s)</span>` : ""
+  ].filter(Boolean).join("");
+
+  const fields = [
+    ["✈️", "Arrivée", firstValue(day, ["arrivalCity","arrival","flight"]), false],
+    ["📍", "Ville", firstValue(day, ["city","destination"]), false],
+    ["🚆", "Transport", firstValue(day, ["transport","train"]), false],
+    ["🏨", "Hébergement", firstValue(day, ["hotel","accommodation","lodging"]), false],
+    ["🎟️", "Activités", firstValue(day, ["activities","activity"]), true],
+    ["🍝", "Restaurants", firstValue(day, ["restaurants","restaurant"]), true],
+    ["🕐", "Horaire", firstValue(day, ["schedule","time","hours"]), true],
+    ["💶", "Budget prévu", firstValue(day, ["budget","plannedBudget"]), false],
+    ["📝", "Notes", firstValue(day, ["notes","description"]), true]
+  ];
+
+  const root = $("dayDetailContent");
+  root.innerHTML = "";
+  fields.forEach(([icon,label,value,wide]) => {
+    const block = renderDetailBlock(icon,label,value,wide);
+    if(block) root.appendChild(block);
+  });
+
+  const mapValue = firstValue(day, ["maps","map","address"]);
+  if(mapValue){
+    const mapBlock = renderDetailBlock("🗺️","Carte et adresse",mapValue,true);
+    const link = document.createElement("a");
+    link.href = mapsLink(mapValue);
+    link.target = "_blank";
+    link.rel = "noopener";
+    link.className = "map-button";
+    link.textContent = "Ouvrir dans Google Maps →";
+    mapBlock.appendChild(link);
+    root.appendChild(mapBlock);
+  }
+
+  if(!root.children.length){
+    root.innerHTML = '<div class="detail-block detail-empty wide">Cette journée existe dans Firebase, mais ses détails restent à compléter.</div>';
+  }
+
+  const index = itineraryDays.findIndex(item => item.id === dayId);
+  const previous = itineraryDays[index - 1];
+  const next = itineraryDays[index + 1];
+  const previousButton = $("previousDayButton");
+  const nextButton = $("nextDayButton");
+  previousButton.disabled = !previous;
+  nextButton.disabled = !next;
+  previousButton.onclick = previous ? ()=>openDayDetail(previous.id) : null;
+  nextButton.onclick = next ? ()=>openDayDetail(next.id) : null;
+
+  renderDateStrip();
+  showPanel("dayDetail");
+}
+window.openDayDetail = openDayDetail;
+
+$("itinerarySearch").addEventListener("input", event => {
+  itinerarySearchText = event.target.value.trim().toLocaleLowerCase("fr-CA");
+  renderItinerary();
+});
+
+$("itineraryCityFilter").addEventListener("change", event => {
+  itineraryCityValue = event.target.value;
+  renderItinerary();
+});
+
+/* ITINÉRAIRE FIREBASE :
+   Trips / italy-2026 / Days / AAAA-MM-JJ */
+const daysQuery = query(
+  collection(db, "Trips", "italy-2026", "Days"),
+  orderBy("__name__")
+);
+
+onSnapshot(daysQuery, snapshot => {
+  itineraryDays = [];
+
+  if(snapshot.empty){
+    $("itineraryList").innerHTML = '<div class="card loading-card">Aucune journée trouvée dans Firebase.</div>';
+    updateItinerarySummary();
+    return;
+  }
+
+  snapshot.forEach(dayDoc => {
+    itineraryDays.push({ id: dayDoc.id, ...dayDoc.data() });
+  });
+
+  updateItinerarySummary();
+  renderItinerary();
   renderDashboard();
-  setStatus("✅ Itinéraire et données connectés à Firebase.", "ok");
+  setStatus("✅ Itinéraire détaillé synchronisé avec Firebase.", "ok");
 }, error => {
   console.error("Lecture de l’itinéraire impossible :", error);
   $("itineraryList").innerHTML =
     '<div class="card loading-card">Impossible de lire l’itinéraire. Vérifie les règles Firestore.</div>';
   setStatus("⚠️ Firebase bloque la lecture de l’itinéraire.", "error");
 });
-
 
 function dashboardMoney(value){
   return new Intl.NumberFormat("fr-CA",{

@@ -1,4 +1,4 @@
-# Italie 2026 — Version 3.2
+# Italie 2026 — Version 3.3
 
 Cette version reprend les fonctions de la Version 2, mais le projet est maintenant organisé en plusieurs fichiers.
 
@@ -60,3 +60,17 @@ Chaque journée ouvre une fiche détaillée qui peut afficher automatiquement le
 - `maps` ou `address`
 
 Le bouton de carte ouvre Google Maps dans un nouvel onglet.
+
+
+## Nouveauté 3.3
+
+L’itinéraire est maintenant plus complet et plus facile à consulter :
+
+- résumé automatique du nombre de journées, de villes et de fiches détaillées;
+- recherche dans toutes les informations Firebase;
+- filtre par ville;
+- barre de navigation rapide par date;
+- cartes de journée enrichies avec activités, restaurants, transport et hébergement;
+- affichage propre des listes Firebase;
+- boutons « journée précédente » et « journée suivante »;
+- fiche détaillée mieux adaptée à l’iPhone.

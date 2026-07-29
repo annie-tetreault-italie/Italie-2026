@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f7f0e6">
 <title>Notre voyage en Italie 2026</title>
-<meta name="application-version" content="3.2.0">
+<meta name="application-version" content="3.3.0">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -85,9 +85,22 @@
   <section id="itinerary" class="panel">
     <div class="hero"><div class="eyebrow">Jour par jour</div><h1>Itinéraire</h1></div>
     <div class="section">
+      <div class="itinerary-summary card">
+        <div><strong id="itineraryDayCount">—</strong><span>journées</span></div>
+        <div><strong id="itineraryCityCount">—</strong><span>villes</span></div>
+        <div><strong id="itineraryFilledCount">—</strong><span>fiches détaillées</span></div>
+      </div>
+      <div class="itinerary-tools">
+        <input id="itinerarySearch" type="search" placeholder="Rechercher une ville, une activité, un hôtel…" aria-label="Rechercher dans l’itinéraire">
+        <select id="itineraryCityFilter" aria-label="Filtrer par ville">
+          <option value="">Toutes les villes</option>
+        </select>
+      </div>
+      <div id="itineraryDateStrip" class="date-strip" aria-label="Navigation rapide par date"></div>
       <div class="timeline" id="itineraryList">
         <div class="card loading-card">Chargement de l’itinéraire depuis Firebase…</div>
       </div>
+      <div id="itineraryEmpty" class="card loading-card" hidden>Aucune journée ne correspond à cette recherche.</div>
     </div>
   </section>
 
@@ -100,7 +113,12 @@
     </div>
 
     <div class="section">
+      <div id="dayDetailOverview" class="day-overview"></div>
       <div id="dayDetailContent" class="day-detail-grid"></div>
+      <div class="day-navigation">
+        <button id="previousDayButton" class="btn secondary" type="button">← Journée précédente</button>
+        <button id="nextDayButton" class="btn" type="button">Journée suivante →</button>
+      </div>
     </div>
   </section>
 
