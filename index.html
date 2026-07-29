@@ -215,6 +215,33 @@
 
     <div class="section">
       <div id="dayDetailOverview" class="day-overview"></div>
+      <div class="day-edit-toolbar">
+        <button id="editDayButton" class="btn secondary" type="button">✏️ Modifier cette journée</button>
+      </div>
+      <form id="dayEditForm" class="day-edit-form card" hidden>
+        <div class="row">
+          <div class="field"><label>Titre</label><input id="editDayTitle" placeholder="Ex. Journée à Florence"></div>
+          <div class="field"><label>Ville / destination</label><input id="editDayCity" placeholder="Ex. Florence"></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>Arrivée</label><input id="editDayArrival" placeholder="Ex. Rome"></div>
+          <div class="field"><label>Transport</label><input id="editDayTransport" placeholder="Ex. Train Italo à 10 h 20"></div>
+        </div>
+        <div class="field"><label>Hébergement</label><input id="editDayHotel" placeholder="Nom ou adresse de l’hébergement"></div>
+        <div class="field"><label>Activités — une par ligne</label><textarea id="editDayActivities" placeholder="Galerie des Offices&#10;Ponte Vecchio"></textarea></div>
+        <div class="field"><label>Restaurants — un par ligne</label><textarea id="editDayRestaurants" placeholder="Trattoria Zà Zà&#10;Gelateria dei Neri"></textarea></div>
+        <div class="field"><label>Horaire</label><textarea id="editDaySchedule" placeholder="09:00 Musée&#10;12:30 Dîner"></textarea></div>
+        <div class="row">
+          <div class="field"><label>Budget prévu</label><input id="editDayBudget" placeholder="Ex. 180 €"></div>
+          <div class="field"><label>Adresse ou carte</label><input id="editDayMaps" placeholder="Adresse ou lien Google Maps"></div>
+        </div>
+        <div class="field"><label>Notes</label><textarea id="editDayNotes" placeholder="Informations utiles pour cette journée"></textarea></div>
+        <div class="day-edit-actions">
+          <button class="btn" type="submit">Enregistrer dans Firebase</button>
+          <button id="cancelDayEdit" class="btn secondary" type="button">Annuler</button>
+        </div>
+        <div id="dayEditStatus" class="subtle" role="status"></div>
+      </form>
       <div id="dayDetailContent" class="day-detail-grid"></div>
       <div class="day-navigation">
         <button id="previousDayButton" class="btn secondary" type="button">← Journée précédente</button>
@@ -384,6 +411,6 @@
   });
 })();
 </script>
-<script type="module" src="js/app.js?v=accueil-1.1"></script>
+<script type="module" src="js/app.js?v=itineraire-1.0"></script>
 </body>
 </html>

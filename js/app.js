@@ -1,4 +1,4 @@
-// Italie 2026 — Version 4.2 — tableau de bord intelligent
+// Mon Carnet de Voyages — Module Itinéraire modifiable
 window.__ITALIE_APP_STARTED__ = true;
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
@@ -261,10 +261,86 @@ function renderDetailBlock(icon,label,value,wide=false){
   return block;
 }
 
+
+function editorText(value){
+  if(Array.isArray(value)) return value.map(item => displayValue(item)).filter(Boolean).join("\n");
+  if(value && typeof value === "object") return Object.values(value).map(item => displayValue(item)).filter(Boolean).join("\n");
+  return String(value ?? "");
+}
+
+function editorList(value){
+  return String(value || "").split(/\r?\n/).map(item => item.trim()).filter(Boolean);
+}
+
+function fillDayEditor(day){
+  $("editDayTitle").value = firstValue(day,["title","name"]);
+  $("editDayCity").value = firstValue(day,["city","destination"]);
+  $("editDayArrival").value = firstValue(day,["arrivalCity","arrival"]);
+  $("editDayTransport").value = editorText(firstValue(day,["transport","train","flight"]));
+  $("editDayHotel").value = editorText(firstValue(day,["hotel","accommodation","lodging"]));
+  $("editDayActivities").value = editorText(firstValue(day,["activities","activity"]));
+  $("editDayRestaurants").value = editorText(firstValue(day,["restaurants","restaurant"]));
+  $("editDaySchedule").value = editorText(firstValue(day,["schedule","time","hours"]));
+  $("editDayBudget").value = editorText(firstValue(day,["budget","plannedBudget"]));
+  $("editDayMaps").value = editorText(firstValue(day,["maps","map","address"]));
+  $("editDayNotes").value = editorText(firstValue(day,["notes","description"]));
+  $("dayEditStatus").textContent = "";
+}
+
+function toggleDayEditor(show){
+  const form = $("dayEditForm");
+  form.hidden = !show;
+  $("editDayButton").textContent = show ? "✏️ Modification en cours" : "✏️ Modifier cette journée";
+  $("editDayButton").disabled = show;
+  if(show) form.scrollIntoView({behavior:"smooth",block:"start"});
+}
+
+$("editDayButton").addEventListener("click",()=>{
+  const day = itineraryDays.find(item => item.id === activeDayId);
+  if(!day) return;
+  fillDayEditor(day);
+  toggleDayEditor(true);
+});
+
+$("cancelDayEdit").addEventListener("click",()=>toggleDayEditor(false));
+
+$("dayEditForm").addEventListener("submit", async event => {
+  event.preventDefault();
+  if(!activeDayId) return;
+  const status = $("dayEditStatus");
+  const button = event.submitter;
+  if(button) button.disabled = true;
+  status.textContent = "Enregistrement…";
+  try{
+    const data = {
+      title: $("editDayTitle").value.trim(),
+      city: $("editDayCity").value.trim(),
+      arrivalCity: $("editDayArrival").value.trim(),
+      transport: $("editDayTransport").value.trim(),
+      hotel: $("editDayHotel").value.trim(),
+      activities: editorList($("editDayActivities").value),
+      restaurants: editorList($("editDayRestaurants").value),
+      schedule: editorList($("editDaySchedule").value),
+      budget: $("editDayBudget").value.trim(),
+      maps: $("editDayMaps").value.trim(),
+      notes: $("editDayNotes").value.trim()
+    };
+    await setDoc(doc(db,"Trips","italy-2026","Days",activeDayId), data, {merge:true});
+    status.textContent = "✅ Journée enregistrée et synchronisée.";
+    setTimeout(()=>toggleDayEditor(false),700);
+  }catch(error){
+    console.error("Modification de la journée impossible :",error);
+    status.textContent = "⚠️ Enregistrement impossible. Vérifie la connexion ou les règles Firebase.";
+  }finally{
+    if(button) button.disabled = false;
+  }
+});
+
 function openDayDetail(dayId){
   const day = itineraryDays.find(item => item.id === dayId);
   if(!day) return;
   activeDayId = dayId;
+  toggleDayEditor(false);
 
   const title = firstValue(day, ["title","name"]) || "Journée en Italie";
   const city = cityForDay(day);

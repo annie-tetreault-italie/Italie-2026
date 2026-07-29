@@ -441,3 +441,17 @@ hr{border:0;border-top:1px solid var(--line);margin:16px 0}
   .weekly-focus-head{display:block}
   .weekly-focus-link{margin-top:6px}
 }
+
+
+/* Module Itinéraire — modification directe des journées */
+.day-edit-toolbar{display:flex;justify-content:flex-end;margin:0 0 12px}
+.day-edit-form{padding:18px;margin-bottom:14px;background:rgba(255,255,255,.9)}
+.day-edit-form[hidden]{display:none!important}
+.day-edit-form textarea{min-height:88px}
+.day-edit-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px}
+.day-edit-actions .btn{width:auto}
+#dayEditStatus{margin-top:10px;font-weight:700}
+@media(max-width:560px){
+  .day-edit-toolbar .btn,.day-edit-actions .btn{width:100%}
+  .day-edit-actions{display:grid;grid-template-columns:1fr}
+}

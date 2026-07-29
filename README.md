@@ -1,16 +1,15 @@
-# Mon Carnet de Voyages — Module Accueil intelligent
+# Mon Carnet de Voyages — Module Itinéraire modifiable
 
-Base : Italie 2026 / Firebase.
+Cette étape conserve tous les modules déjà stables et ajoute une seule fonction : la modification directe d’une journée depuis sa fiche.
 
-Cette étape ajoute seulement la nouvelle identité de l’accueil :
-- nom officiel « Mon Carnet de Voyages »;
-- slogan « Préparer · Voyager · Revivre »;
-- voyage actif « Italie 2026 »;
-- présentation mobile améliorée.
+Champs modifiables :
+- titre et ville;
+- arrivée et transport;
+- hébergement;
+- activités et restaurants;
+- horaire;
+- budget prévu;
+- carte/adresse;
+- notes.
 
-Les autres modules et la structure Firebase restent inchangés.
-
-
-## Amélioration ajoutée
-
-L’accueil affiche maintenant jusqu’à cinq priorités importantes, calculées automatiquement à partir des tâches et des rappels avant le départ. Une priorité cochée est immédiatement synchronisée avec Firebase.
+Les changements sont enregistrés dans `Trips / italy-2026 / Days / AAAA-MM-JJ` avec Firebase et se synchronisent entre l’ordinateur et l’iPhone.
