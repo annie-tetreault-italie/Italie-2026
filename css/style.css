@@ -549,3 +549,31 @@ body.photo-viewer-open{overflow:hidden}
 .memory-photo-open{border:0;padding:0;background:transparent;border-radius:11px;overflow:hidden;cursor:pointer}
 .memory-photo-open img{display:block;width:100%;aspect-ratio:1;object-fit:cover}
 @media(max-width:600px){.photo-viewer{padding:10px}.photo-viewer-card{height:82vh}.photo-viewer-nav{width:42px;height:50px;font-size:34px;background:rgba(255,255,255,.82)}.photo-viewer-prev{left:7px}.photo-viewer-next{right:7px}.photo-viewer-close{right:10px}.photo-viewer-caption{font-size:11px}}
+
+
+/* Position actuelle — Version location-1.0 */
+.current-location-card{
+  margin-bottom:12px;
+  padding:18px;
+  background:linear-gradient(135deg,#f8fbf9,#fff8ef);
+  border-color:#cfe1da;
+}
+.current-location-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}
+.current-location-head h2{margin:4px 0 7px;color:var(--green)}
+.current-location-head p{margin:0;color:var(--muted);line-height:1.45}
+.location-pulse{width:16px;height:16px;border-radius:50%;background:#b7c7c0;box-shadow:0 0 0 0 rgba(31,90,75,.3);flex:0 0 auto;margin-top:7px}
+.location-pulse.active{background:var(--green);animation:locationPulse 1.6s infinite}
+.location-pulse.error{background:var(--terracotta)}
+@keyframes locationPulse{0%{box-shadow:0 0 0 0 rgba(31,90,75,.32)}70%{box-shadow:0 0 0 12px rgba(31,90,75,0)}100%{box-shadow:0 0 0 0 rgba(31,90,75,0)}}
+.current-location-details{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:15px}
+.current-location-details div{background:rgba(255,255,255,.82);border:1px solid var(--line);border-radius:14px;padding:10px}
+.current-location-details span{display:block;color:var(--muted);font-size:10px;text-transform:uppercase;font-weight:800;margin-bottom:4px}
+.current-location-details strong{font-size:13px;color:var(--ink);word-break:break-word}
+.current-location-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:15px}
+.current-location-actions .btn{width:auto}
+.current-map-link{text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+.location-privacy{margin:11px 0 0;color:var(--muted);font-size:11px;line-height:1.4}
+@media(max-width:620px){
+  .current-location-details{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .current-location-actions .btn,.current-map-link{width:100%}
+}

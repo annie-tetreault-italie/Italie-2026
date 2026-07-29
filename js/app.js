@@ -1544,6 +1544,84 @@ renderChecks();
 renderPreparationAssistant();
 renderDashboard();
 
+
+// Position actuelle — localisation privée sur l’appareil
+let currentLocationWatchId = null;
+
+function setCurrentLocationMessage(message, state=""){
+  const status=$("currentLocationStatus");
+  const pulse=$("currentLocationPulse");
+  if(status) status.textContent=message;
+  if(pulse) pulse.className="location-pulse"+(state?" "+state:"");
+}
+
+function formatLocationTime(timestamp){
+  return new Intl.DateTimeFormat("fr-CA",{hour:"2-digit",minute:"2-digit",second:"2-digit"}).format(new Date(timestamp));
+}
+
+function renderCurrentPosition(position){
+  const {latitude,longitude,accuracy}=position.coords;
+  $("currentLatitude").textContent=latitude.toFixed(6);
+  $("currentLongitude").textContent=longitude.toFixed(6);
+  $("currentAccuracy").textContent=`± ${Math.round(accuracy)} m`;
+  $("currentLocationTime").textContent=formatLocationTime(position.timestamp);
+  $("currentLocationDetails").hidden=false;
+  const mapLink=$("openCurrentLocationMap");
+  mapLink.href=`https://www.google.com/maps?q=${encodeURIComponent(latitude+","+longitude)}`;
+  mapLink.hidden=false;
+  $("stopLocationButton").hidden=false;
+  $("locateMeButton").textContent="🔄 Actualiser ma position";
+  setCurrentLocationMessage("Position trouvée. Le suivi se met à jour lorsque tu te déplaces.","active");
+}
+
+function currentLocationError(error){
+  const messages={
+    1:"La permission de localisation a été refusée. Autorise-la dans les réglages du navigateur.",
+    2:"Ta position est temporairement indisponible.",
+    3:"La recherche de ta position a pris trop de temps. Réessaie."
+  };
+  setCurrentLocationMessage(messages[error.code]||"Impossible d’obtenir ta position.","error");
+  $("locateMeButton").disabled=false;
+}
+
+function startCurrentLocation(){
+  if(!navigator.geolocation){
+    setCurrentLocationMessage("La localisation n’est pas prise en charge par ce navigateur.","error");
+    return;
+  }
+  if(currentLocationWatchId!==null){
+    navigator.geolocation.clearWatch(currentLocationWatchId);
+    currentLocationWatchId=null;
+  }
+  $("locateMeButton").disabled=true;
+  setCurrentLocationMessage("Recherche de ta position…","active");
+  currentLocationWatchId=navigator.geolocation.watchPosition(
+    position=>{
+      $("locateMeButton").disabled=false;
+      renderCurrentPosition(position);
+    },
+    currentLocationError,
+    {enableHighAccuracy:true,timeout:15000,maximumAge:10000}
+  );
+}
+
+function stopCurrentLocation(){
+  if(currentLocationWatchId!==null){
+    navigator.geolocation.clearWatch(currentLocationWatchId);
+    currentLocationWatchId=null;
+  }
+  $("stopLocationButton").hidden=true;
+  $("locateMeButton").disabled=false;
+  $("locateMeButton").textContent="📍 Afficher ma position";
+  setCurrentLocationMessage("Suivi arrêté. La dernière position reste affichée.");
+}
+
+$("locateMeButton")?.addEventListener("click",startCurrentLocation);
+$("stopLocationButton")?.addEventListener("click",stopCurrentLocation);
+window.addEventListener("pagehide",()=>{
+  if(currentLocationWatchId!==null) navigator.geolocation.clearWatch(currentLocationWatchId);
+});
+
 document.addEventListener("click",e=>{
   const button = e.target.closest(".memory-photo-open");
   if(!button) return;

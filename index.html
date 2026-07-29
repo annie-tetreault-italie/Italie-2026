@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f7f0e6">
 <title>Mon Carnet de Voyages — Italie 2026</title>
-<meta name="application-version" content="rating-1.1">
-<link rel="stylesheet" href="css/style.css?v=rating-1.1">
+<meta name="application-version" content="location-1.0">
+<link rel="stylesheet" href="css/style.css?v=location-1.0">
 </head>
 <body>
 <div class="app">
@@ -148,6 +148,29 @@
             <button id="todayOpenDay" class="btn secondary" type="button">Voir la fiche</button>
           </div>
         </div>
+
+        <article class="card current-location-card" aria-labelledby="currentLocationTitle">
+          <div class="current-location-head">
+            <div>
+              <div class="today-kicker">📍 Position actuelle</div>
+              <h2 id="currentLocationTitle">Où suis-je maintenant?</h2>
+              <p id="currentLocationStatus">Appuie sur le bouton pour autoriser la localisation.</p>
+            </div>
+            <div id="currentLocationPulse" class="location-pulse" aria-hidden="true"></div>
+          </div>
+          <div id="currentLocationDetails" class="current-location-details" hidden>
+            <div><span>Latitude</span><strong id="currentLatitude">—</strong></div>
+            <div><span>Longitude</span><strong id="currentLongitude">—</strong></div>
+            <div><span>Précision</span><strong id="currentAccuracy">—</strong></div>
+            <div><span>Mise à jour</span><strong id="currentLocationTime">—</strong></div>
+          </div>
+          <div class="current-location-actions">
+            <button id="locateMeButton" class="btn" type="button">📍 Afficher ma position</button>
+            <button id="stopLocationButton" class="btn secondary" type="button" hidden>Arrêter le suivi</button>
+            <a id="openCurrentLocationMap" class="btn secondary current-map-link" href="#" target="_blank" rel="noopener" hidden>🗺️ Ouvrir dans Google Maps</a>
+          </div>
+          <p class="location-privacy">Ta position reste sur ton appareil et n’est pas enregistrée dans Firebase.</p>
+        </article>
 
         <div class="today-grid">
           <article class="card today-section-card wide">
@@ -486,6 +509,6 @@
   });
 })();
 </script>
-<script type="module" src="js/app.js?v=photo-viewer-1.0"></script>
+<script type="module" src="js/app.js?v=location-1.0"></script>
 </body>
 </html>

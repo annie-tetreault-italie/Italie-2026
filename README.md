@@ -8,3 +8,7 @@ Ajoute un journal, une humeur et un coup de cœur à chaque journée. Les souven
 
 
 Version rating-1.1 : correction de la sélection des étoiles et du cache du fichier JavaScript.
+
+
+## Position actuelle
+Le bouton de localisation utilise la géolocalisation du navigateur sur HTTPS. La position n’est pas enregistrée dans Firebase.
