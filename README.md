@@ -1,9 +1,11 @@
-# Italie 2026 — Version 4.3
+# Mon Carnet de Voyages — Module Accueil
 
-Version stable avec assistant automatique avant le départ.
+Base : Italie 2026 / Firebase.
 
-Nouveautés :
-- rappels affichés selon le nombre de jours avant le départ;
-- tâches automatiques pour passeports, assurances, billets, euros, cartes hors ligne, valises et check-in;
-- cases cochées synchronisées entre l’ordinateur et l’iPhone;
-- conservation du tableau de bord, de Firebase, de l’itinéraire, des réservations, du budget et de l’écran Aujourd’hui.
+Cette étape ajoute seulement la nouvelle identité de l’accueil :
+- nom officiel « Mon Carnet de Voyages »;
+- slogan « Préparer · Voyager · Revivre »;
+- voyage actif « Italie 2026 »;
+- présentation mobile améliorée.
+
+Les autres modules et la structure Firebase restent inchangés.

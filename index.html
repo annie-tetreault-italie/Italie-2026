@@ -4,16 +4,23 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f7f0e6">
-<title>Notre voyage en Italie 2026</title>
-<meta name="application-version" content="4.3.0">
-<link rel="stylesheet" href="css/style.css?v=4.3.0">
+<title>Mon Carnet de Voyages — Italie 2026</title>
+<meta name="application-version" content="accueil-1.0">
+<link rel="stylesheet" href="css/style.css?v=accueil-1.0">
 </head>
 <body>
 <div class="app">
   <section id="home" class="panel active">
-    <div class="hero">
-      <div class="eyebrow">La dolce vita nous attend</div>
-      <h1>Notre voyage en Italie 🇮🇹</h1>
+    <div class="hero home-identity-hero">
+      <div class="app-brand" aria-label="Mon Carnet de Voyages">
+        <div class="app-brand-mark" aria-hidden="true">🌍</div>
+        <div>
+          <div class="app-brand-name">Mon Carnet de Voyages</div>
+          <div class="app-brand-slogan">Préparer · Voyager · Revivre</div>
+        </div>
+      </div>
+      <div class="trip-pill">🇮🇹 Voyage actif</div>
+      <h1>Italie 2026</h1>
       <div class="dates">28 septembre — 16 octobre 2026</div>
       <div class="countdown" id="countdown">
         <div><strong id="cdDays">—</strong><span>jours</span></div>
@@ -22,8 +29,9 @@
         <div><strong id="cdSec">—</strong><span>secondes</span></div>
       </div>
     </div>
-    <div class="notice">
-      ✈️ <strong>Nouvelle arrivée :</strong> Rome vers 9 h 15 le 28 septembre, puis train directement vers les Cinque Terre.
+    <div class="notice home-next-message">
+      <span class="notice-icon">✈️</span>
+      <div><strong>Première étape :</strong> arrivée à Rome vers 9 h 15 le 28 septembre, puis train vers les Cinque Terre.</div>
     </div>
     <div id="syncStatus" class="sync-status">Connexion à Firebase…</div>
 
@@ -362,6 +370,6 @@
   });
 })();
 </script>
-<script type="module" src="js/app.js?v=4.3.0"></script>
+<script type="module" src="js/app.js?v=accueil-1.0"></script>
 </body>
 </html>
