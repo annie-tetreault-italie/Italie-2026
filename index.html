@@ -5,11 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f7f0e6">
 <title>Mon Carnet de Voyages — Italie 2026</title>
-<meta name="application-version" content="premium-3.7-conditions-voyage">
+<meta name="application-version" content="premium-4.0-carte-du-monde">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
-<link rel="stylesheet" href="css/style.css?v=premium-3.7-conditions-voyage">
+<link rel="stylesheet" href="css/style.css?v=premium-4.0-carte-du-monde">
 </head>
 <body>
+<button id="themeToggle" class="theme-toggle" type="button" aria-label="Changer le thème">🌙</button>
 <div class="app">
   <section id="home" class="panel active">
     <div class="premium-home-hero manarola-hero">
@@ -84,9 +85,35 @@
     <div class="section">
       <div class="trips-toolbar">
         <div><h2>Mes carnets <span id="tripLibraryCount" class="trip-library-count"></span></h2><p>Crée, modifie et duplique tes futurs voyages sans toucher au carnet Italie 2026.</p></div>
-        <button id="openCreateTrip" class="btn" type="button">＋ Créer un nouveau voyage</button>
+        <div class="trips-toolbar-actions"><button class="btn secondary" type="button" onclick="showPanel('world')">🌎 Carte du monde</button><button id="openCreateTrip" class="btn" type="button">＋ Créer un nouveau voyage</button></div>
       </div>
       <div id="tripsGrid" class="trips-grid"></div>
+    </div>
+  </section>
+
+
+  <section id="world" class="panel">
+    <div class="hero world-hero">
+      <div class="eyebrow">Ma vie en voyages</div>
+      <h1>Carte du monde</h1>
+      <p>Mes voyages réalisés, prévus et rêvés</p>
+    </div>
+    <div class="section world-section">
+      <div class="world-summary">
+        <article class="card world-stat"><span>🌍</span><strong id="worldCountryCount">0</strong><small>pays dans mes carnets</small></article>
+        <article class="card world-stat"><span>✅</span><strong id="worldDoneCount">0</strong><small>voyages réalisés</small></article>
+        <article class="card world-stat"><span>✈️</span><strong id="worldPlannedCount">0</strong><small>voyages prévus</small></article>
+        <article class="card world-stat"><span>❤️</span><strong id="worldDreamCount">0</strong><small>voyages rêvés</small></article>
+      </div>
+      <article class="card world-map-card">
+        <div class="world-map-head"><div><span class="eyebrow">Vue d’ensemble</span><h2>Mon monde à explorer</h2></div><button class="btn secondary" type="button" onclick="showPanel('trips')">Voir mes carnets</button></div>
+        <div class="world-map" id="worldMap" aria-label="Carte stylisée de mes voyages">
+          <div class="continent north-america">Amérique du Nord</div><div class="continent south-america">Amérique du Sud</div><div class="continent europe">Europe</div><div class="continent africa">Afrique</div><div class="continent asia">Asie</div><div class="continent oceania">Océanie</div>
+          <div id="worldMarkers"></div>
+        </div>
+        <div class="world-legend"><span><i class="done"></i> Réalisé</span><span><i class="planned"></i> Prévu</span><span><i class="dream"></i> Rêve</span></div>
+      </article>
+      <article class="card world-list-card"><div class="world-map-head"><div><span class="eyebrow">Tous mes projets</span><h2>Destinations</h2></div></div><div id="worldTripList" class="world-trip-list"></div></article>
     </div>
   </section>
 
@@ -499,7 +526,8 @@
       <div class="field"><label for="newTripEnd">Date de retour</label><input id="newTripEnd" type="date"></div>
       <div class="field"><label for="newTripBudget">Budget prévu ($ CA)</label><input id="newTripBudget" type="number" min="0" step="100" placeholder="5000"></div>
       <div class="field"><label for="newTripTravelers">Voyageurs</label><input id="newTripTravelers" type="number" min="1" max="20" value="2"></div>
-      <div class="field wide"><label for="newTripStyle">Style de voyage</label><select id="newTripStyle"><option>Découverte</option><option>Détente</option><option>Gastronomie</option><option>Aventure</option><option>Culture</option><option>Plage</option></select></div>
+      <div class="field"><label for="newTripStatus">Statut</label><select id="newTripStatus"><option value="planned">✈️ Prévu</option><option value="dream">❤️ Rêve</option><option value="done">✅ Réalisé</option></select></div>
+      <div class="field"><label for="newTripStyle">Style de voyage</label><select id="newTripStyle"><option>Découverte</option><option>Détente</option><option>Gastronomie</option><option>Aventure</option><option>Culture</option><option>Plage</option></select></div>
     </div>
     <div id="createTripStatus" class="subtle" role="status"></div>
     <div class="modal-actions"><button id="saveNewTrip" class="btn" type="button">Créer le voyage</button><button id="cancelNewTrip" class="btn secondary" type="button">Annuler</button></div>
@@ -547,6 +575,7 @@
 <nav class="nav">
   <button class="active" data-panel="home" onclick="showPanel('home')"><span>🏠</span>Accueil</button>
   <button data-panel="trips" onclick="showPanel('trips')"><span>🌍</span>Voyages</button>
+  <button data-panel="world" onclick="showPanel('world')"><span>🌎</span>Monde</button>
   <button data-panel="today" onclick="showPanel('today')"><span>☀️</span>Aujourd’hui</button>
   <button data-panel="timeline" onclick="showPanel('timeline')"><span>🕒</span>Timeline</button>
   <button data-panel="map" onclick="showPanel('map')"><span>🗺️</span>Carte</button>
@@ -585,6 +614,6 @@
   <div class="replay-controls"><button id="replayPrevious" class="replay-control" aria-label="Précédent">←</button><button id="replayToggle" class="replay-control primary" aria-label="Pause">⏸</button><div id="replayCounter" class="replay-counter">1 / 1</div><button id="replayNext" class="replay-control" aria-label="Suivant">→</button></div>
   <section id="replayFinale" class="replay-finale"><div class="replay-finale-card"><div class="replay-finale-flag">🇮🇹</div><h2>Merci Italie</h2><p>Un voyage se termine. Les souvenirs, eux, restent pour toujours.</p><div id="replayFinalStats" class="replay-final-stats"></div><button id="replayRestart" class="replay-control primary" aria-label="Recommencer">↻</button></div></section>
 </div>
-<script type="module" src="js/app.js?v=premium-3.7-conditions-voyage"></script>
+<script type="module" src="js/app.js?v=premium-4.0-carte-du-monde"></script>
 </body>
 </html>

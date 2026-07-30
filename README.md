@@ -1,13 +1,9 @@
-# Mon Carnet de Voyages — Premium 3.9
+# 🌍 Mon Carnet de Voyages — Premium 4.0 Stable
 
-## Gestion complète des carnets
-
-- Créer un nouveau voyage
-- Modifier les informations d’un voyage
-- Dupliquer un voyage pour préparer une variante
-- Voir un résumé avant de l’ouvrir
-- Supprimer un voyage avec confirmation
-- Compteur automatique de carnets
-- Italie 2026 demeure protégée comme voyage principal
-
-Les fonctions déjà stables (itinéraire, météo, Timeline, photos, carte et Revivre) sont conservées.
+## Nouveautés
+- Carte du monde interactive basée sur les carnets enregistrés.
+- Statuts Réalisé, Prévu et Rêve pour chaque voyage.
+- Compteurs de pays et de projets.
+- Accès à un carnet depuis son marqueur.
+- Mode sombre mémorisé sur l’appareil.
+- Toutes les fonctions stables précédentes sont conservées.

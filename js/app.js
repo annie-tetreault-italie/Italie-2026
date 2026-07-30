@@ -2137,7 +2137,7 @@ const COUNTRY_META = {
 };
 function loadTrips(){
   const stored=LS.get(TRIPS_STORAGE_KEY,[]);
-  const italy={id:"italy-2026",name:"Italie 2026",country:"Italie",start:"2026-09-28",end:"2026-10-16",budget:"",travelers:3,style:"Découverte",active:true};
+  const italy={id:"italy-2026",name:"Italie 2026",country:"Italie",start:"2026-09-28",end:"2026-10-16",budget:"",travelers:3,style:"Découverte",status:"planned",active:true};
   return [italy,...stored.filter(t=>t && t.id!=="italy-2026")];
 }
 function saveTrips(trips){ LS.set(TRIPS_STORAGE_KEY,trips.filter(t=>t.id!=="italy-2026")); }
@@ -2156,7 +2156,7 @@ function renderTrips(){
     const bg=meta.cover.startsWith('url')?`background-image:${meta.cover}`:`background:${meta.cover}`;
     const isItaly=trip.id==="italy-2026";
     return `<article class="trip-library-card ${trip.active?'active-trip':''}" data-trip-id="${esc(trip.id)}">
-      <div class="trip-library-cover" style="${bg}"><span>${meta.flag}</span><em>${trip.active?'Voyage actif':'En préparation'}</em></div>
+      <div class="trip-library-cover" style="${bg}"><span>${meta.flag}</span><em>${trip.active?'Voyage actif':tripStatusMeta(trip.status).label}</em></div>
       <div class="trip-library-body"><h3>${esc(trip.name)}</h3><p>${esc(trip.country)} · ${esc(tripDuration(trip))}</p>
       <div class="trip-library-meta"><span>👥 ${Number(trip.travelers)||1}</span><span>✨ ${esc(trip.style||'Découverte')}</span>${trip.budget?`<span>💰 ${Number(trip.budget).toLocaleString('fr-CA')} $</span>`:''}</div>
       <div class="trip-library-actions">
@@ -2179,11 +2179,11 @@ function renderTrips(){
   root.querySelectorAll('[data-duplicate-trip]').forEach(btn=>btn.addEventListener('click',()=>{
     const trip=trips.find(t=>t.id===btn.dataset.duplicateTrip); if(!trip) return;
     const copy={...trip,id:`trip-${Date.now()}`,name:`${trip.name} — copie`,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};
-    trips.push(copy); saveTrips(trips); renderTrips();
+    trips.push(copy); saveTrips(trips); renderTrips(); renderWorldDashboard();
   }));
   root.querySelectorAll('[data-delete-trip]').forEach(btn=>btn.addEventListener('click',()=>{
     const trip=trips.find(t=>t.id===btn.dataset.deleteTrip); if(!trip||!confirm(`Supprimer « ${trip.name} »?`)) return;
-    saveTrips(trips.filter(t=>t.id!==trip.id)); renderTrips();
+    saveTrips(trips.filter(t=>t.id!==trip.id)); renderTrips(); renderWorldDashboard();
   }));
   root.querySelector('[data-empty-create]')?.addEventListener('click',()=>openCreateTrip());
 }
@@ -2199,6 +2199,7 @@ function fillTripForm(trip=null){
   $("newTripBudget").value=trip?.budget||"";
   $("newTripTravelers").value=trip?.travelers||2;
   $("newTripStyle").value=trip?.style||"Découverte";
+  $("newTripStatus").value=trip?.status||"planned";
 }
 function openCreateTrip(trip=null){
   fillTripForm(trip); $("createTripModal").hidden=false; $("createTripStatus").textContent=""; $("newTripName").focus();
@@ -2211,7 +2212,7 @@ function createTrip(){
   if(!name){ status.textContent="Écris le nom du voyage."; return; }
   if(start&&end&&end<start){ status.textContent="La date de retour doit être après le départ."; return; }
   const trips=loadTrips();
-  const values={name,country,start,end,budget:$("newTripBudget").value,travelers:Number($("newTripTravelers").value)||1,style:$("newTripStyle").value,updatedAt:new Date().toISOString()};
+  const values={name,country,start,end,budget:$("newTripBudget").value,travelers:Number($("newTripTravelers").value)||1,style:$("newTripStyle").value,status:$("newTripStatus").value||"planned",updatedAt:new Date().toISOString()};
   if(editingTripId){
     const index=trips.findIndex(t=>t.id===editingTripId);
     if(index<0){ status.textContent="Ce voyage est introuvable."; return; }
@@ -2219,7 +2220,7 @@ function createTrip(){
   }else{
     trips.push({id:`trip-${Date.now()}`,...values,createdAt:new Date().toISOString()});
   }
-  saveTrips(trips); renderTrips(); closeCreateTrip(); fillTripForm();
+  saveTrips(trips); renderTrips(); renderWorldDashboard(); closeCreateTrip(); fillTripForm();
 }
 $("openCreateTrip")?.addEventListener("click",()=>openCreateTrip());
 $("saveNewTrip")?.addEventListener("click",createTrip);
@@ -2227,6 +2228,35 @@ $("cancelNewTrip")?.addEventListener("click",closeCreateTrip);
 $("createTripModal")?.addEventListener("click",e=>{if(e.target.id==="createTripModal") closeCreateTrip();});
 document.addEventListener("keydown",e=>{if(e.key==="Escape" && $("createTripModal") && !$("createTripModal").hidden) closeCreateTrip();});
 renderTrips();
+
+
+// ===== Premium 4.0 — Carte du monde et thème =====
+const TRIP_STATUS_META={done:{label:"Réalisé",icon:"✅"},planned:{label:"Prévu",icon:"✈️"},dream:{label:"Rêve",icon:"❤️"}};
+function tripStatusMeta(status){return TRIP_STATUS_META[status]||TRIP_STATUS_META.planned;}
+const COUNTRY_POSITIONS={
+  "Canada":{x:18,y:25},"Italie":{x:52,y:31},"France":{x:49,y:29},"Espagne":{x:47,y:34},"Portugal":{x:45,y:35},
+  "Vietnam":{x:78,y:43},"Japon":{x:88,y:31},"Thaïlande":{x:75,y:47},"Autre":{x:58,y:50}
+};
+function renderWorldDashboard(){
+  const trips=loadTrips().map(t=>({...t,status:t.status||"planned"}));
+  const countries=new Set(trips.map(t=>t.country).filter(Boolean));
+  if($("worldCountryCount")) $("worldCountryCount").textContent=countries.size;
+  if($("worldDoneCount")) $("worldDoneCount").textContent=trips.filter(t=>t.status==="done").length;
+  if($("worldPlannedCount")) $("worldPlannedCount").textContent=trips.filter(t=>t.status==="planned").length;
+  if($("worldDreamCount")) $("worldDreamCount").textContent=trips.filter(t=>t.status==="dream").length;
+  const markers=$("worldMarkers");
+  if(markers){
+    markers.innerHTML=trips.map((trip,index)=>{const meta=COUNTRY_META[trip.country]||COUNTRY_META.Autre;const pos=COUNTRY_POSITIONS[trip.country]||{x:55+(index%5)*5,y:48+(index%3)*5};const status=trip.status||"planned";return `<button class="world-marker ${status}" style="left:${pos.x}%;top:${pos.y}%" data-world-trip="${esc(trip.id)}" aria-label="${esc(trip.name)}"><span class="world-marker-pin"><span>${meta.flag}</span></span><span class="world-marker-label">${esc(trip.name)}</span></button>`;}).join("");
+    markers.querySelectorAll("[data-world-trip]").forEach(btn=>btn.addEventListener("click",()=>{showPanel("trips");setTimeout(()=>document.querySelector(`[data-trip-id="${btn.dataset.worldTrip}"]`)?.scrollIntoView({behavior:"smooth",block:"center"}),100);}));
+  }
+  const list=$("worldTripList");
+  if(list){list.innerHTML=trips.map(trip=>{const meta=COUNTRY_META[trip.country]||COUNTRY_META.Autre;const status=trip.status||"planned";const s=tripStatusMeta(status);return `<div class="world-trip-item"><span class="flag">${meta.flag}</span><div><strong>${esc(trip.name)}</strong><small>${esc(trip.country)} · ${esc(tripDuration(trip))}</small></div><span class="world-status ${status}">${s.icon} ${s.label}</span></div>`;}).join("");}
+}
+const THEME_KEY="mon-carnet-theme";
+function applyTheme(theme){document.body.classList.toggle("dark-mode",theme==="dark");const b=$("themeToggle");if(b)b.textContent=theme==="dark"?"☀️":"🌙";document.querySelector('meta[name="theme-color"]')?.setAttribute("content",theme==="dark"?"#101916":"#f7f0e6");}
+applyTheme(LS.get(THEME_KEY,"light"));
+$("themeToggle")?.addEventListener("click",()=>{const next=document.body.classList.contains("dark-mode")?"light":"dark";LS.set(THEME_KEY,next);applyTheme(next);});
+renderWorldDashboard();
 
 
 // ===== Premium 3.7 — Météo en temps réel et prévisions =====
@@ -2314,6 +2344,6 @@ function renderAllWeather(stale=false){renderHomeWeather();renderWeatherCities()
 $("refreshAllWeather")?.addEventListener("click",()=>loadWeather(true));
 $("refreshTodayWeather")?.addEventListener("click",()=>loadWeather(true));
 const originalShowPanel=window.showPanel;
-window.showPanel=function(id){originalShowPanel(id);if(id==="conditions"||id==="today")setTimeout(()=>{renderAllWeather();},80);};
+window.showPanel=function(id){originalShowPanel(id);if(id==="conditions"||id==="today")setTimeout(()=>{renderAllWeather();},80);if(id==="world")setTimeout(renderWorldDashboard,40);};
 loadWeather();
 setInterval(()=>loadWeather(true),WEATHER_TTL);
