@@ -1,10 +1,13 @@
-# Mon Carnet de Voyages — Premium 3.8.1
+# Mon Carnet de Voyages — Premium 3.9
 
-Correction du mode **Revivre le voyage** :
+## Gestion complète des carnets
 
-- les 18 journées défilent réellement;
-- une image est visible même avant le chargement de Firebase;
-- boutons précédent, pause, suivant et vitesse fonctionnels;
-- barre de progression et parcours synchronisés;
-- photos personnelles utilisées lorsqu’elles existent;
-- écran final avec statistiques.
+- Créer un nouveau voyage
+- Modifier les informations d’un voyage
+- Dupliquer un voyage pour préparer une variante
+- Voir un résumé avant de l’ouvrir
+- Supprimer un voyage avec confirmation
+- Compteur automatique de carnets
+- Italie 2026 demeure protégée comme voyage principal
+
+Les fonctions déjà stables (itinéraire, météo, Timeline, photos, carte et Revivre) sont conservées.

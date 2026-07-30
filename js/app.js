@@ -2149,30 +2149,61 @@ function tripDuration(trip){
 function renderTrips(){
   const root=$("tripsGrid"); if(!root) return;
   const trips=loadTrips();
+  const customTrips=trips.filter(t=>t.id!=="italy-2026");
+  const count=$("tripLibraryCount"); if(count) count.textContent=`${trips.length} carnet${trips.length>1?'s':''}`;
   root.innerHTML=trips.map(trip=>{
     const meta=COUNTRY_META[trip.country]||COUNTRY_META.Autre;
     const bg=meta.cover.startsWith('url')?`background-image:${meta.cover}`:`background:${meta.cover}`;
+    const isItaly=trip.id==="italy-2026";
     return `<article class="trip-library-card ${trip.active?'active-trip':''}" data-trip-id="${esc(trip.id)}">
       <div class="trip-library-cover" style="${bg}"><span>${meta.flag}</span><em>${trip.active?'Voyage actif':'En préparation'}</em></div>
       <div class="trip-library-body"><h3>${esc(trip.name)}</h3><p>${esc(trip.country)} · ${esc(tripDuration(trip))}</p>
       <div class="trip-library-meta"><span>👥 ${Number(trip.travelers)||1}</span><span>✨ ${esc(trip.style||'Découverte')}</span>${trip.budget?`<span>💰 ${Number(trip.budget).toLocaleString('fr-CA')} $</span>`:''}</div>
-      <div class="trip-library-actions">${trip.active?`<button class="btn" data-open-trip="${esc(trip.id)}">Ouvrir</button>`:`<button class="btn secondary" data-preview-trip="${esc(trip.id)}">Voir</button><button class="icon-danger" data-delete-trip="${esc(trip.id)}" aria-label="Supprimer">🗑️</button>`}</div></div>
+      <div class="trip-library-actions">
+        ${isItaly?`<button class="btn" data-open-trip="${esc(trip.id)}">Ouvrir</button>`:`<button class="btn secondary" data-preview-trip="${esc(trip.id)}">Voir</button><button class="btn secondary" data-edit-trip="${esc(trip.id)}">✏️ Modifier</button><button class="btn secondary" data-duplicate-trip="${esc(trip.id)}">⧉ Dupliquer</button><button class="icon-danger" data-delete-trip="${esc(trip.id)}" aria-label="Supprimer">🗑️</button>`}
+      </div></div>
     </article>`;
   }).join('');
+  if(!customTrips.length){
+    root.insertAdjacentHTML('beforeend','<article class="trip-library-empty"><div>✨</div><h3>Ton prochain voyage commence ici</h3><p>Crée un carnet pour le Vietnam, le Japon, la Thaïlande ou toute autre destination.</p><button class="btn" type="button" data-empty-create>Créer mon prochain voyage</button></article>');
+  }
   root.querySelectorAll('[data-open-trip]').forEach(btn=>btn.addEventListener('click',()=>showPanel('home')));
   root.querySelectorAll('[data-preview-trip]').forEach(btn=>btn.addEventListener('click',()=>{
     const trip=trips.find(t=>t.id===btn.dataset.previewTrip); if(!trip) return;
-    alert(`${trip.name}\n\nCe carnet est créé et conservé sur cet appareil. L'ouverture complète de plusieurs voyages arrivera dans la prochaine étape.`);
+    const budget=trip.budget?`${Number(trip.budget).toLocaleString('fr-CA')} $ CA`:'Non indiqué';
+    alert(`${trip.name}\n\nDestination : ${trip.country}\nDurée : ${tripDuration(trip)}\nVoyageurs : ${trip.travelers||1}\nStyle : ${trip.style||'Découverte'}\nBudget : ${budget}`);
+  }));
+  root.querySelectorAll('[data-edit-trip]').forEach(btn=>btn.addEventListener('click',()=>{
+    const trip=trips.find(t=>t.id===btn.dataset.editTrip); if(trip) openCreateTrip(trip);
+  }));
+  root.querySelectorAll('[data-duplicate-trip]').forEach(btn=>btn.addEventListener('click',()=>{
+    const trip=trips.find(t=>t.id===btn.dataset.duplicateTrip); if(!trip) return;
+    const copy={...trip,id:`trip-${Date.now()}`,name:`${trip.name} — copie`,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};
+    trips.push(copy); saveTrips(trips); renderTrips();
   }));
   root.querySelectorAll('[data-delete-trip]').forEach(btn=>btn.addEventListener('click',()=>{
     const trip=trips.find(t=>t.id===btn.dataset.deleteTrip); if(!trip||!confirm(`Supprimer « ${trip.name} »?`)) return;
     saveTrips(trips.filter(t=>t.id!==trip.id)); renderTrips();
   }));
+  root.querySelector('[data-empty-create]')?.addEventListener('click',()=>openCreateTrip());
 }
-function openCreateTrip(){
-  $("createTripModal").hidden=false; $("createTripStatus").textContent=""; $("newTripName").focus();
+let editingTripId="";
+function fillTripForm(trip=null){
+  editingTripId=trip?.id||"";
+  $("createTripTitle").textContent=trip?"✏️ Modifier le voyage":"🌍 Créer un nouveau voyage";
+  $("saveNewTrip").textContent=trip?"Enregistrer les changements":"Créer le voyage";
+  $("newTripName").value=trip?.name||"";
+  $("newTripCountry").value=trip?.country||"Vietnam";
+  $("newTripStart").value=trip?.start||"";
+  $("newTripEnd").value=trip?.end||"";
+  $("newTripBudget").value=trip?.budget||"";
+  $("newTripTravelers").value=trip?.travelers||2;
+  $("newTripStyle").value=trip?.style||"Découverte";
 }
-function closeCreateTrip(){ $("createTripModal").hidden=true; }
+function openCreateTrip(trip=null){
+  fillTripForm(trip); $("createTripModal").hidden=false; $("createTripStatus").textContent=""; $("newTripName").focus();
+}
+function closeCreateTrip(){ $("createTripModal").hidden=true; editingTripId=""; }
 function createTrip(){
   const name=$("newTripName").value.trim(); const country=$("newTripCountry").value;
   const start=$("newTripStart").value; const end=$("newTripEnd").value;
@@ -2180,12 +2211,17 @@ function createTrip(){
   if(!name){ status.textContent="Écris le nom du voyage."; return; }
   if(start&&end&&end<start){ status.textContent="La date de retour doit être après le départ."; return; }
   const trips=loadTrips();
-  const trip={id:`trip-${Date.now()}`,name,country,start,end,budget:$("newTripBudget").value,travelers:Number($("newTripTravelers").value)||1,style:$("newTripStyle").value,createdAt:new Date().toISOString()};
-  trips.push(trip); saveTrips(trips); renderTrips(); closeCreateTrip();
-  ["newTripName","newTripStart","newTripEnd","newTripBudget"].forEach(id=>$(id).value="");
-  $("newTripTravelers").value="2";
+  const values={name,country,start,end,budget:$("newTripBudget").value,travelers:Number($("newTripTravelers").value)||1,style:$("newTripStyle").value,updatedAt:new Date().toISOString()};
+  if(editingTripId){
+    const index=trips.findIndex(t=>t.id===editingTripId);
+    if(index<0){ status.textContent="Ce voyage est introuvable."; return; }
+    trips[index]={...trips[index],...values};
+  }else{
+    trips.push({id:`trip-${Date.now()}`,...values,createdAt:new Date().toISOString()});
+  }
+  saveTrips(trips); renderTrips(); closeCreateTrip(); fillTripForm();
 }
-$("openCreateTrip")?.addEventListener("click",openCreateTrip);
+$("openCreateTrip")?.addEventListener("click",()=>openCreateTrip());
 $("saveNewTrip")?.addEventListener("click",createTrip);
 $("cancelNewTrip")?.addEventListener("click",closeCreateTrip);
 $("createTripModal")?.addEventListener("click",e=>{if(e.target.id==="createTripModal") closeCreateTrip();});

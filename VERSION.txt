@@ -1,1 +1,2 @@
-Premium 3.8.1 — Revivre fonctionnel
+Mon Carnet de Voyages — Premium 3.9
+Gestion complète des carnets : créer, modifier, dupliquer et supprimer.
