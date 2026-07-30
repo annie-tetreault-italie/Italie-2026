@@ -5,18 +5,37 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f7f0e6">
 <title>Mon Carnet de Voyages — Italie 2026</title>
-<meta name="application-version" content="premium-3.2-revivre">
+<meta name="application-version" content="premium-3.3-sprint">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
-<link rel="stylesheet" href="css/style.css?v=premium-3.2-revivre">
+<link rel="stylesheet" href="css/style.css?v=premium-3.3-sprint">
 </head>
 <body>
 <div class="app">
+
+  <section id="trips" class="panel trips-panel">
+    <div class="trips-hero">
+      <div class="trips-hero-shade"></div>
+      <div class="trips-hero-content"><span class="eyebrow">Ton carnet pour la vie</span><h1>Mes voyages</h1><p>Préparer, voyager et revivre chaque destination au même endroit.</p></div>
+    </div>
+    <div class="section trips-section">
+      <article class="trip-library-card italy-trip-card">
+        <div class="trip-library-cover"><span class="trip-status">En préparation</span><div><span>🇮🇹 Italie 2026</span><h2>Rome · Cinque Terre · Florence · Venise · Toscane</h2></div></div>
+        <div class="trip-library-body">
+          <div class="trip-library-stats"><div><strong>18</strong><span>jours</span></div><div><strong id="tripsPhotoCount">0</strong><span>photos</span></div><div><strong id="tripsMemoryCount">0</strong><span>souvenirs</span></div></div>
+          <button id="openItalyTrip" class="btn premium-main-action" type="button">Ouvrir Italie 2026 →</button>
+        </div>
+      </article>
+      <button id="newTripButton" class="new-trip-card" type="button"><span>＋</span><strong>Créer un nouveau voyage</strong><small>Espagne, Portugal, France…</small></button>
+      <p id="newTripStatus" class="subtle" role="status"></p>
+    </div>
+  </section>
+
   <section id="home" class="panel active">
     <div class="premium-home-hero manarola-hero">
       <div class="premium-hero-overlay"></div>
       <div class="premium-hero-content">
         <div class="app-brand premium-brand"><div class="app-brand-mark">🌍</div><div><div class="app-brand-name">Mon Carnet de Voyages</div><div class="app-brand-slogan">Préparer · Voyager · Revivre</div></div></div>
-        <div class="premium-trip-pill">🇮🇹 Italie 2026</div>
+        <button id="openTripsHub" class="premium-trip-pill trip-pill-button" type="button">🌍 Mes voyages · 🇮🇹 Italie 2026</button>
         <div class="premium-greeting">Bonjour Annie 👋</div>
         <h1 id="premiumCurrentCity">Ton voyage approche</h1>
         <p id="premiumCurrentDate">28 septembre au 16 octobre 2026</p>
@@ -490,6 +509,7 @@
 </div>
 
 <nav class="nav">
+  <button data-panel="trips" onclick="showPanel('trips')"><span>🌍</span>Voyages</button>
   <button class="active" data-panel="home" onclick="showPanel('home')"><span>🏠</span>Accueil</button>
   <button data-panel="today" onclick="showPanel('today')"><span>☀️</span>Aujourd’hui</button>
   <button data-panel="timeline" onclick="showPanel('timeline')"><span>🕒</span>Timeline</button>
@@ -529,6 +549,6 @@
   <div class="replay-controls"><button id="replayPrevious" class="replay-control" aria-label="Précédent">←</button><button id="replayToggle" class="replay-control primary" aria-label="Pause">⏸</button><div id="replayCounter" class="replay-counter">1 / 1</div><button id="replayNext" class="replay-control" aria-label="Suivant">→</button></div>
   <section id="replayFinale" class="replay-finale"><div class="replay-finale-card"><div class="replay-finale-flag">🇮🇹</div><h2>Merci Italie</h2><p>Un voyage se termine. Les souvenirs, eux, restent pour toujours.</p><div id="replayFinalStats" class="replay-final-stats"></div><button id="replayRestart" class="replay-control primary" aria-label="Recommencer">↻</button></div></section>
 </div>
-<script type="module" src="js/app.js?v=premium-3.2-revivre"></script>
+<script type="module" src="js/app.js?v=premium-3.3-sprint"></script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-// Mon Carnet de Voyages — Notes, étoiles et photo préférée
+// Mon Carnet de Voyages — Premium 3.3
 window.__ITALIE_APP_STARTED__ = true;
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
@@ -127,6 +127,39 @@ function mapsLink(value){
 
 function cityForDay(day){
   return firstValue(day, ["city","destination","arrivalCity"]);
+}
+
+// ===== Premium 3.3 — Couvertures intelligentes =====
+const TRIP_START_DATE = new Date("2026-09-28T00:00:00");
+const DESTINATION_COVERS = {
+  "cinque terre":"assets/manarola-sunset.jpg",
+  "manarola":"assets/manarola-sunset.jpg",
+  "vernazza":"assets/manarola-sunset.jpg",
+  "monterosso":"assets/manarola-sunset.jpg",
+  "florence":"assets/florence-day.jpg",
+  "firenze":"assets/florence-day.jpg",
+  "venise":"assets/venice-grand-canal.jpg",
+  "venezia":"assets/venice-grand-canal.jpg",
+  "toscane":"assets/tuscany-day.jpg",
+  "tuscany":"assets/tuscany-day.jpg",
+  "rome":"assets/rome-colosseum.jpg",
+  "roma":"assets/rome-colosseum.jpg"
+};
+function defaultCoverForDay(day){
+  const city=String(cityForDay(day)||day?.title||"").toLocaleLowerCase("fr-CA");
+  for(const [name,src] of Object.entries(DESTINATION_COVERS)){ if(city.includes(name)) return src; }
+  return "assets/manarola-sunset.jpg";
+}
+function preferredPersonalPhoto(day){
+  const photos=Array.isArray(day?.photos)?day.photos:[];
+  const favorite=Number(day?.favoritePhotoIndex);
+  const candidate=Number.isInteger(favorite)&&favorite>=0?photos[favorite]:photos[0];
+  return typeof candidate==="string"?candidate:(candidate?.url||candidate?.src||candidate?.dataUrl||"");
+}
+function coverForDay(day){
+  // Avant le départ, les anciennes photos de test ne sont jamais utilisées comme couverture.
+  if(new Date() < TRIP_START_DATE) return defaultCoverForDay(day);
+  return preferredPersonalPhoto(day) || defaultCoverForDay(day);
 }
 
 function daySearchText(day){
@@ -844,44 +877,6 @@ let timelineHighlightsOnly = false;
 let timelinePlaybackTimer = null;
 let timelinePlaybackIndex = 0;
 const ITALY_SIGNATURE_QUOTE = "Aujourd’hui restera l’un de mes plus beaux souvenirs d’Italie.";
-
-const DESTINATION_COVERS = {
-  cinqueTerre: "assets/manarola-sunset.jpg",
-  florence: "https://images.unsplash.com/photo-1544986581-efac024faf62?auto=format&fit=crop&w=1800&q=85",
-  venice: "https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?auto=format&fit=crop&w=1800&q=85",
-  tuscany: "https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=1800&q=85",
-  rome: "https://images.unsplash.com/photo-1552832230-c0197dd311b5?auto=format&fit=crop&w=1800&q=85",
-  italy: "assets/manarola-sunset.jpg"
-};
-
-function destinationCoverForDay(day){
-  const city = String(cityForDay(day) || firstValue(day,["title","location","arrivalCity"]) || "").toLocaleLowerCase("fr-CA");
-  if(city.includes("cinque") || city.includes("manarola") || city.includes("vernazza") || city.includes("monterosso") || city.includes("riomaggiore")) return DESTINATION_COVERS.cinqueTerre;
-  if(city.includes("florence") || city.includes("firenze")) return DESTINATION_COVERS.florence;
-  if(city.includes("venise") || city.includes("venice") || city.includes("venezia")) return DESTINATION_COVERS.venice;
-  if(city.includes("toscane") || city.includes("tuscany") || city.includes("chianti") || city.includes("sienne") || city.includes("siena") || city.includes("panzano")) return DESTINATION_COVERS.tuscany;
-  if(city.includes("rome") || city.includes("roma")) return DESTINATION_COVERS.rome;
-  return DESTINATION_COVERS.italy;
-}
-
-function personalCoverForDay(day){
-  const photos = Array.isArray(day?.photos) ? day.photos : [];
-  const preferred = Number(day?.favoritePhotoIndex);
-  if(Number.isInteger(preferred) && preferred >= 0 && photos[preferred]) return photos[preferred];
-  const today = new Date();
-  const travelDay = day?.id ? new Date(day.id + "T00:00:00") : null;
-  if(travelDay && travelDay <= today){
-    for(const photo of photos){
-      const src = typeof photo === "string" ? photo : (photo?.url || photo?.src || photo?.dataUrl || "");
-      if(src) return src;
-    }
-  }
-  return "";
-}
-
-function coverForDay(day){
-  return personalCoverForDay(day) || destinationCoverForDay(day);
-}
 
 function timelineMemoryForDay(day){ return firstValue(day,["memoryText","journal","memory","favoriteMoment","notes"]); }
 function timelineRating(day){ return Number(day.rating||day.dayRating||0); }
@@ -2035,6 +2030,21 @@ document.addEventListener("click",e=>{
   openPhotoViewer(day.photos,Number(button.dataset.memoryIndex)||0,`${formatDateFr(day.id)} — ${day.location || day.title || "Souvenir"}`);
 });
 
+
+// ===== Premium 3.3 — Mes voyages (première version) =====
+function renderTripsHub(){
+  const photoCount=itineraryDays.reduce((n,d)=>n+(Array.isArray(d.photos)?d.photos.length:0),0);
+  const memoryCount=itineraryDays.filter(d=>timelineMemoryForDay(d)||timelineReflection(d)).length;
+  $("tripsPhotoCount") && ($("tripsPhotoCount").textContent=photoCount);
+  $("tripsMemoryCount") && ($("tripsMemoryCount").textContent=memoryCount);
+}
+$("openItalyTrip")?.addEventListener("click",()=>showPanel("home"));
+$("newTripButton")?.addEventListener("click",()=>{
+  const status=$("newTripStatus");
+  if(status) status.textContent="La création d’un nouveau voyage sera activée dans la version multi-voyages complète.";
+});
+$("openTripsHub")?.addEventListener("click",()=>{ showPanel("trips"); renderTripsHub(); });
+
 document.addEventListener("touchend", function(e){
   const btn=e.target.closest("button[data-panel]");
   if(btn){
@@ -2049,9 +2059,7 @@ let replayIndex = 0;
 let replayTimer = null;
 let replayPaused = false;
 
-function replayPhotoForDay(day){
-  return coverForDay(day);
-}
+function replayPhotoForDay(day){ return coverForDay(day); }
 function replayPlacesForDay(day){ return Array.isArray(day?.herePlaces) ? day.herePlaces.length : 0; }
 function replayMemoryText(day){ return timelineReflection(day) || timelineMemoryForDay(day) || "Une nouvelle journée à garder en mémoire."; }
 function replayCities(){
