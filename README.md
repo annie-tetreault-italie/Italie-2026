@@ -1,21 +1,19 @@
-# 🌍 Mon Carnet de Voyages — Premium 3.2
+# 🌍 Mon Carnet de Voyages — Premium 3.2.1
 
-## 🎬 Revivre le voyage
+## 🖼️ Photos de destinations corrigées
 
-Cette version ajoute un véritable mode cinéma plein écran :
-
-- lecture automatique des journées;
-- photos personnelles de chaque journée, avec Manarola comme image de secours;
-- trajet synchronisé avec la ville affichée;
-- souvenirs, notes, coups de cœur et évaluations;
-- commandes précédent, pause, suivant et fermeture;
-- écran final avec les statistiques du voyage;
-- navigation au clavier : flèches, espace et Échap.
+- La photo de test n’est plus utilisée comme couverture avant le voyage.
+- Cinque Terre affiche Manarola au coucher du soleil.
+- Florence affiche une vue de la ville.
+- Venise affiche le Grand Canal.
+- La Toscane affiche un paysage lumineux de jour.
+- Rome affiche le Colisée.
+- Une photo personnelle choisie comme préférée prend immédiatement la priorité.
+- Pendant le voyage, les photos personnelles prennent automatiquement la priorité.
 
 ## Installation sur GitHub Pages
 
 1. Extraire le ZIP avec **Extraire tout**.
 2. Téléverser `index.html`, `README.md`, `VERSION.txt` ainsi que les dossiers `assets`, `css` et `js` à la racine du dépôt.
 3. Confirmer le remplacement des fichiers.
-4. Attendre environ une minute, ouvrir l’application et faire `Ctrl + F5`.
-5. Ouvrir **Timeline**, puis **▶️ Revivre le voyage**.
+4. Attendre environ une minute et faire `Ctrl + F5` dans l’application.

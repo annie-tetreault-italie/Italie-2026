@@ -845,6 +845,44 @@ let timelinePlaybackTimer = null;
 let timelinePlaybackIndex = 0;
 const ITALY_SIGNATURE_QUOTE = "Aujourd’hui restera l’un de mes plus beaux souvenirs d’Italie.";
 
+const DESTINATION_COVERS = {
+  cinqueTerre: "assets/manarola-sunset.jpg",
+  florence: "https://images.unsplash.com/photo-1544986581-efac024faf62?auto=format&fit=crop&w=1800&q=85",
+  venice: "https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?auto=format&fit=crop&w=1800&q=85",
+  tuscany: "https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=1800&q=85",
+  rome: "https://images.unsplash.com/photo-1552832230-c0197dd311b5?auto=format&fit=crop&w=1800&q=85",
+  italy: "assets/manarola-sunset.jpg"
+};
+
+function destinationCoverForDay(day){
+  const city = String(cityForDay(day) || firstValue(day,["title","location","arrivalCity"]) || "").toLocaleLowerCase("fr-CA");
+  if(city.includes("cinque") || city.includes("manarola") || city.includes("vernazza") || city.includes("monterosso") || city.includes("riomaggiore")) return DESTINATION_COVERS.cinqueTerre;
+  if(city.includes("florence") || city.includes("firenze")) return DESTINATION_COVERS.florence;
+  if(city.includes("venise") || city.includes("venice") || city.includes("venezia")) return DESTINATION_COVERS.venice;
+  if(city.includes("toscane") || city.includes("tuscany") || city.includes("chianti") || city.includes("sienne") || city.includes("siena") || city.includes("panzano")) return DESTINATION_COVERS.tuscany;
+  if(city.includes("rome") || city.includes("roma")) return DESTINATION_COVERS.rome;
+  return DESTINATION_COVERS.italy;
+}
+
+function personalCoverForDay(day){
+  const photos = Array.isArray(day?.photos) ? day.photos : [];
+  const preferred = Number(day?.favoritePhotoIndex);
+  if(Number.isInteger(preferred) && preferred >= 0 && photos[preferred]) return photos[preferred];
+  const today = new Date();
+  const travelDay = day?.id ? new Date(day.id + "T00:00:00") : null;
+  if(travelDay && travelDay <= today){
+    for(const photo of photos){
+      const src = typeof photo === "string" ? photo : (photo?.url || photo?.src || photo?.dataUrl || "");
+      if(src) return src;
+    }
+  }
+  return "";
+}
+
+function coverForDay(day){
+  return personalCoverForDay(day) || destinationCoverForDay(day);
+}
+
 function timelineMemoryForDay(day){ return firstValue(day,["memoryText","journal","memory","favoriteMoment","notes"]); }
 function timelineRating(day){ return Number(day.rating||day.dayRating||0); }
 function timelineBudget(day){ return firstValue(day,["budget","dailyBudget"]); }
@@ -910,7 +948,7 @@ function renderTimeline(){
     const city=cityForDay(day)||"Italie"; const photos=Array.isArray(day.photos)?day.photos:[]; const places=Array.isArray(day.herePlaces)?day.herePlaces:[]; const memory=timelineMemoryForDay(day); const rating=timelineRating(day); const budget=timelineBudget(day); const reflection=timelineReflection(day);
     const activities=valueItems(firstValue(day,["activities","activity","schedule"])); const restaurants=valueItems(firstValue(day,["restaurants","restaurant"]));
     const card=document.createElement("article"); card.className="card timeline-day-card"+(rating>=5?" timeline-highlight":""); card.dataset.timelineDay=day.id;
-    const cover=photos[0]||"assets/manarola-sunset.jpg";
+    const cover=coverForDay(day);
     card.innerHTML=`<div class="timeline-day-cover" style="background-image:linear-gradient(180deg,rgba(0,0,0,.06),rgba(0,0,0,.72)),url('${cover}')"><div><div class="timeline-day-date">${esc(formatDateFr(day.id))}</div><h2>${esc(city)}</h2><div>Jour ${itineraryDays.findIndex(d=>d.id===day.id)+1} sur ${itineraryDays.length}</div></div></div><div class="timeline-day-body"><div class="timeline-day-kpis"><div><strong>${photos.length}</strong><span>📸 Photos</span></div><div><strong>${places.length}</strong><span>📌 Lieux</span></div><div><strong>${rating?"★".repeat(rating):"—"}</strong><span>Note</span></div><div><strong>${budget?esc(displayValue(budget)):"—"}</strong><span>💶 Budget</span></div></div>${memory?`<div class="timeline-memory"><strong>❤️ Mon souvenir</strong><br>${esc(displayValue(memory))}</div>`:""}${activities.length?`<p><strong>🥾 Activités :</strong> ${esc(activities.slice(0,3).join(" · "))}</p>`:""}${restaurants.length?`<p><strong>🍝 Restaurants :</strong> ${esc(restaurants.slice(0,3).join(" · "))}</p>`:""}${photos.length?`<div class="timeline-photo-strip">${photos.slice(0,8).map((src,i)=>`<button type="button" data-timeline-photo="${i}"><img src="${src}" alt="Souvenir du ${esc(formatDateFr(day.id))}"></button>`).join("")}</div>`:""}<section class="timeline-reflection"><div class="timeline-reflection-label">🌅 Ce que je retiens aujourd’hui</div><blockquote>${reflection?esc(reflection):"Ajoute une phrase qui résume cette journée."}</blockquote><button class="timeline-reflection-edit" type="button">✏️ Modifier la phrase</button><div class="timeline-reflection-form" hidden><textarea maxlength="260" aria-label="Phrase souvenir">${esc(reflection)}</textarea><div><button class="btn timeline-reflection-save" type="button">Enregistrer</button><button class="btn secondary timeline-reflection-cancel" type="button">Annuler</button></div><small class="timeline-reflection-status"></small></div></section><div class="timeline-day-actions"><button class="btn" type="button" data-open-timeline-day="${day.id}">Voir la journée</button><button class="btn secondary" type="button" data-map-timeline-day="${day.id}">📍 Voir sur la carte</button></div></div>`;
     card.querySelectorAll("[data-timeline-photo]").forEach(btn=>btn.addEventListener("click",()=>openPhotoViewer(photos,Number(btn.dataset.timelinePhoto)||0,`${formatDateFr(day.id)} — ${city}`)));
     card.querySelector("[data-open-timeline-day]")?.addEventListener("click",()=>openDayDetail(day.id));
@@ -2012,12 +2050,7 @@ let replayTimer = null;
 let replayPaused = false;
 
 function replayPhotoForDay(day){
-  const photos = Array.isArray(day?.photos) ? day.photos : [];
-  for(const photo of photos){
-    const src = typeof photo === "string" ? photo : (photo?.url || photo?.src || photo?.dataUrl || "");
-    if(src) return src;
-  }
-  return "assets/manarola-sunset.jpg";
+  return coverForDay(day);
 }
 function replayPlacesForDay(day){ return Array.isArray(day?.herePlaces) ? day.herePlaces.length : 0; }
 function replayMemoryText(day){ return timelineReflection(day) || timelineMemoryForDay(day) || "Une nouvelle journée à garder en mémoire."; }
