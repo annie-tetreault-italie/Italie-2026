@@ -2144,3 +2144,93 @@ $("cancelNewTrip")?.addEventListener("click",closeCreateTrip);
 $("createTripModal")?.addEventListener("click",e=>{if(e.target.id==="createTripModal") closeCreateTrip();});
 document.addEventListener("keydown",e=>{if(e.key==="Escape" && $("createTripModal") && !$("createTripModal").hidden) closeCreateTrip();});
 renderTrips();
+
+
+// ===== Premium 3.7 — Météo en temps réel et prévisions =====
+const WEATHER_CACHE_KEY = "mon-carnet-weather-v37";
+const WEATHER_TTL = 15 * 60 * 1000;
+const WEATHER_PLACES = [
+  {id:"cinque-terre", name:"Cinque Terre", lat:44.1461, lon:9.6439},
+  {id:"florence", name:"Florence", lat:43.7696, lon:11.2558},
+  {id:"venice", name:"Venise", lat:45.4408, lon:12.3155},
+  {id:"tuscany", name:"Toscane", lat:43.3188, lon:11.3308},
+  {id:"rome", name:"Rome", lat:41.9028, lon:12.4964}
+];
+let weatherData = {};
+function weatherCodeInfo(code){
+  const n=Number(code);
+  if(n===0) return {icon:"☀️",label:"Ensoleillé"};
+  if([1,2].includes(n)) return {icon:"🌤️",label:"Partiellement nuageux"};
+  if(n===3) return {icon:"☁️",label:"Nuageux"};
+  if([45,48].includes(n)) return {icon:"🌫️",label:"Brouillard"};
+  if([51,53,55,56,57].includes(n)) return {icon:"🌦️",label:"Bruine"};
+  if([61,63,65,66,67,80,81,82].includes(n)) return {icon:"🌧️",label:"Pluie"};
+  if([71,73,75,77,85,86].includes(n)) return {icon:"🌨️",label:"Neige"};
+  if([95,96,99].includes(n)) return {icon:"⛈️",label:"Orage"};
+  return {icon:"🌤️",label:"Variable"};
+}
+function cityWeatherKey(city=""){
+  const c=String(city).toLocaleLowerCase("fr-CA");
+  if(c.includes("cinque")||c.includes("vernazza")||c.includes("manarola")||c.includes("monterosso")||c.includes("riomaggiore")) return "cinque-terre";
+  if(c.includes("florence")||c.includes("firenze")) return "florence";
+  if(c.includes("venise")||c.includes("venezia")) return "venice";
+  if(c.includes("toscane")||c.includes("chianti")||c.includes("sienne")||c.includes("siena")||c.includes("panzano")) return "tuscany";
+  if(c.includes("rome")||c.includes("roma")) return "rome";
+  return "rome";
+}
+async function fetchPlaceWeather(place){
+  const params=new URLSearchParams({latitude:place.lat,longitude:place.lon,timezone:"auto",forecast_days:"7",current:"temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,weather_code,wind_speed_10m",daily:"weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset,uv_index_max"});
+  const response=await fetch(`https://api.open-meteo.com/v1/forecast?${params}`);
+  if(!response.ok) throw new Error(`Météo ${place.name}: ${response.status}`);
+  return response.json();
+}
+function cachedWeather(){
+  const cache=LS.get(WEATHER_CACHE_KEY,null);
+  if(!cache||!cache.savedAt||Date.now()-cache.savedAt>WEATHER_TTL) return null;
+  return cache.data||null;
+}
+async function loadWeather(force=false){
+  const cached=!force&&cachedWeather();
+  if(cached){weatherData=cached;renderAllWeather();return;}
+  const error=$("weatherError"); if(error) error.hidden=true;
+  try{
+    const results=await Promise.all(WEATHER_PLACES.map(async place=>[place.id,await fetchPlaceWeather(place)]));
+    weatherData=Object.fromEntries(results); LS.set(WEATHER_CACHE_KEY,{savedAt:Date.now(),data:weatherData}); renderAllWeather();
+  }catch(err){
+    console.error("Chargement météo",err);
+    const fallback=LS.get(WEATHER_CACHE_KEY,null)?.data;
+    if(fallback){weatherData=fallback;renderAllWeather(true);} else {if(error) error.hidden=false; renderWeatherUnavailable();}
+  }
+}
+function renderWeatherUnavailable(){
+  const strip=$("homeWeatherStrip"); if(strip) strip.innerHTML='<div class="weather-loading weather-offline">Météo indisponible pour le moment.</div>';
+  const details=$("todayWeatherDetails"); if(details) details.innerHTML='<div class="weather-offline">Connexion requise</div>';
+}
+function formatWeatherTime(iso){if(!iso)return"—";return new Intl.DateTimeFormat("fr-CA",{hour:"2-digit",minute:"2-digit"}).format(new Date(iso));}
+function renderHomeWeather(){
+  const root=$("homeWeatherStrip"); if(!root) return;
+  root.innerHTML=WEATHER_PLACES.map(place=>{const w=weatherData[place.id];if(!w)return'';const info=weatherCodeInfo(w.current.weather_code);return `<button class="home-weather-mini" type="button" data-weather-place="${place.id}"><span>${info.icon} ${esc(place.name)}</span><strong>${Math.round(w.current.temperature_2m)} °C</strong><small>${esc(info.label)}</small></button>`;}).join('');
+  root.querySelectorAll('[data-weather-place]').forEach(btn=>btn.addEventListener('click',()=>showPanel('conditions')));
+}
+function renderWeatherCities(){
+  const root=$("weatherCitiesGrid"); if(!root) return;
+  root.innerHTML=WEATHER_PLACES.map(place=>{const w=weatherData[place.id];if(!w)return'';const current=weatherCodeInfo(w.current.weather_code);const days=(w.daily.time||[]).map((date,i)=>{const info=weatherCodeInfo(w.daily.weather_code[i]);const label=new Intl.DateTimeFormat("fr-CA",{weekday:"short"}).format(new Date(date+'T12:00:00')).replace('.','');return `<div class="weather-day"><strong>${esc(label)}</strong><span class="weather-icon">${info.icon}</span><span>${Math.round(w.daily.temperature_2m_max[i])}°</span><small>${Math.round(w.daily.temperature_2m_min[i])}° · 💧${Math.round(w.daily.precipitation_probability_max[i]||0)}%</small></div>`;}).join('');return `<article class="card weather-city-card"><div class="weather-city-current"><div><span class="eyebrow">${current.icon} Maintenant</span><h2>${esc(place.name)}</h2><p>${esc(current.label)}</p><div class="weather-current-meta"><span>Ressenti ${Math.round(w.current.apparent_temperature)}°</span><span>💨 ${Math.round(w.current.wind_speed_10m)} km/h</span><span>💧 ${Math.round(w.current.relative_humidity_2m)} %</span><span>UV ${Math.round(w.daily.uv_index_max[0]||0)}</span></div></div><div class="weather-current-temp">${Math.round(w.current.temperature_2m)} °C</div></div><div class="weather-forecast-list">${days}</div></article>`;}).join('');
+}
+function renderTodayWeather(){
+  if(!itineraryDays.length) return;
+  const day=itineraryDays.find(d=>d.id===todaySelectedDayId)||itineraryDays[0]; const city=cityForDay(day)||"Rome"; const key=cityWeatherKey(city); const w=weatherData[key];
+  const title=$("todayWeatherTitle"),summary=$("todayWeatherSummary"),details=$("todayWeatherDetails"); if(!title||!summary||!details)return;
+  if(!w){title.textContent=city;summary.textContent="Météo indisponible";details.innerHTML="";return;}
+  const info=weatherCodeInfo(w.current.weather_code);title.textContent=`${info.icon} ${Math.round(w.current.temperature_2m)} °C à ${city}`;summary.textContent=info.label;
+  details.innerHTML=`<div><span>Ressenti</span><strong>${Math.round(w.current.apparent_temperature)} °C</strong></div><div><span>Pluie</span><strong>${Math.round(w.daily.precipitation_probability_max[0]||0)} %</strong></div><div><span>Vent</span><strong>${Math.round(w.current.wind_speed_10m)} km/h</strong></div><div><span>Lever</span><strong>${formatWeatherTime(w.daily.sunrise[0])}</strong></div><div><span>Coucher</span><strong>${formatWeatherTime(w.daily.sunset[0])}</strong></div>`;
+}
+function addTimelineWeather(){
+  document.querySelectorAll('.timeline-day-card').forEach(card=>{if(card.querySelector('.timeline-weather-pill'))return;const day=itineraryDays.find(d=>d.id===card.dataset.timelineDay);if(!day)return;const w=weatherData[cityWeatherKey(cityForDay(day))];if(!w)return;const info=weatherCodeInfo(w.current.weather_code);const cover=card.querySelector('.timeline-day-cover>div');if(cover)cover.insertAdjacentHTML('beforeend',`<div class="timeline-weather-pill">${info.icon} ${Math.round(w.current.temperature_2m)} °C</div>`);});
+}
+function renderAllWeather(stale=false){renderHomeWeather();renderWeatherCities();renderTodayWeather();addTimelineWeather();const updated=$("weatherUpdatedAt");if(updated)updated.textContent=`${stale?'Dernières données disponibles':'Mise à jour'} : ${new Intl.DateTimeFormat('fr-CA',{hour:'2-digit',minute:'2-digit'}).format(new Date())}`;}
+$("refreshAllWeather")?.addEventListener("click",()=>loadWeather(true));
+$("refreshTodayWeather")?.addEventListener("click",()=>loadWeather(true));
+const originalShowPanel=window.showPanel;
+window.showPanel=function(id){originalShowPanel(id);if(id==="conditions"||id==="today")setTimeout(()=>{renderAllWeather();},80);};
+loadWeather();
+setInterval(()=>loadWeather(true),WEATHER_TTL);

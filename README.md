@@ -1,18 +1,11 @@
-# Mon Carnet de Voyages — Premium 3.6 Stable
+# Mon Carnet de Voyages — Premium 3.7
 
-Cette version repart du projet stable et ajoute un véritable écran **Mes voyages**.
+Version stable basée sur la 3.6.
 
 ## Nouveautés
-
-- bouton **Mes voyages** sur l’accueil;
-- formulaire fonctionnel **Créer un nouveau voyage**;
-- modèles incluant le Vietnam, le Japon et la Thaïlande;
-- dates, budget, voyageurs et style de voyage;
-- sauvegarde locale dans le navigateur;
-- suppression d’un projet créé;
-- conservation du voyage Italie 2026 comme voyage actif;
-- aucun changement destructif dans Firebase.
-
-## Installation
-
-Extraire le ZIP et téléverser son contenu à la racine du dépôt GitHub Pages.
+- Conditions météo en temps réel pour Cinque Terre, Florence, Venise, Toscane et Rome
+- Prévisions sur 7 jours
+- Température ressentie, pluie, vent, humidité, UV, lever et coucher du soleil
+- Météo intégrée à l’accueil, à Aujourd’hui et à la Timeline
+- Actualisation manuelle et automatique toutes les 15 minutes
+- Aucune clé API requise (Open-Meteo)
