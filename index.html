@@ -5,28 +5,26 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f7f0e6">
 <title>Mon Carnet de Voyages — Italie 2026</title>
-<meta name="application-version" content="premium-3.3-sprint">
+<meta name="application-version" content="premium-3.5-voyages">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
-<link rel="stylesheet" href="css/style.css?v=premium-3.3-sprint">
+<link rel="stylesheet" href="css/style.css?v=premium-3.5-voyages">
 </head>
 <body>
 <div class="app">
-
-  <section id="trips" class="panel trips-panel">
-    <div class="trips-hero">
-      <div class="trips-hero-shade"></div>
-      <div class="trips-hero-content"><span class="eyebrow">Ton carnet pour la vie</span><h1>Mes voyages</h1><p>Préparer, voyager et revivre chaque destination au même endroit.</p></div>
-    </div>
-    <div class="section trips-section">
-      <article class="trip-library-card italy-trip-card">
-        <div class="trip-library-cover"><span class="trip-status">En préparation</span><div><span>🇮🇹 Italie 2026</span><h2>Rome · Cinque Terre · Florence · Venise · Toscane</h2></div></div>
-        <div class="trip-library-body">
-          <div class="trip-library-stats"><div><strong>18</strong><span>jours</span></div><div><strong id="tripsPhotoCount">0</strong><span>photos</span></div><div><strong id="tripsMemoryCount">0</strong><span>souvenirs</span></div></div>
-          <button id="openItalyTrip" class="btn premium-main-action" type="button">Ouvrir Italie 2026 →</button>
-        </div>
-      </article>
-      <button id="newTripButton" class="new-trip-card" type="button"><span>＋</span><strong>Créer un nouveau voyage</strong><small>Espagne, Portugal, France…</small></button>
-      <p id="newTripStatus" class="subtle" role="status"></p>
+  <section id="trips" class="panel">
+    <div class="hero trips-hero"><div class="eyebrow">Rêver · préparer · partir</div><h1>Mes voyages</h1><div class="dates">Crée un voyage ou laisse-toi inspirer</div></div>
+    <div class="section">
+      <div class="trip-hub-actions">
+        <button id="openCreateTrip" class="card trip-hub-action"><span>➕</span><strong>Créer un nouveau voyage</strong><small>Nom, pays, dates, budget et voyageurs</small></button>
+        <button id="openInspire" class="card trip-hub-action"><span>✨</span><strong>Inspire-moi</strong><small>Suggestions selon ton budget et tes envies</small></button>
+      </div>
+      <h2>Mes voyages</h2>
+      <div id="tripLibrary" class="trip-library"></div>
+      <h2>Voyages populaires</h2>
+      <div class="template-groups">
+        <article class="card template-group"><h3>🌍 Europe</h3><div class="template-chips"><button data-template="Italie">🇮🇹 Italie</button><button data-template="Portugal">🇵🇹 Portugal</button><button data-template="Espagne">🇪🇸 Espagne</button><button data-template="France">🇫🇷 France</button></div></article>
+        <article class="card template-group"><h3>🌏 Asie</h3><div class="template-chips"><button data-template="Vietnam">🇻🇳 Vietnam</button><button data-template="Japon">🇯🇵 Japon</button><button data-template="Thaïlande">🇹🇭 Thaïlande</button><button data-template="Cambodge">🇰🇭 Cambodge</button><button data-template="Bali">🇮🇩 Bali</button></div></article>
+      </div>
     </div>
   </section>
 
@@ -35,7 +33,7 @@
       <div class="premium-hero-overlay"></div>
       <div class="premium-hero-content">
         <div class="app-brand premium-brand"><div class="app-brand-mark">🌍</div><div><div class="app-brand-name">Mon Carnet de Voyages</div><div class="app-brand-slogan">Préparer · Voyager · Revivre</div></div></div>
-        <button id="openTripsHub" class="premium-trip-pill trip-pill-button" type="button">🌍 Mes voyages · 🇮🇹 Italie 2026</button>
+        <div class="premium-trip-pill">🇮🇹 Italie 2026</div>
         <div class="premium-greeting">Bonjour Annie 👋</div>
         <h1 id="premiumCurrentCity">Ton voyage approche</h1>
         <p id="premiumCurrentDate">28 septembre au 16 octobre 2026</p>
@@ -44,15 +42,6 @@
     </div>
     <div id="syncStatus" class="sync-status">Connexion à Firebase…</div>
     <div class="section premium-dashboard">
-      <article class="card live-weather-card" aria-labelledby="liveWeatherTitle">
-        <div class="premium-card-head">
-          <div><span class="eyebrow">🌤️ En temps réel</span><h2 id="liveWeatherTitle">Météo des destinations</h2></div>
-          <button id="refreshWeather" class="premium-arrow" type="button" aria-label="Actualiser la météo">↻</button>
-        </div>
-        <div id="weatherUpdated" class="weather-updated">Mise à jour en cours…</div>
-        <div id="weatherDestinations" class="weather-destination-grid" aria-live="polite"></div>
-      </article>
-
       <article class="card premium-progress-card">
         <div class="premium-card-head"><div><span class="eyebrow">Progression du voyage</span><h2 id="premiumProgressTitle">Préparation en cours</h2></div><strong id="premiumProgressPercent">0 %</strong></div>
         <div class="premium-progress-track"><div id="premiumProgressBar"></div></div>
@@ -85,7 +74,7 @@
         <div id="weeklyFocusList" class="weekly-focus-list"></div>
       </article>
 
-      <div class="premium-quick-grid">
+      <div class="premium-quick-grid"><button onclick="showPanel('trips')"><span>🌍</span>Mes voyages</button>
         <button onclick="showPanel('itinerary')"><span>🗺️</span>Itinéraire</button><button onclick="showPanel('map')"><span>📍</span>Carte</button><button onclick="showPanel('bookings')"><span>🎟️</span>Réservations</button><button onclick="showPanel('budget')"><span>💳</span>Budget</button><button onclick="showPanel('lists')"><span>✅</span>Listes</button><button onclick="showPanel('memories')"><span>📖</span>Souvenirs</button>
       </div>
 
@@ -479,6 +468,29 @@
   </section>
 </div>
 
+
+<div id="createTripModal" class="quick-modal" hidden>
+  <form id="createTripForm" class="quick-modal-card trip-form" role="dialog" aria-modal="true" aria-labelledby="createTripTitle">
+    <h2 id="createTripTitle">➕ Créer un nouveau voyage</h2>
+    <div class="row"><div class="field"><label>Nom du voyage</label><input id="newTripName" required placeholder="Ex. Vietnam 2028"></div><div class="field"><label>Pays ou région</label><input id="newTripCountry" required placeholder="Ex. Vietnam"></div></div>
+    <div class="row"><div class="field"><label>Date de départ</label><input id="newTripStart" type="date"></div><div class="field"><label>Date de retour</label><input id="newTripEnd" type="date"></div></div>
+    <div class="row"><div class="field"><label>Budget prévu ($ CA)</label><input id="newTripBudget" type="number" min="0" step="50" placeholder="5000"></div><div class="field"><label>Voyageurs</label><input id="newTripTravelers" type="number" min="1" value="2"></div></div>
+    <div class="field"><label>Style</label><select id="newTripStyle"><option>Découverte</option><option>Gastronomie</option><option>Détente</option><option>Aventure</option><option>Nature</option><option>Culture</option></select></div>
+    <div class="quick-modal-actions"><button class="btn" type="submit">Créer le voyage</button><button id="cancelCreateTrip" class="btn secondary" type="button">Annuler</button></div>
+    <div id="createTripStatus" class="subtle" role="status"></div>
+  </form>
+</div>
+<div id="inspireModal" class="quick-modal" hidden>
+  <form id="inspireForm" class="quick-modal-card trip-form" role="dialog" aria-modal="true" aria-labelledby="inspireTitle">
+    <h2 id="inspireTitle">✨ Inspire-moi</h2>
+    <div class="row"><div class="field"><label>Budget total ($ CA)</label><input id="inspireBudget" type="number" min="500" value="5000"></div><div class="field"><label>Nombre de jours</label><input id="inspireDays" type="number" min="3" value="14"></div></div>
+    <div class="row"><div class="field"><label>Voyageurs</label><input id="inspireTravelers" type="number" min="1" value="2"></div><div class="field"><label>Mois</label><select id="inspireMonth"><option>Septembre</option><option>Octobre</option><option>Mai</option><option>Juin</option><option>Juillet</option><option>Août</option><option>Novembre</option></select></div></div>
+    <div class="field"><label>Ce que tu aimes</label><select id="inspireInterest"><option>Gastronomie et paysages</option><option>Culture et histoire</option><option>Plages et détente</option><option>Nature et aventure</option><option>Villes et photographie</option></select></div>
+    <div class="quick-modal-actions"><button class="btn" type="submit">Voir mes suggestions</button><button id="cancelInspire" class="btn secondary" type="button">Fermer</button></div>
+    <div id="inspireResults" class="inspire-results"></div>
+  </form>
+</div>
+
 <div id="quickEditModal" class="quick-modal" hidden>
   <div class="quick-modal-card" role="dialog" aria-modal="true" aria-labelledby="quickModalTitle">
     <h2 id="quickModalTitle">Modifier</h2>
@@ -518,7 +530,6 @@
 </div>
 
 <nav class="nav">
-  <button data-panel="trips" onclick="showPanel('trips')"><span>🌍</span>Voyages</button>
   <button class="active" data-panel="home" onclick="showPanel('home')"><span>🏠</span>Accueil</button>
   <button data-panel="today" onclick="showPanel('today')"><span>☀️</span>Aujourd’hui</button>
   <button data-panel="timeline" onclick="showPanel('timeline')"><span>🕒</span>Timeline</button>
@@ -558,6 +569,6 @@
   <div class="replay-controls"><button id="replayPrevious" class="replay-control" aria-label="Précédent">←</button><button id="replayToggle" class="replay-control primary" aria-label="Pause">⏸</button><div id="replayCounter" class="replay-counter">1 / 1</div><button id="replayNext" class="replay-control" aria-label="Suivant">→</button></div>
   <section id="replayFinale" class="replay-finale"><div class="replay-finale-card"><div class="replay-finale-flag">🇮🇹</div><h2>Merci Italie</h2><p>Un voyage se termine. Les souvenirs, eux, restent pour toujours.</p><div id="replayFinalStats" class="replay-final-stats"></div><button id="replayRestart" class="replay-control primary" aria-label="Recommencer">↻</button></div></section>
 </div>
-<script type="module" src="js/app.js?v=premium-3.3-sprint"></script>
+<script type="module" src="js/app.js?v=premium-3.5-voyages"></script>
 </body>
 </html>

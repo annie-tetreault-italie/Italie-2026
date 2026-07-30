@@ -1,16 +1,5 @@
-# Mon Carnet de Voyages — Premium 3.4
+# Mon Carnet de Voyages — Premium 3.5
 
-## Nouveautés
-- Couvertures intelligentes par destination
-- Toscane lumineuse de jour
-- Les anciennes photos de test ne sont plus utilisées avant le départ
-- Les photos personnelles préférées prennent la priorité pendant le voyage
-- Première page « Mes voyages »
-- Mode « Revivre le voyage » conservé et synchronisé avec les nouvelles couvertures
+Cette version ajoute un véritable écran **Mes voyages**, un formulaire fonctionnel **Créer un nouveau voyage**, des modèles Europe et Asie incluant le Vietnam, ainsi qu’un premier moteur **Inspire-moi**.
 
-## Installation GitHub Pages
-Téléverser le contenu du dossier à la racine du dépôt, puis actualiser avec Ctrl + F5.
-
-
-## Météo en temps réel
-La page Accueil affiche la température actuelle des cinq grandes destinations. Les données proviennent d’Open-Meteo et sont actualisées automatiquement, sans clé API.
+Les nouveaux voyages sont enregistrés localement dans le navigateur. Le voyage Italie 2026 et toutes ses fonctions existantes demeurent inchangés.
