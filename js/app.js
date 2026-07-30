@@ -924,7 +924,7 @@ function renderTimeline(){
 }
 $("timelineHighlightsButton")?.addEventListener("click",()=>{ timelineHighlightsOnly=!timelineHighlightsOnly; $("timelineHighlightsButton").textContent=timelineHighlightsOnly?"Voir toutes les journées":"⭐ Meilleurs moments"; renderTimeline(); });
 $("timelineTodayButton")?.addEventListener("click",()=>{ renderTimeline(); const now=new Date(); const id=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`; let target=document.querySelector(`[data-timeline-day="${id}"]`); if(!target){ target=document.querySelector('.timeline-day-card'); } target?.scrollIntoView({behavior:"smooth",block:"center"}); });
-$("timelinePlayButton")?.addEventListener("click",startTimelinePlayback);
+// Le bouton Timeline est géré par le lecteur Revivre 3.8.1.
 window.renderTimeline=renderTimeline;
 onSnapshot(daysQuery, snapshot => {
   itineraryDays = [];
@@ -2005,27 +2005,38 @@ document.addEventListener("touchend", function(e){
   }
 },{passive:false});
 
-// ===== Premium 3.8 — Revivre le voyage Premium =====
-let REPLAY_INTERVAL = 8000;
+// ===== Premium 3.8.1 — Revivre le voyage réellement fonctionnel =====
+let REPLAY_INTERVAL = 7000;
 let replayIndex = 0;
 let replayTimer = null;
 let replayPaused = false;
 let replayPhotoTimer = null;
 let replayPhotoIndex = 0;
 let replaySpeedIndex = 0;
-const REPLAY_SPEEDS = [{label:"1×",ms:8000},{label:"1,5×",ms:5400},{label:"2×",ms:4000}];
+const REPLAY_SPEEDS = [{label:"1×",ms:7000},{label:"1,5×",ms:4800},{label:"2×",ms:3400}];
 
-function replayPhotosForDay(day){
-  const photos = Array.isArray(day?.photos) ? day.photos : [];
-  const sources = photos.map(photo => typeof photo === "string" ? photo : (photo?.url || photo?.src || photo?.dataUrl || "")).filter(Boolean);
-  return sources.length ? sources : [timelineCoverForDay(day) || "assets/manarola-sunset.jpg"];
+function replayFallbackDays(){
+  const cities=["Cinque Terre","Cinque Terre","Cinque Terre","Cinque Terre","Florence","Venise","Venise","Toscane","Toscane","Toscane","Toscane","Toscane","Toscane","Toscane","Toscane","Rome","Rome","Rome"];
+  const base=new Date("2026-09-28T12:00:00");
+  return cities.map((city,index)=>{ const d=new Date(base); d.setDate(base.getDate()+index); return {id:d.toISOString().slice(0,10),location:city,title:city,photos:[],herePlaces:[]}; });
 }
-function replayPhotoForDay(day){ return replayPhotosForDay(day)[0]; }
+function replayDays(){ return itineraryDays.length ? itineraryDays : replayFallbackDays(); }
+function replayPhotoSource(photo){
+  if(typeof photo==="string") return photo;
+  if(!photo || typeof photo!=="object") return "";
+  return photo.url || photo.src || photo.dataUrl || photo.data || photo.downloadURL || "";
+}
+function replayDefaultCover(){ return "assets/manarola-sunset.jpg"; }
+function replayPhotosForDay(day){
+  const photos=Array.isArray(day?.photos)?day.photos:[];
+  const sources=photos.map(replayPhotoSource).filter(Boolean);
+  return sources.length?sources:[replayDefaultCover(day)];
+}
 function setReplayBackdrop(src){
-  const backdrop=$("replayBackdrop");
-  if(!backdrop) return;
+  const backdrop=$("replayBackdrop"); if(!backdrop) return;
+  const safe=String(src||"assets/manarola-sunset.jpg").replace(/"/g,"%22");
   backdrop.style.opacity="0";
-  setTimeout(()=>{ backdrop.style.backgroundImage=`url("${String(src).replace(/"/g,'%22')}")`; backdrop.style.opacity="1"; },180);
+  window.setTimeout(()=>{backdrop.style.backgroundImage=`url("${safe}")`;backdrop.style.opacity="1";},120);
 }
 function startReplayPhotoCycle(day){
   clearInterval(replayPhotoTimer);
@@ -2033,89 +2044,83 @@ function startReplayPhotoCycle(day){
   const dots=$("replayPhotoDots");
   if(dots) dots.innerHTML=photos.length>1?photos.map((_,i)=>`<button type="button" class="${i===0?"active":""}" aria-label="Photo ${i+1}"></button>`).join(""):"";
   setReplayBackdrop(photos[0]);
-  if(photos.length<2) return;
-  replayPhotoTimer=setInterval(()=>{
+  if(photos.length>1) replayPhotoTimer=setInterval(()=>{
     if(replayPaused) return;
     replayPhotoIndex=(replayPhotoIndex+1)%photos.length;
     setReplayBackdrop(photos[replayPhotoIndex]);
     dots?.querySelectorAll("button").forEach((dot,i)=>dot.classList.toggle("active",i===replayPhotoIndex));
-  },2200);
+  },2300);
 }
-function replayPlacesForDay(day){ return Array.isArray(day?.herePlaces) ? day.herePlaces.length : 0; }
-function replayMemoryText(day){ return timelineReflection(day) || timelineMemoryForDay(day) || "Une nouvelle journée à garder en mémoire."; }
-function replayCities(){
-  const result=[];
-  itineraryDays.forEach(day=>{ const city=cityForDay(day)||"Italie"; if(result[result.length-1]!==city) result.push(city); });
-  return result;
+function replayPlacesForDay(day){ return Array.isArray(day?.herePlaces)?day.herePlaces.length:0; }
+function replayMemoryText(day){ return timelineReflection(day)||timelineMemoryForDay(day)||"Une nouvelle journée à garder en mémoire."; }
+function replayCities(days=replayDays()){
+  const result=[]; days.forEach(day=>{const city=cityForDay(day)||day.location||"Italie";if(result[result.length-1]!==city)result.push(city);}); return result;
 }
 function replayStats(){
-  const photoCount=itineraryDays.reduce((n,d)=>n+(Array.isArray(d.photos)?d.photos.length:0),0);
-  const places=itineraryDays.reduce((n,d)=>n+replayPlacesForDay(d),0);
-  const favorites=itineraryDays.filter(d=>timelineRating(d)>=4 || firstValue(d,["favoriteMoment","favorite","memoryFavorite"])).length;
-  const memories=itineraryDays.filter(d=>timelineMemoryForDay(d)||timelineReflection(d)).length;
-  return {photoCount,places,favorites,memories};
+  const days=replayDays();
+  return {
+    photoCount:days.reduce((n,d)=>n+(Array.isArray(d.photos)?d.photos.length:0),0),
+    places:days.reduce((n,d)=>n+replayPlacesForDay(d),0),
+    favorites:days.filter(d=>timelineRating(d)>=4||firstValue(d,["favoriteMoment","favorite","memoryFavorite"])).length,
+    memories:days.filter(d=>timelineMemoryForDay(d)||timelineReflection(d)).length
+  };
 }
-function renderReplayRoute(day){
-  const cities=replayCities(); const active=cityForDay(day)||"Italie"; const activeIndex=Math.max(0,cities.indexOf(active));
-  $("replayRouteList").innerHTML=cities.map((city,index)=>`<div class="replay-route-step ${index<activeIndex?"done":index===activeIndex?"active":""}"><i></i><span>${esc(city)}</span></div>`).join("");
+function renderReplayRoute(day,days){
+  const cities=replayCities(days), active=cityForDay(day)||day.location||"Italie", activeIndex=Math.max(0,cities.indexOf(active));
+  const root=$("replayRouteList"); if(!root)return;
+  root.innerHTML=cities.map((city,index)=>`<div class="replay-route-step ${index<activeIndex?"done":index===activeIndex?"active":""}"><i></i><span>${esc(city)}</span></div>`).join("");
 }
 function weatherPlaceIdForCity(city){
   const value=String(city||"").toLocaleLowerCase("fr-CA");
-  if(value.includes("cinque")||value.includes("vernazza")||value.includes("manarola")||value.includes("monterosso")) return "cinque-terre";
-  if(value.includes("florence")||value.includes("firenze")) return "florence";
-  if(value.includes("venise")||value.includes("venezia")) return "venise";
-  if(value.includes("toscane")||value.includes("chianti")||value.includes("sienne")||value.includes("siena")) return "toscane";
-  if(value.includes("rome")||value.includes("roma")) return "rome";
-  return "";
+  if(value.includes("cinque")||value.includes("vernazza")||value.includes("manarola")||value.includes("monterosso"))return "cinque-terre";
+  if(value.includes("florence")||value.includes("firenze"))return "florence";
+  if(value.includes("venise")||value.includes("venezia"))return "venise";
+  if(value.includes("toscane")||value.includes("chianti")||value.includes("sienne")||value.includes("siena"))return "toscane";
+  if(value.includes("rome")||value.includes("roma"))return "rome"; return "";
 }
 function renderReplayDay(index){
-  if(!itineraryDays.length) return;
-  replayIndex=Math.max(0,Math.min(index,itineraryDays.length-1));
-  const day=itineraryDays[replayIndex]; const city=cityForDay(day)||"Italie";
+  const days=replayDays(); if(!days.length)return;
+  replayIndex=Math.max(0,Math.min(index,days.length-1));
+  const day=days[replayIndex], city=cityForDay(day)||day.location||"Italie";
   startReplayPhotoCycle(day);
   $("replayDate").textContent=formatDateFr(day.id);
   $("replayCity").textContent=city;
   $("replayTitle").textContent=firstValue(day,["title","location","arrival"])||"Une journée en Italie";
   $("replayQuote").textContent=`“${replayMemoryText(day)}”`;
-  const photos=Array.isArray(day.photos)?day.photos.length:0; const places=replayPlacesForDay(day); const rating=timelineRating(day);
-  const placeKey=weatherPlaceIdForCity(city); const weather=placeKey?weatherData?.[placeKey]:null; const weatherInfo=weather?weatherCodeInfo(weather.current.weather_code):null;
+  const photos=Array.isArray(day.photos)?day.photos.length:0, places=replayPlacesForDay(day), rating=timelineRating(day);
+  const placeKey=weatherPlaceIdForCity(city), weather=placeKey&&typeof weatherData!=="undefined"?weatherData?.[placeKey]:null;
+  const weatherInfo=weather?weatherCodeInfo(weather.current.weather_code):null;
   $("replayWeather").textContent=weather?`${weatherInfo.icon} ${Math.round(weather.current.temperature_2m)} °C · ${weatherInfo.label}`:"";
   $("replayKpis").innerHTML=`<span>📸 ${photos} photo${photos>1?"s":""}</span><span>📍 ${places} lieu${places>1?"x":""}</span>${rating?`<span>⭐ ${rating}/5</span>`:""}${timelineBudget(day)?`<span>💶 ${esc(displayValue(timelineBudget(day)))}</span>`:""}`;
-  $("replayCounter").textContent=`${replayIndex+1} / ${itineraryDays.length}`;
-  $("replayProgressFill").style.width=`${((replayIndex+1)/itineraryDays.length)*100}%`;
-  renderReplayRoute(day);
-  $("replayContent").style.animation="none"; requestAnimationFrame(()=>{ $("replayContent").style.animation="replaySlide .6s ease both"; });
+  $("replayCounter").textContent=`${replayIndex+1} / ${days.length}`;
+  $("replayProgressFill").style.width=`${((replayIndex+1)/days.length)*100}%`;
+  renderReplayRoute(day,days);
+  const content=$("replayContent"); content.style.animation="none"; requestAnimationFrame(()=>content.style.animation="replaySlide .6s ease both");
 }
-function replaySchedule(){ clearTimeout(replayTimer); if(replayPaused) return; replayTimer=setTimeout(()=>{ if(replayIndex>=itineraryDays.length-1) showReplayFinale(); else {renderReplayDay(replayIndex+1);replaySchedule();} },REPLAY_INTERVAL); }
+function replaySchedule(){
+  clearTimeout(replayTimer); if(replayPaused)return;
+  replayTimer=setTimeout(()=>{const days=replayDays();if(replayIndex>=days.length-1)showReplayFinale();else{renderReplayDay(replayIndex+1);replaySchedule();}},REPLAY_INTERVAL);
+}
 function openTripReplay(){
-  if(!itineraryDays.length){ alert("L’itinéraire est encore en chargement. Réessaie dans un instant."); return; }
-  stopTimelinePlayback(); replayPaused=false; $("replayFinale").classList.remove("show"); $("tripReplay").classList.add("open"); $("tripReplay").setAttribute("aria-hidden","false"); document.body.style.overflow="hidden"; $("replayToggle").textContent="⏸"; renderReplayDay(0); replaySchedule();
+  stopTimelinePlayback(); replayPaused=false;
+  $("replayFinale")?.classList.remove("show");
+  $("tripReplay")?.classList.add("open"); $("tripReplay")?.setAttribute("aria-hidden","false");
+  document.body.style.overflow="hidden"; $("replayToggle").textContent="⏸";
+  renderReplayDay(0); replaySchedule();
 }
-function closeTripReplay(){ clearTimeout(replayTimer); clearInterval(replayPhotoTimer); $("tripReplay").classList.remove("open"); $("tripReplay").setAttribute("aria-hidden","true"); document.body.style.overflow=""; }
-function toggleTripReplay(){ replayPaused=!replayPaused; $("replayToggle").textContent=replayPaused?"▶":"⏸"; if(replayPaused) clearTimeout(replayTimer); else replaySchedule(); }
-function showReplayFinale(){
-  clearTimeout(replayTimer); clearInterval(replayPhotoTimer); const s=replayStats();
-  $("replayFinalStats").innerHTML=`<div><strong>${s.photoCount}</strong><span>photos</span></div><div><strong>${s.favorites}</strong><span>coups de cœur</span></div><div><strong>${s.places}</strong><span>lieux</span></div><div><strong>${s.memories}</strong><span>journées racontées</span></div>`;
-  $("replayFinale").classList.add("show");
-}
-$("timelinePlayButton")?.addEventListener("click",event=>{ event.stopImmediatePropagation(); openTripReplay(); },true);
+function closeTripReplay(){clearTimeout(replayTimer);clearInterval(replayPhotoTimer);$("tripReplay")?.classList.remove("open");$("tripReplay")?.setAttribute("aria-hidden","true");document.body.style.overflow="";}
+function toggleTripReplay(){replayPaused=!replayPaused;$("replayToggle").textContent=replayPaused?"▶":"⏸";if(replayPaused)clearTimeout(replayTimer);else replaySchedule();}
+function showReplayFinale(){clearTimeout(replayTimer);clearInterval(replayPhotoTimer);const s=replayStats();$("replayFinalStats").innerHTML=`<div><strong>${s.photoCount}</strong><span>photos</span></div><div><strong>${s.favorites}</strong><span>coups de cœur</span></div><div><strong>${s.places}</strong><span>lieux</span></div><div><strong>${s.memories}</strong><span>journées racontées</span></div>`;$("replayFinale").classList.add("show");}
+
+$("timelinePlayButton")?.addEventListener("click",event=>{event.preventDefault();event.stopImmediatePropagation();openTripReplay();},true);
 $("replayClose")?.addEventListener("click",closeTripReplay);
 $("replayToggle")?.addEventListener("click",toggleTripReplay);
-$("replayPrevious")?.addEventListener("click",()=>{ $("replayFinale").classList.remove("show"); renderReplayDay(replayIndex-1); replaySchedule(); });
-$("replayNext")?.addEventListener("click",()=>{ if(replayIndex>=itineraryDays.length-1) showReplayFinale(); else {renderReplayDay(replayIndex+1);replaySchedule();} });
-$("replayRestart")?.addEventListener("click",()=>{ $("replayFinale").classList.remove("show"); replayPaused=false; $("replayToggle").textContent="⏸"; renderReplayDay(0); replaySchedule(); });
-
-$("replaySpeed")?.addEventListener("click",()=>{
-  replaySpeedIndex=(replaySpeedIndex+1)%REPLAY_SPEEDS.length;
-  const speed=REPLAY_SPEEDS[replaySpeedIndex]; REPLAY_INTERVAL=speed.ms; $("replaySpeed").textContent=speed.label; replaySchedule();
-});
-$("replayPhotoDots")?.addEventListener("click",event=>{
-  const dot=event.target.closest("button"); if(!dot) return;
-  const dots=[...$("replayPhotoDots").querySelectorAll("button")]; const next=dots.indexOf(dot); if(next<0) return;
-  const day=itineraryDays[replayIndex]; const photos=replayPhotosForDay(day); replayPhotoIndex=next; setReplayBackdrop(photos[next]); dots.forEach((item,i)=>item.classList.toggle("active",i===next));
-});
-document.addEventListener("keydown",event=>{ if(!$("tripReplay")?.classList.contains("open")) return; if(event.key==="Escape") closeTripReplay(); if(event.key==="ArrowRight") $("replayNext").click(); if(event.key==="ArrowLeft") $("replayPrevious").click(); if(event.key===" "){event.preventDefault();toggleTripReplay();} });
-
+$("replayPrevious")?.addEventListener("click",()=>{$("replayFinale").classList.remove("show");renderReplayDay(replayIndex-1);replaySchedule();});
+$("replayNext")?.addEventListener("click",()=>{const days=replayDays();if(replayIndex>=days.length-1)showReplayFinale();else{renderReplayDay(replayIndex+1);replaySchedule();}});
+$("replayRestart")?.addEventListener("click",()=>{$("replayFinale").classList.remove("show");replayPaused=false;$("replayToggle").textContent="⏸";renderReplayDay(0);replaySchedule();});
+$("replaySpeed")?.addEventListener("click",()=>{replaySpeedIndex=(replaySpeedIndex+1)%REPLAY_SPEEDS.length;const speed=REPLAY_SPEEDS[replaySpeedIndex];REPLAY_INTERVAL=speed.ms;$("replaySpeed").textContent=speed.label;replaySchedule();});
+$("replayPhotoDots")?.addEventListener("click",event=>{const dot=event.target.closest("button");if(!dot)return;const dots=[...$("replayPhotoDots").querySelectorAll("button")],next=dots.indexOf(dot);if(next<0)return;const day=replayDays()[replayIndex],photos=replayPhotosForDay(day);replayPhotoIndex=next;setReplayBackdrop(photos[next]);dots.forEach((item,i)=>item.classList.toggle("active",i===next));});
+document.addEventListener("keydown",event=>{if(!$("tripReplay")?.classList.contains("open"))return;if(event.key==="Escape")closeTripReplay();if(event.key==="ArrowRight")$("replayNext").click();if(event.key==="ArrowLeft")$("replayPrevious").click();if(event.key===" "){event.preventDefault();toggleTripReplay();}});
 
 // ===== Premium 3.6 — Mes voyages stables =====
 const TRIPS_STORAGE_KEY = "mon-carnet-voyages";
