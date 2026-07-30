@@ -1,29 +1,21 @@
-# Mon Carnet de Voyages — Premium 3.1 Timeline Vivante
+# 🌍 Mon Carnet de Voyages — Premium 3.2
 
-## Version 3.1 corrigée
+## 🎬 Revivre le voyage
 
-Cette version comprend :
+Cette version ajoute un véritable mode cinéma plein écran :
 
-- l’arrière-plan officiel de Manarola au coucher du soleil;
-- la Timeline Premium complète;
-- la section « Ce que je retiens aujourd’hui »;
-- une réflexion modifiable et enregistrée;
-- une citation souvenir automatique;
-- le bouton de lecture de la Timeline;
-- le défilement automatique entre les journées;
-- les photos, souvenirs, lieux GPS, budgets et notes réunis;
-- le filtre « Meilleurs moments »;
-- les raccourcis vers la journée et la carte;
-- la synchronisation Firebase déjà présente dans l’application.
+- lecture automatique des journées;
+- photos personnelles de chaque journée, avec Manarola comme image de secours;
+- trajet synchronisé avec la ville affichée;
+- souvenirs, notes, coups de cœur et évaluations;
+- commandes précédent, pause, suivant et fermeture;
+- écran final avec les statistiques du voyage;
+- navigation au clavier : flèches, espace et Échap.
 
-### Installation sur GitHub Pages
+## Installation sur GitHub Pages
 
-Téléverse le contenu extrait du ZIP à la racine du dépôt :
-
-- `index.html`
-- `README.md`
-- le dossier `assets`
-- le dossier `css`
-- le dossier `js`
-
-Après le commit, actualise l’application avec **Ctrl + F5**.
+1. Extraire le ZIP avec **Extraire tout**.
+2. Téléverser `index.html`, `README.md`, `VERSION.txt` ainsi que les dossiers `assets`, `css` et `js` à la racine du dépôt.
+3. Confirmer le remplacement des fichiers.
+4. Attendre environ une minute, ouvrir l’application et faire `Ctrl + F5`.
+5. Ouvrir **Timeline**, puis **▶️ Revivre le voyage**.

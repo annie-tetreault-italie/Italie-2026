@@ -2004,3 +2004,72 @@ document.addEventListener("touchend", function(e){
     showPanel(btn.dataset.panel);
   }
 },{passive:false});
+
+// ===== Premium 3.2 — Revivre le voyage =====
+const REPLAY_INTERVAL = 6500;
+let replayIndex = 0;
+let replayTimer = null;
+let replayPaused = false;
+
+function replayPhotoForDay(day){
+  const photos = Array.isArray(day?.photos) ? day.photos : [];
+  for(const photo of photos){
+    const src = typeof photo === "string" ? photo : (photo?.url || photo?.src || photo?.dataUrl || "");
+    if(src) return src;
+  }
+  return "assets/manarola-sunset.jpg";
+}
+function replayPlacesForDay(day){ return Array.isArray(day?.herePlaces) ? day.herePlaces.length : 0; }
+function replayMemoryText(day){ return timelineReflection(day) || timelineMemoryForDay(day) || "Une nouvelle journée à garder en mémoire."; }
+function replayCities(){
+  const result=[];
+  itineraryDays.forEach(day=>{ const city=cityForDay(day)||"Italie"; if(result[result.length-1]!==city) result.push(city); });
+  return result;
+}
+function replayStats(){
+  const photoCount=itineraryDays.reduce((n,d)=>n+(Array.isArray(d.photos)?d.photos.length:0),0);
+  const places=itineraryDays.reduce((n,d)=>n+replayPlacesForDay(d),0);
+  const favorites=itineraryDays.filter(d=>timelineRating(d)>=4 || firstValue(d,["favoriteMoment","favorite","memoryFavorite"])).length;
+  const memories=itineraryDays.filter(d=>timelineMemoryForDay(d)||timelineReflection(d)).length;
+  return {photoCount,places,favorites,memories};
+}
+function renderReplayRoute(day){
+  const cities=replayCities(); const active=cityForDay(day)||"Italie"; const activeIndex=Math.max(0,cities.indexOf(active));
+  $("replayRouteList").innerHTML=cities.map((city,index)=>`<div class="replay-route-step ${index<activeIndex?"done":index===activeIndex?"active":""}"><i></i><span>${esc(city)}</span></div>`).join("");
+}
+function renderReplayDay(index){
+  if(!itineraryDays.length) return;
+  replayIndex=Math.max(0,Math.min(index,itineraryDays.length-1));
+  const day=itineraryDays[replayIndex]; const city=cityForDay(day)||"Italie";
+  $("replayBackdrop").style.opacity="0";
+  setTimeout(()=>{ $("replayBackdrop").style.backgroundImage=`url("${String(replayPhotoForDay(day)).replace(/"/g,'%22')}")`; $("replayBackdrop").style.opacity="1"; },180);
+  $("replayDate").textContent=formatDateFr(day.id);
+  $("replayCity").textContent=city;
+  $("replayTitle").textContent=firstValue(day,["title","location","arrival"])||"Une journée en Italie";
+  $("replayQuote").textContent=`“${replayMemoryText(day)}”`;
+  const photos=Array.isArray(day.photos)?day.photos.length:0; const places=replayPlacesForDay(day); const rating=timelineRating(day);
+  $("replayKpis").innerHTML=`<span>📸 ${photos} photo${photos>1?"s":""}</span><span>📍 ${places} lieu${places>1?"x":""}</span>${rating?`<span>⭐ ${rating}/5</span>`:""}${timelineBudget(day)?`<span>💶 ${esc(displayValue(timelineBudget(day)))}</span>`:""}`;
+  $("replayCounter").textContent=`${replayIndex+1} / ${itineraryDays.length}`;
+  $("replayProgressFill").style.width=`${((replayIndex+1)/itineraryDays.length)*100}%`;
+  renderReplayRoute(day);
+  $("replayContent").style.animation="none"; requestAnimationFrame(()=>{ $("replayContent").style.animation="replaySlide .6s ease both"; });
+}
+function replaySchedule(){ clearTimeout(replayTimer); if(replayPaused) return; replayTimer=setTimeout(()=>{ if(replayIndex>=itineraryDays.length-1) showReplayFinale(); else {renderReplayDay(replayIndex+1);replaySchedule();} },REPLAY_INTERVAL); }
+function openTripReplay(){
+  if(!itineraryDays.length){ alert("L’itinéraire est encore en chargement. Réessaie dans un instant."); return; }
+  stopTimelinePlayback(); replayPaused=false; $("replayFinale").classList.remove("show"); $("tripReplay").classList.add("open"); $("tripReplay").setAttribute("aria-hidden","false"); document.body.style.overflow="hidden"; $("replayToggle").textContent="⏸"; renderReplayDay(0); replaySchedule();
+}
+function closeTripReplay(){ clearTimeout(replayTimer); $("tripReplay").classList.remove("open"); $("tripReplay").setAttribute("aria-hidden","true"); document.body.style.overflow=""; }
+function toggleTripReplay(){ replayPaused=!replayPaused; $("replayToggle").textContent=replayPaused?"▶":"⏸"; if(replayPaused) clearTimeout(replayTimer); else replaySchedule(); }
+function showReplayFinale(){
+  clearTimeout(replayTimer); const s=replayStats();
+  $("replayFinalStats").innerHTML=`<div><strong>${s.photoCount}</strong><span>photos</span></div><div><strong>${s.favorites}</strong><span>coups de cœur</span></div><div><strong>${s.places}</strong><span>lieux</span></div><div><strong>${s.memories}</strong><span>journées racontées</span></div>`;
+  $("replayFinale").classList.add("show");
+}
+$("timelinePlayButton")?.addEventListener("click",event=>{ event.stopImmediatePropagation(); openTripReplay(); },true);
+$("replayClose")?.addEventListener("click",closeTripReplay);
+$("replayToggle")?.addEventListener("click",toggleTripReplay);
+$("replayPrevious")?.addEventListener("click",()=>{ $("replayFinale").classList.remove("show"); renderReplayDay(replayIndex-1); replaySchedule(); });
+$("replayNext")?.addEventListener("click",()=>{ if(replayIndex>=itineraryDays.length-1) showReplayFinale(); else {renderReplayDay(replayIndex+1);replaySchedule();} });
+$("replayRestart")?.addEventListener("click",()=>{ $("replayFinale").classList.remove("show"); replayPaused=false; $("replayToggle").textContent="⏸"; renderReplayDay(0); replaySchedule(); });
+document.addEventListener("keydown",event=>{ if(!$("tripReplay")?.classList.contains("open")) return; if(event.key==="Escape") closeTripReplay(); if(event.key==="ArrowRight") $("replayNext").click(); if(event.key==="ArrowLeft") $("replayPrevious").click(); if(event.key===" "){event.preventDefault();toggleTripReplay();} });
