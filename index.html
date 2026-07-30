@@ -44,6 +44,15 @@
     </div>
     <div id="syncStatus" class="sync-status">Connexion à Firebase…</div>
     <div class="section premium-dashboard">
+      <article class="card live-weather-card" aria-labelledby="liveWeatherTitle">
+        <div class="premium-card-head">
+          <div><span class="eyebrow">🌤️ En temps réel</span><h2 id="liveWeatherTitle">Météo des destinations</h2></div>
+          <button id="refreshWeather" class="premium-arrow" type="button" aria-label="Actualiser la météo">↻</button>
+        </div>
+        <div id="weatherUpdated" class="weather-updated">Mise à jour en cours…</div>
+        <div id="weatherDestinations" class="weather-destination-grid" aria-live="polite"></div>
+      </article>
+
       <article class="card premium-progress-card">
         <div class="premium-card-head"><div><span class="eyebrow">Progression du voyage</span><h2 id="premiumProgressTitle">Préparation en cours</h2></div><strong id="premiumProgressPercent">0 %</strong></div>
         <div class="premium-progress-track"><div id="premiumProgressBar"></div></div>

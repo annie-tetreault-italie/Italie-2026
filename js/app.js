@@ -758,6 +758,7 @@ function renderMemories(){
     card.querySelector(".memory-open-day").addEventListener("click",()=>openDayDetail(day.id));
     root.appendChild(card);
   });
+  renderWeatherCards();
 }
 
 $("saveDayMemory").addEventListener("click", saveActiveDayMemory);
@@ -944,7 +945,7 @@ function renderTimeline(){
     const activities=valueItems(firstValue(day,["activities","activity","schedule"])); const restaurants=valueItems(firstValue(day,["restaurants","restaurant"]));
     const card=document.createElement("article"); card.className="card timeline-day-card"+(rating>=5?" timeline-highlight":""); card.dataset.timelineDay=day.id;
     const cover=coverForDay(day);
-    card.innerHTML=`<div class="timeline-day-cover" style="background-image:linear-gradient(180deg,rgba(0,0,0,.06),rgba(0,0,0,.72)),url('${cover}')"><div><div class="timeline-day-date">${esc(formatDateFr(day.id))}</div><h2>${esc(city)}</h2><div>Jour ${itineraryDays.findIndex(d=>d.id===day.id)+1} sur ${itineraryDays.length}</div></div></div><div class="timeline-day-body"><div class="timeline-day-kpis"><div><strong>${photos.length}</strong><span>📸 Photos</span></div><div><strong>${places.length}</strong><span>📌 Lieux</span></div><div><strong>${rating?"★".repeat(rating):"—"}</strong><span>Note</span></div><div><strong>${budget?esc(displayValue(budget)):"—"}</strong><span>💶 Budget</span></div></div>${memory?`<div class="timeline-memory"><strong>❤️ Mon souvenir</strong><br>${esc(displayValue(memory))}</div>`:""}${activities.length?`<p><strong>🥾 Activités :</strong> ${esc(activities.slice(0,3).join(" · "))}</p>`:""}${restaurants.length?`<p><strong>🍝 Restaurants :</strong> ${esc(restaurants.slice(0,3).join(" · "))}</p>`:""}${photos.length?`<div class="timeline-photo-strip">${photos.slice(0,8).map((src,i)=>`<button type="button" data-timeline-photo="${i}"><img src="${src}" alt="Souvenir du ${esc(formatDateFr(day.id))}"></button>`).join("")}</div>`:""}<section class="timeline-reflection"><div class="timeline-reflection-label">🌅 Ce que je retiens aujourd’hui</div><blockquote>${reflection?esc(reflection):"Ajoute une phrase qui résume cette journée."}</blockquote><button class="timeline-reflection-edit" type="button">✏️ Modifier la phrase</button><div class="timeline-reflection-form" hidden><textarea maxlength="260" aria-label="Phrase souvenir">${esc(reflection)}</textarea><div><button class="btn timeline-reflection-save" type="button">Enregistrer</button><button class="btn secondary timeline-reflection-cancel" type="button">Annuler</button></div><small class="timeline-reflection-status"></small></div></section><div class="timeline-day-actions"><button class="btn" type="button" data-open-timeline-day="${day.id}">Voir la journée</button><button class="btn secondary" type="button" data-map-timeline-day="${day.id}">📍 Voir sur la carte</button></div></div>`;
+    card.innerHTML=`<div class="timeline-day-cover" style="background-image:linear-gradient(180deg,rgba(0,0,0,.06),rgba(0,0,0,.72)),url('${cover}')"><div><div class="timeline-day-date">${esc(formatDateFr(day.id))}</div><h2>${esc(city)}</h2><div class="timeline-cover-meta"><span>Jour ${itineraryDays.findIndex(d=>d.id===day.id)+1} sur ${itineraryDays.length}</span><span class="timeline-weather-badge" data-weather-city="${esc(city)}">🌡️ —</span></div></div></div><div class="timeline-day-body"><div class="timeline-day-kpis"><div><strong>${photos.length}</strong><span>📸 Photos</span></div><div><strong>${places.length}</strong><span>📌 Lieux</span></div><div><strong>${rating?"★".repeat(rating):"—"}</strong><span>Note</span></div><div><strong>${budget?esc(displayValue(budget)):"—"}</strong><span>💶 Budget</span></div></div>${memory?`<div class="timeline-memory"><strong>❤️ Mon souvenir</strong><br>${esc(displayValue(memory))}</div>`:""}${activities.length?`<p><strong>🥾 Activités :</strong> ${esc(activities.slice(0,3).join(" · "))}</p>`:""}${restaurants.length?`<p><strong>🍝 Restaurants :</strong> ${esc(restaurants.slice(0,3).join(" · "))}</p>`:""}${photos.length?`<div class="timeline-photo-strip">${photos.slice(0,8).map((src,i)=>`<button type="button" data-timeline-photo="${i}"><img src="${src}" alt="Souvenir du ${esc(formatDateFr(day.id))}"></button>`).join("")}</div>`:""}<section class="timeline-reflection"><div class="timeline-reflection-label">🌅 Ce que je retiens aujourd’hui</div><blockquote>${reflection?esc(reflection):"Ajoute une phrase qui résume cette journée."}</blockquote><button class="timeline-reflection-edit" type="button">✏️ Modifier la phrase</button><div class="timeline-reflection-form" hidden><textarea maxlength="260" aria-label="Phrase souvenir">${esc(reflection)}</textarea><div><button class="btn timeline-reflection-save" type="button">Enregistrer</button><button class="btn secondary timeline-reflection-cancel" type="button">Annuler</button></div><small class="timeline-reflection-status"></small></div></section><div class="timeline-day-actions"><button class="btn" type="button" data-open-timeline-day="${day.id}">Voir la journée</button><button class="btn secondary" type="button" data-map-timeline-day="${day.id}">📍 Voir sur la carte</button></div></div>`;
     card.querySelectorAll("[data-timeline-photo]").forEach(btn=>btn.addEventListener("click",()=>openPhotoViewer(photos,Number(btn.dataset.timelinePhoto)||0,`${formatDateFr(day.id)} — ${city}`)));
     card.querySelector("[data-open-timeline-day]")?.addEventListener("click",()=>openDayDetail(day.id));
     card.querySelector("[data-map-timeline-day]")?.addEventListener("click",()=>{ showPanel("map"); setTimeout(()=>{ const coords=coordinatesForDay(day); if(coords&&tripMap) tripMap.setView(coords,11); },180); });
@@ -959,6 +960,98 @@ $("timelineHighlightsButton")?.addEventListener("click",()=>{ timelineHighlights
 $("timelineTodayButton")?.addEventListener("click",()=>{ renderTimeline(); const now=new Date(); const id=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`; let target=document.querySelector(`[data-timeline-day="${id}"]`); if(!target){ target=document.querySelector('.timeline-day-card'); } target?.scrollIntoView({behavior:"smooth",block:"center"}); });
 $("timelinePlayButton")?.addEventListener("click",startTimelinePlayback);
 window.renderTimeline=renderTimeline;
+
+// ===== Premium 3.4 — Météo en temps réel (Open-Meteo, sans clé API) =====
+const WEATHER_PLACES = [
+  {key:"cinque-terre", name:"Cinque Terre", detail:"Manarola", lat:44.107, lon:9.729},
+  {key:"florence", name:"Florence", detail:"Firenze", lat:43.7696, lon:11.2558},
+  {key:"venice", name:"Venise", detail:"Venezia", lat:45.4408, lon:12.3155},
+  {key:"tuscany", name:"Toscane", detail:"Sienne", lat:43.3188, lon:11.3308},
+  {key:"rome", name:"Rome", detail:"Roma", lat:41.9028, lon:12.4964}
+];
+const weatherByKey = new Map();
+const WEATHER_CACHE_KEY = "italie-weather-v1";
+const WEATHER_CACHE_MS = 15 * 60 * 1000;
+
+function weatherIcon(code, isDay=1){
+  if(code===0) return isDay ? "☀️" : "🌙";
+  if([1,2].includes(code)) return isDay ? "🌤️" : "☁️";
+  if(code===3) return "☁️";
+  if([45,48].includes(code)) return "🌫️";
+  if([51,53,55,56,57].includes(code)) return "🌦️";
+  if([61,63,65,66,67,80,81,82].includes(code)) return "🌧️";
+  if([71,73,75,77,85,86].includes(code)) return "🌨️";
+  if([95,96,99].includes(code)) return "⛈️";
+  return "🌡️";
+}
+function weatherLabel(code){
+  if(code===0) return "Ciel dégagé";
+  if(code===1) return "Plutôt dégagé";
+  if(code===2) return "Partiellement nuageux";
+  if(code===3) return "Couvert";
+  if([45,48].includes(code)) return "Brouillard";
+  if([51,53,55,56,57].includes(code)) return "Bruine";
+  if([61,63,65,66,67].includes(code)) return "Pluie";
+  if([71,73,75,77].includes(code)) return "Neige";
+  if([80,81,82].includes(code)) return "Averses";
+  if([85,86].includes(code)) return "Averses de neige";
+  if([95,96,99].includes(code)) return "Orage";
+  return "Conditions variables";
+}
+function cityWeatherKey(city=""){
+  const c=String(city).toLowerCase();
+  if(c.includes("cinque")||c.includes("manarola")||c.includes("vernazza")||c.includes("monterosso")||c.includes("riomaggiore")) return "cinque-terre";
+  if(c.includes("florence")||c.includes("firenze")) return "florence";
+  if(c.includes("venise")||c.includes("venezia")||c.includes("venice")) return "venice";
+  if(c.includes("tosc")||c.includes("sienne")||c.includes("siena")||c.includes("panzano")||c.includes("chianti")) return "tuscany";
+  if(c.includes("rome")||c.includes("roma")) return "rome";
+  return "";
+}
+function renderWeatherCards(){
+  const root=$("weatherDestinations"); if(!root) return;
+  root.innerHTML=WEATHER_PLACES.map(place=>{
+    const w=weatherByKey.get(place.key);
+    if(!w) return `<article class="weather-place-card loading"><div class="weather-place-top"><div><strong>${esc(place.name)}</strong><small>${esc(place.detail)}</small></div><span>…</span></div><p>Chargement</p></article>`;
+    return `<article class="weather-place-card"><div class="weather-place-top"><div><strong>${esc(place.name)}</strong><small>${esc(place.detail)}</small></div><span class="weather-icon">${weatherIcon(w.code,w.isDay)}</span></div><div class="weather-temp">${Math.round(w.temp)} °C</div><p>${esc(weatherLabel(w.code))}</p><div class="weather-mini"><span>Ressenti ${Math.round(w.feels)}°</span><span>💨 ${Math.round(w.wind)} km/h</span></div></article>`;
+  }).join("");
+  document.querySelectorAll("[data-weather-city]").forEach(el=>{
+    const key=cityWeatherKey(el.dataset.weatherCity); const w=weatherByKey.get(key);
+    el.innerHTML=w ? `${weatherIcon(w.code,w.isDay)} ${Math.round(w.temp)} °C` : "🌡️ —";
+  });
+}
+async function loadLiveWeather(force=false){
+  const status=$("weatherUpdated");
+  try{
+    if(!force){
+      const cached=LS.get(WEATHER_CACHE_KEY,null);
+      if(cached && Date.now()-cached.savedAt<WEATHER_CACHE_MS && cached.items){
+        Object.entries(cached.items).forEach(([k,v])=>weatherByKey.set(k,v));
+        renderWeatherCards();
+        if(status) status.textContent=`Dernière mise à jour : ${new Date(cached.savedAt).toLocaleTimeString("fr-CA",{hour:"2-digit",minute:"2-digit"})}`;
+        return;
+      }
+    }
+    if(status) status.textContent="Mise à jour en cours…";
+    await Promise.all(WEATHER_PLACES.map(async place=>{
+      const url=`https://api.open-meteo.com/v1/forecast?latitude=${place.lat}&longitude=${place.lon}&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,is_day&timezone=auto`;
+      const response=await fetch(url,{cache:"no-store"});
+      if(!response.ok) throw new Error(`Météo indisponible (${response.status})`);
+      const data=await response.json(); const c=data.current||{};
+      weatherByKey.set(place.key,{temp:c.temperature_2m,feels:c.apparent_temperature,code:c.weather_code,wind:c.wind_speed_10m,isDay:c.is_day});
+    }));
+    const items=Object.fromEntries(weatherByKey.entries());
+    LS.set(WEATHER_CACHE_KEY,{savedAt:Date.now(),items});
+    renderWeatherCards();
+    if(status) status.textContent=`Actualisée à ${new Date().toLocaleTimeString("fr-CA",{hour:"2-digit",minute:"2-digit"})} · données Open-Meteo`;
+  }catch(error){
+    console.error(error);
+    renderWeatherCards();
+    if(status) status.textContent="Météo temporairement indisponible. Appuie sur ↻ pour réessayer.";
+  }
+}
+$("refreshWeather")?.addEventListener("click",()=>loadLiveWeather(true));
+loadLiveWeather();
+
 onSnapshot(daysQuery, snapshot => {
   itineraryDays = [];
 

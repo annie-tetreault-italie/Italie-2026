@@ -1,4 +1,4 @@
-# Mon Carnet de Voyages — Premium 3.3
+# Mon Carnet de Voyages — Premium 3.4
 
 ## Nouveautés
 - Couvertures intelligentes par destination
@@ -10,3 +10,7 @@
 
 ## Installation GitHub Pages
 Téléverser le contenu du dossier à la racine du dépôt, puis actualiser avec Ctrl + F5.
+
+
+## Météo en temps réel
+La page Accueil affiche la température actuelle des cinq grandes destinations. Les données proviennent d’Open-Meteo et sont actualisées automatiquement, sans clé API.
