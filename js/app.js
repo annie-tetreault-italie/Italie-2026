@@ -2073,4 +2073,74 @@ $("replayPrevious")?.addEventListener("click",()=>{ $("replayFinale").classList.
 $("replayNext")?.addEventListener("click",()=>{ if(replayIndex>=itineraryDays.length-1) showReplayFinale(); else {renderReplayDay(replayIndex+1);replaySchedule();} });
 $("replayRestart")?.addEventListener("click",()=>{ $("replayFinale").classList.remove("show"); replayPaused=false; $("replayToggle").textContent="⏸"; renderReplayDay(0); replaySchedule(); });
 document.addEventListener("keydown",event=>{ if(!$("tripReplay")?.classList.contains("open")) return; if(event.key==="Escape") closeTripReplay(); if(event.key==="ArrowRight") $("replayNext").click(); if(event.key==="ArrowLeft") $("replayPrevious").click(); if(event.key===" "){event.preventDefault();toggleTripReplay();} });
-\n\n// === Premium 3.5 : Mes voyages + Inspire-moi ===\nconst TRIP_LIBRARY_KEY = "monCarnetVoyages.library.v1";\nconst defaultTrips = [{id:"italie-2026",name:"Italie 2026",country:"Italie",flag:"🇮🇹",start:"2026-09-28",end:"2026-10-16",budget:0,travelers:2,style:"Découverte",status:"En préparation"}];\nfunction getTripLibrary(){ const saved=LS.get(TRIP_LIBRARY_KEY,[]); return saved.length?saved:defaultTrips; }\nfunction saveTripLibrary(items){ LS.set(TRIP_LIBRARY_KEY,items); renderTripLibrary(); }\nfunction tripFlag(country=""){ const c=country.toLowerCase(); if(c.includes("vietnam"))return"🇻🇳"; if(c.includes("japon"))return"🇯🇵"; if(c.includes("thaï"))return"🇹🇭"; if(c.includes("ital"))return"🇮🇹"; if(c.includes("portugal"))return"🇵🇹"; if(c.includes("esp"))return"🇪🇸"; if(c.includes("france"))return"🇫🇷"; if(c.includes("cambodge"))return"🇰🇭"; if(c.includes("bali")||c.includes("indon"))return"🇮🇩"; return"🌍"; }\nfunction tripDuration(t){ if(!t.start||!t.end)return"Dates à choisir"; const a=new Date(t.start+"T12:00:00"),b=new Date(t.end+"T12:00:00"); return Math.max(1,Math.round((b-a)/86400000)+1)+" jours"; }\nfunction renderTripLibrary(){ const host=$("tripLibrary"); if(!host)return; const trips=getTripLibrary(); host.innerHTML=trips.map(t=>`<article class="card saved-trip-card"><div class="saved-trip-flag">${t.flag||tripFlag(t.country)}</div><div class="grow"><span class="trip-status">${esc(t.status||"En préparation")}</span><h3>${esc(t.name)}</h3><p>${esc(t.country)} · ${tripDuration(t)} · ${Number(t.travelers||1)} voyageur${Number(t.travelers||1)>1?"s":""}</p><small>${Number(t.budget||0)>0?new Intl.NumberFormat("fr-CA",{style:"currency",currency:"CAD"}).format(t.budget):"Budget à définir"} · ${esc(t.style||"Découverte")}</small></div>${t.id==="italie-2026"?'<button class="btn secondary" onclick="showPanel(\'home\')">Ouvrir</button>':'<button class="btn secondary" data-trip-open="'+esc(t.id)+'">Préparer</button>'}</article>`).join(""); }\nfunction openTripModal(template=""){ const m=$("createTripModal"); if(!m)return; m.hidden=false; if(template){ $("newTripCountry").value=template; $("newTripName").value=template+" "+(new Date().getFullYear()+1); } setTimeout(()=>$("newTripName")?.focus(),50); }\n$("openCreateTrip")?.addEventListener("click",()=>openTripModal());\n$("cancelCreateTrip")?.addEventListener("click",()=>$("createTripModal").hidden=true);\ndocument.querySelectorAll("[data-template]").forEach(b=>b.addEventListener("click",()=>openTripModal(b.dataset.template)));\n$("createTripForm")?.addEventListener("submit",e=>{ e.preventDefault(); const country=$("newTripCountry").value.trim(),name=$("newTripName").value.trim(); if(!name||!country)return; const trips=getTripLibrary(); trips.push({id:"trip-"+Date.now(),name,country,flag:tripFlag(country),start:$("newTripStart").value,end:$("newTripEnd").value,budget:Number($("newTripBudget").value||0),travelers:Number($("newTripTravelers").value||1),style:$("newTripStyle").value,status:"En préparation"}); saveTripLibrary(trips); $("createTripStatus").textContent="✅ Voyage créé. Il apparaît maintenant dans Mes voyages."; setTimeout(()=>{ $("createTripModal").hidden=true; e.target.reset(); $("newTripTravelers").value=2; $("createTripStatus").textContent=""; },700); });\n$("openInspire")?.addEventListener("click",()=>{ $("inspireModal").hidden=false; });\n$("cancelInspire")?.addEventListener("click",()=>$("inspireModal").hidden=true);\nconst inspirationCatalog=[\n {country:"Vietnam",flag:"🇻🇳",base:3400,days:15,summary:"Hanoï, baie d’Halong, Hoi An et delta du Mékong"},\n {country:"Portugal",flag:"🇵🇹",base:4200,days:14,summary:"Lisbonne, Porto, Douro et Algarve"},\n {country:"Italie",flag:"🇮🇹",base:5000,days:17,summary:"Rome, Toscane, Venise et Cinque Terre"},\n {country:"Thaïlande",flag:"🇹🇭",base:3900,days:16,summary:"Bangkok, Chiang Mai et plages du Sud"},\n {country:"Japon",flag:"🇯🇵",base:5900,days:14,summary:"Tokyo, Kyoto, Osaka et Nara"}\n];\n$("inspireForm")?.addEventListener("submit",e=>{ e.preventDefault(); const budget=Number($("inspireBudget").value||0),days=Number($("inspireDays").value||14),travelers=Number($("inspireTravelers").value||2); const factor=Math.max(.65,travelers/2)*Math.max(.75,days/14); const ranked=inspirationCatalog.map(x=>({...x,estimate:Math.round(x.base*factor/100)*100})).sort((a,b)=>Math.abs(a.estimate-budget)-Math.abs(b.estimate-budget)).slice(0,3); $("inspireResults").innerHTML='<h3>Nos meilleures suggestions</h3>'+ranked.map((x,i)=>`<article class="inspire-card"><div><strong>${i+1}. ${x.flag} ${x.country}</strong><span>${x.summary}</span><small>Budget estimé : ${new Intl.NumberFormat("fr-CA",{style:"currency",currency:"CAD",maximumFractionDigits:0}).format(x.estimate)}</small></div><button type="button" class="btn secondary" data-inspire-create="${x.country}">Créer</button></article>`).join(''); $("inspireResults").querySelectorAll("[data-inspire-create]").forEach(b=>b.addEventListener("click",()=>{ $("inspireModal").hidden=true; openTripModal(b.dataset.inspireCreate); })); });\ndocument.addEventListener("click",e=>{ if(e.target.matches("#createTripModal,#inspireModal")) e.target.hidden=true; });\nrenderTripLibrary();\n
+
+
+// ===== Premium 3.6 — Mes voyages stables =====
+const TRIPS_STORAGE_KEY = "mon-carnet-voyages";
+const COUNTRY_META = {
+  "Vietnam": {flag:"🇻🇳", cover:"linear-gradient(135deg,#234,#6a8f72)"},
+  "Japon": {flag:"🇯🇵", cover:"linear-gradient(135deg,#a84d5b,#f0b9c2)"},
+  "Thaïlande": {flag:"🇹🇭", cover:"linear-gradient(135deg,#147a8c,#f0b14b)"},
+  "Italie": {flag:"🇮🇹", cover:"url('assets/manarola-sunset.jpg')"},
+  "France": {flag:"🇫🇷", cover:"linear-gradient(135deg,#334e7d,#e8cfa8)"},
+  "Espagne": {flag:"🇪🇸", cover:"linear-gradient(135deg,#bd523f,#e9b74e)"},
+  "Portugal": {flag:"🇵🇹", cover:"linear-gradient(135deg,#1e765c,#d99b43)"},
+  "Canada": {flag:"🇨🇦", cover:"linear-gradient(135deg,#b02e35,#f4eee7)"},
+  "Autre": {flag:"🌍", cover:"linear-gradient(135deg,#345e57,#d39b72)"}
+};
+function loadTrips(){
+  const stored=LS.get(TRIPS_STORAGE_KEY,[]);
+  const italy={id:"italy-2026",name:"Italie 2026",country:"Italie",start:"2026-09-28",end:"2026-10-16",budget:"",travelers:3,style:"Découverte",active:true};
+  return [italy,...stored.filter(t=>t && t.id!=="italy-2026")];
+}
+function saveTrips(trips){ LS.set(TRIPS_STORAGE_KEY,trips.filter(t=>t.id!=="italy-2026")); }
+function tripDuration(trip){
+  if(!trip.start||!trip.end) return "Dates à choisir";
+  const days=Math.max(1,Math.round((new Date(trip.end+'T12:00:00')-new Date(trip.start+'T12:00:00'))/86400000)+1);
+  return `${days} jour${days>1?'s':''}`;
+}
+function renderTrips(){
+  const root=$("tripsGrid"); if(!root) return;
+  const trips=loadTrips();
+  root.innerHTML=trips.map(trip=>{
+    const meta=COUNTRY_META[trip.country]||COUNTRY_META.Autre;
+    const bg=meta.cover.startsWith('url')?`background-image:${meta.cover}`:`background:${meta.cover}`;
+    return `<article class="trip-library-card ${trip.active?'active-trip':''}" data-trip-id="${esc(trip.id)}">
+      <div class="trip-library-cover" style="${bg}"><span>${meta.flag}</span><em>${trip.active?'Voyage actif':'En préparation'}</em></div>
+      <div class="trip-library-body"><h3>${esc(trip.name)}</h3><p>${esc(trip.country)} · ${esc(tripDuration(trip))}</p>
+      <div class="trip-library-meta"><span>👥 ${Number(trip.travelers)||1}</span><span>✨ ${esc(trip.style||'Découverte')}</span>${trip.budget?`<span>💰 ${Number(trip.budget).toLocaleString('fr-CA')} $</span>`:''}</div>
+      <div class="trip-library-actions">${trip.active?`<button class="btn" data-open-trip="${esc(trip.id)}">Ouvrir</button>`:`<button class="btn secondary" data-preview-trip="${esc(trip.id)}">Voir</button><button class="icon-danger" data-delete-trip="${esc(trip.id)}" aria-label="Supprimer">🗑️</button>`}</div></div>
+    </article>`;
+  }).join('');
+  root.querySelectorAll('[data-open-trip]').forEach(btn=>btn.addEventListener('click',()=>showPanel('home')));
+  root.querySelectorAll('[data-preview-trip]').forEach(btn=>btn.addEventListener('click',()=>{
+    const trip=trips.find(t=>t.id===btn.dataset.previewTrip); if(!trip) return;
+    alert(`${trip.name}\n\nCe carnet est créé et conservé sur cet appareil. L'ouverture complète de plusieurs voyages arrivera dans la prochaine étape.`);
+  }));
+  root.querySelectorAll('[data-delete-trip]').forEach(btn=>btn.addEventListener('click',()=>{
+    const trip=trips.find(t=>t.id===btn.dataset.deleteTrip); if(!trip||!confirm(`Supprimer « ${trip.name} »?`)) return;
+    saveTrips(trips.filter(t=>t.id!==trip.id)); renderTrips();
+  }));
+}
+function openCreateTrip(){
+  $("createTripModal").hidden=false; $("createTripStatus").textContent=""; $("newTripName").focus();
+}
+function closeCreateTrip(){ $("createTripModal").hidden=true; }
+function createTrip(){
+  const name=$("newTripName").value.trim(); const country=$("newTripCountry").value;
+  const start=$("newTripStart").value; const end=$("newTripEnd").value;
+  const status=$("createTripStatus");
+  if(!name){ status.textContent="Écris le nom du voyage."; return; }
+  if(start&&end&&end<start){ status.textContent="La date de retour doit être après le départ."; return; }
+  const trips=loadTrips();
+  const trip={id:`trip-${Date.now()}`,name,country,start,end,budget:$("newTripBudget").value,travelers:Number($("newTripTravelers").value)||1,style:$("newTripStyle").value,createdAt:new Date().toISOString()};
+  trips.push(trip); saveTrips(trips); renderTrips(); closeCreateTrip();
+  ["newTripName","newTripStart","newTripEnd","newTripBudget"].forEach(id=>$(id).value="");
+  $("newTripTravelers").value="2";
+}
+$("openCreateTrip")?.addEventListener("click",openCreateTrip);
+$("saveNewTrip")?.addEventListener("click",createTrip);
+$("cancelNewTrip")?.addEventListener("click",closeCreateTrip);
+$("createTripModal")?.addEventListener("click",e=>{if(e.target.id==="createTripModal") closeCreateTrip();});
+document.addEventListener("keydown",e=>{if(e.key==="Escape" && $("createTripModal") && !$("createTripModal").hidden) closeCreateTrip();});
+renderTrips();

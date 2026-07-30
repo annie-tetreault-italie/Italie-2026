@@ -5,35 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f7f0e6">
 <title>Mon Carnet de Voyages — Italie 2026</title>
-<meta name="application-version" content="premium-3.5-voyages">
+<meta name="application-version" content="premium-3.6-stable-voyages">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
-<link rel="stylesheet" href="css/style.css?v=premium-3.5-voyages">
+<link rel="stylesheet" href="css/style.css?v=premium-3.6-stable-voyages">
 </head>
 <body>
 <div class="app">
-  <section id="trips" class="panel">
-    <div class="hero trips-hero"><div class="eyebrow">Rêver · préparer · partir</div><h1>Mes voyages</h1><div class="dates">Crée un voyage ou laisse-toi inspirer</div></div>
-    <div class="section">
-      <div class="trip-hub-actions">
-        <button id="openCreateTrip" class="card trip-hub-action"><span>➕</span><strong>Créer un nouveau voyage</strong><small>Nom, pays, dates, budget et voyageurs</small></button>
-        <button id="openInspire" class="card trip-hub-action"><span>✨</span><strong>Inspire-moi</strong><small>Suggestions selon ton budget et tes envies</small></button>
-      </div>
-      <h2>Mes voyages</h2>
-      <div id="tripLibrary" class="trip-library"></div>
-      <h2>Voyages populaires</h2>
-      <div class="template-groups">
-        <article class="card template-group"><h3>🌍 Europe</h3><div class="template-chips"><button data-template="Italie">🇮🇹 Italie</button><button data-template="Portugal">🇵🇹 Portugal</button><button data-template="Espagne">🇪🇸 Espagne</button><button data-template="France">🇫🇷 France</button></div></article>
-        <article class="card template-group"><h3>🌏 Asie</h3><div class="template-chips"><button data-template="Vietnam">🇻🇳 Vietnam</button><button data-template="Japon">🇯🇵 Japon</button><button data-template="Thaïlande">🇹🇭 Thaïlande</button><button data-template="Cambodge">🇰🇭 Cambodge</button><button data-template="Bali">🇮🇩 Bali</button></div></article>
-      </div>
-    </div>
-  </section>
-
   <section id="home" class="panel active">
     <div class="premium-home-hero manarola-hero">
       <div class="premium-hero-overlay"></div>
       <div class="premium-hero-content">
         <div class="app-brand premium-brand"><div class="app-brand-mark">🌍</div><div><div class="app-brand-name">Mon Carnet de Voyages</div><div class="app-brand-slogan">Préparer · Voyager · Revivre</div></div></div>
         <div class="premium-trip-pill">🇮🇹 Italie 2026</div>
+        <button class="trip-switch-button" type="button" onclick="showPanel('trips')">🌍 Mes voyages</button>
         <div class="premium-greeting">Bonjour Annie 👋</div>
         <h1 id="premiumCurrentCity">Ton voyage approche</h1>
         <p id="premiumCurrentDate">28 septembre au 16 octobre 2026</p>
@@ -74,13 +58,29 @@
         <div id="weeklyFocusList" class="weekly-focus-list"></div>
       </article>
 
-      <div class="premium-quick-grid"><button onclick="showPanel('trips')"><span>🌍</span>Mes voyages</button>
+      <div class="premium-quick-grid">
         <button onclick="showPanel('itinerary')"><span>🗺️</span>Itinéraire</button><button onclick="showPanel('map')"><span>📍</span>Carte</button><button onclick="showPanel('bookings')"><span>🎟️</span>Réservations</button><button onclick="showPanel('budget')"><span>💳</span>Budget</button><button onclick="showPanel('lists')"><span>✅</span>Listes</button><button onclick="showPanel('memories')"><span>📖</span>Souvenirs</button>
       </div>
 
       <div hidden>
         <span id="dashboardBookingTitle"></span><span id="dashboardBookingDetails"></span><span id="dashboardBudget"></span><span id="dashboardExpenseCount"></span><span id="dashboardPacking"></span><span id="dashboardPackingDetails"></span><span id="dashboardConfirmedBookings"></span><span id="dashboardConfirmedDetails"></span><span id="preparationPercent"></span><span id="preparationSummary"></span><div id="preparationProgressBar"></div><div id="preparationDetails"></div><button id="startDayButton"></button><span id="dashboardTripName"></span><span id="dashboardSummary"></span>
       </div>
+    </div>
+  </section>
+
+
+  <section id="trips" class="panel">
+    <div class="hero trips-hero">
+      <div class="eyebrow">Tous tes projets au même endroit</div>
+      <h1>Mes voyages</h1>
+      <p>Préparer · Voyager · Revivre</p>
+    </div>
+    <div class="section">
+      <div class="trips-toolbar">
+        <div><h2>Mes carnets</h2><p>Italie 2026 reste ton voyage actif.</p></div>
+        <button id="openCreateTrip" class="btn" type="button">＋ Créer un nouveau voyage</button>
+      </div>
+      <div id="tripsGrid" class="trips-grid"></div>
     </div>
   </section>
 
@@ -470,25 +470,20 @@
 
 
 <div id="createTripModal" class="quick-modal" hidden>
-  <form id="createTripForm" class="quick-modal-card trip-form" role="dialog" aria-modal="true" aria-labelledby="createTripTitle">
-    <h2 id="createTripTitle">➕ Créer un nouveau voyage</h2>
-    <div class="row"><div class="field"><label>Nom du voyage</label><input id="newTripName" required placeholder="Ex. Vietnam 2028"></div><div class="field"><label>Pays ou région</label><input id="newTripCountry" required placeholder="Ex. Vietnam"></div></div>
-    <div class="row"><div class="field"><label>Date de départ</label><input id="newTripStart" type="date"></div><div class="field"><label>Date de retour</label><input id="newTripEnd" type="date"></div></div>
-    <div class="row"><div class="field"><label>Budget prévu ($ CA)</label><input id="newTripBudget" type="number" min="0" step="50" placeholder="5000"></div><div class="field"><label>Voyageurs</label><input id="newTripTravelers" type="number" min="1" value="2"></div></div>
-    <div class="field"><label>Style</label><select id="newTripStyle"><option>Découverte</option><option>Gastronomie</option><option>Détente</option><option>Aventure</option><option>Nature</option><option>Culture</option></select></div>
-    <div class="quick-modal-actions"><button class="btn" type="submit">Créer le voyage</button><button id="cancelCreateTrip" class="btn secondary" type="button">Annuler</button></div>
+  <div class="quick-modal-card create-trip-card" role="dialog" aria-modal="true" aria-labelledby="createTripTitle">
+    <h2 id="createTripTitle">🌍 Créer un nouveau voyage</h2>
+    <div class="create-trip-grid">
+      <div class="field"><label for="newTripName">Nom du voyage</label><input id="newTripName" placeholder="Ex. Vietnam 2028"></div>
+      <div class="field"><label for="newTripCountry">Pays ou région</label><select id="newTripCountry"><option value="Vietnam">🇻🇳 Vietnam</option><option value="Japon">🇯🇵 Japon</option><option value="Thaïlande">🇹🇭 Thaïlande</option><option value="Italie">🇮🇹 Italie</option><option value="France">🇫🇷 France</option><option value="Espagne">🇪🇸 Espagne</option><option value="Portugal">🇵🇹 Portugal</option><option value="Canada">🇨🇦 Canada</option><option value="Autre">🌍 Autre</option></select></div>
+      <div class="field"><label for="newTripStart">Date de départ</label><input id="newTripStart" type="date"></div>
+      <div class="field"><label for="newTripEnd">Date de retour</label><input id="newTripEnd" type="date"></div>
+      <div class="field"><label for="newTripBudget">Budget prévu ($ CA)</label><input id="newTripBudget" type="number" min="0" step="100" placeholder="5000"></div>
+      <div class="field"><label for="newTripTravelers">Voyageurs</label><input id="newTripTravelers" type="number" min="1" max="20" value="2"></div>
+      <div class="field wide"><label for="newTripStyle">Style de voyage</label><select id="newTripStyle"><option>Découverte</option><option>Détente</option><option>Gastronomie</option><option>Aventure</option><option>Culture</option><option>Plage</option></select></div>
+    </div>
     <div id="createTripStatus" class="subtle" role="status"></div>
-  </form>
-</div>
-<div id="inspireModal" class="quick-modal" hidden>
-  <form id="inspireForm" class="quick-modal-card trip-form" role="dialog" aria-modal="true" aria-labelledby="inspireTitle">
-    <h2 id="inspireTitle">✨ Inspire-moi</h2>
-    <div class="row"><div class="field"><label>Budget total ($ CA)</label><input id="inspireBudget" type="number" min="500" value="5000"></div><div class="field"><label>Nombre de jours</label><input id="inspireDays" type="number" min="3" value="14"></div></div>
-    <div class="row"><div class="field"><label>Voyageurs</label><input id="inspireTravelers" type="number" min="1" value="2"></div><div class="field"><label>Mois</label><select id="inspireMonth"><option>Septembre</option><option>Octobre</option><option>Mai</option><option>Juin</option><option>Juillet</option><option>Août</option><option>Novembre</option></select></div></div>
-    <div class="field"><label>Ce que tu aimes</label><select id="inspireInterest"><option>Gastronomie et paysages</option><option>Culture et histoire</option><option>Plages et détente</option><option>Nature et aventure</option><option>Villes et photographie</option></select></div>
-    <div class="quick-modal-actions"><button class="btn" type="submit">Voir mes suggestions</button><button id="cancelInspire" class="btn secondary" type="button">Fermer</button></div>
-    <div id="inspireResults" class="inspire-results"></div>
-  </form>
+    <div class="modal-actions"><button id="saveNewTrip" class="btn" type="button">Créer le voyage</button><button id="cancelNewTrip" class="btn secondary" type="button">Annuler</button></div>
+  </div>
 </div>
 
 <div id="quickEditModal" class="quick-modal" hidden>
@@ -531,6 +526,7 @@
 
 <nav class="nav">
   <button class="active" data-panel="home" onclick="showPanel('home')"><span>🏠</span>Accueil</button>
+  <button data-panel="trips" onclick="showPanel('trips')"><span>🌍</span>Voyages</button>
   <button data-panel="today" onclick="showPanel('today')"><span>☀️</span>Aujourd’hui</button>
   <button data-panel="timeline" onclick="showPanel('timeline')"><span>🕒</span>Timeline</button>
   <button data-panel="map" onclick="showPanel('map')"><span>🗺️</span>Carte</button>
@@ -569,6 +565,6 @@
   <div class="replay-controls"><button id="replayPrevious" class="replay-control" aria-label="Précédent">←</button><button id="replayToggle" class="replay-control primary" aria-label="Pause">⏸</button><div id="replayCounter" class="replay-counter">1 / 1</div><button id="replayNext" class="replay-control" aria-label="Suivant">→</button></div>
   <section id="replayFinale" class="replay-finale"><div class="replay-finale-card"><div class="replay-finale-flag">🇮🇹</div><h2>Merci Italie</h2><p>Un voyage se termine. Les souvenirs, eux, restent pour toujours.</p><div id="replayFinalStats" class="replay-final-stats"></div><button id="replayRestart" class="replay-control primary" aria-label="Recommencer">↻</button></div></section>
 </div>
-<script type="module" src="js/app.js?v=premium-3.5-voyages"></script>
+<script type="module" src="js/app.js?v=premium-3.6-stable-voyages"></script>
 </body>
 </html>
