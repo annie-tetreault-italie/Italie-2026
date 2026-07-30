@@ -1,3 +1,13 @@
+# Mon Carnet de Voyages — Premium 3.8
+
+## Revivre mon voyage
+- Lecture plein écran et automatique
+- Plusieurs photos par journée
+- Météo en direct dans le lecteur
+- Parcours synchronisé
+- Vitesse 1×, 1,5× ou 2×
+- Souvenirs, notes, lieux, budget et statistiques finales
+
 # Mon Carnet de Voyages — Premium 3.7
 
 Version stable basée sur la 3.6.

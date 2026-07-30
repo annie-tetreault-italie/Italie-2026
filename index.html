@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f7f0e6">
 <title>Mon Carnet de Voyages — Italie 2026</title>
-<meta name="application-version" content="premium-3.7-conditions-voyage">
+<meta name="application-version" content="premium-3.8-revivre-premium">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
-<link rel="stylesheet" href="css/style.css?v=premium-3.7-conditions-voyage">
+<link rel="stylesheet" href="css/style.css?v=premium-3.8-revivre-premium">
 </head>
 <body>
 <div class="app">
@@ -580,11 +580,11 @@
 <div id="tripReplay" class="replay-overlay" aria-hidden="true">
   <div id="replayBackdrop" class="replay-backdrop"></div><div class="replay-shade"></div>
   <div class="replay-top"><div class="replay-brand">🌍 Mon Carnet de Voyages</div><div class="replay-progress"><i id="replayProgressFill"></i></div><button id="replayClose" class="replay-close" aria-label="Fermer">×</button></div>
-  <main id="replayContent" class="replay-content"><div id="replayDate" class="replay-date"></div><h2 id="replayCity"></h2><p id="replayTitle" class="replay-title"></p><blockquote id="replayQuote" class="replay-quote"></blockquote><div id="replayKpis" class="replay-kpis"></div></main>
+  <main id="replayContent" class="replay-content"><div class="replay-meta-line"><div id="replayDate" class="replay-date"></div><div id="replayWeather" class="replay-weather"></div></div><h2 id="replayCity"></h2><p id="replayTitle" class="replay-title"></p><blockquote id="replayQuote" class="replay-quote"></blockquote><div id="replayKpis" class="replay-kpis"></div><div id="replayPhotoDots" class="replay-photo-dots" aria-label="Photos de la journée"></div></main>
   <aside class="replay-route"><h3>Le parcours</h3><div id="replayRouteList" class="replay-route-list"></div></aside>
-  <div class="replay-controls"><button id="replayPrevious" class="replay-control" aria-label="Précédent">←</button><button id="replayToggle" class="replay-control primary" aria-label="Pause">⏸</button><div id="replayCounter" class="replay-counter">1 / 1</div><button id="replayNext" class="replay-control" aria-label="Suivant">→</button></div>
+  <div class="replay-controls"><button id="replaySpeed" class="replay-control replay-speed" aria-label="Vitesse">1×</button><button id="replayPrevious" class="replay-control" aria-label="Précédent">←</button><button id="replayToggle" class="replay-control primary" aria-label="Pause">⏸</button><div id="replayCounter" class="replay-counter">1 / 1</div><button id="replayNext" class="replay-control" aria-label="Suivant">→</button></div>
   <section id="replayFinale" class="replay-finale"><div class="replay-finale-card"><div class="replay-finale-flag">🇮🇹</div><h2>Merci Italie</h2><p>Un voyage se termine. Les souvenirs, eux, restent pour toujours.</p><div id="replayFinalStats" class="replay-final-stats"></div><button id="replayRestart" class="replay-control primary" aria-label="Recommencer">↻</button></div></section>
 </div>
-<script type="module" src="js/app.js?v=premium-3.7-conditions-voyage"></script>
+<script type="module" src="js/app.js?v=premium-3.8-revivre-premium"></script>
 </body>
 </html>

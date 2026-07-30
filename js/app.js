@@ -2005,19 +2005,41 @@ document.addEventListener("touchend", function(e){
   }
 },{passive:false});
 
-// ===== Premium 3.2 — Revivre le voyage =====
-const REPLAY_INTERVAL = 6500;
+// ===== Premium 3.8 — Revivre le voyage Premium =====
+let REPLAY_INTERVAL = 8000;
 let replayIndex = 0;
 let replayTimer = null;
 let replayPaused = false;
+let replayPhotoTimer = null;
+let replayPhotoIndex = 0;
+let replaySpeedIndex = 0;
+const REPLAY_SPEEDS = [{label:"1×",ms:8000},{label:"1,5×",ms:5400},{label:"2×",ms:4000}];
 
-function replayPhotoForDay(day){
+function replayPhotosForDay(day){
   const photos = Array.isArray(day?.photos) ? day.photos : [];
-  for(const photo of photos){
-    const src = typeof photo === "string" ? photo : (photo?.url || photo?.src || photo?.dataUrl || "");
-    if(src) return src;
-  }
-  return "assets/manarola-sunset.jpg";
+  const sources = photos.map(photo => typeof photo === "string" ? photo : (photo?.url || photo?.src || photo?.dataUrl || "")).filter(Boolean);
+  return sources.length ? sources : [timelineCoverForDay(day) || "assets/manarola-sunset.jpg"];
+}
+function replayPhotoForDay(day){ return replayPhotosForDay(day)[0]; }
+function setReplayBackdrop(src){
+  const backdrop=$("replayBackdrop");
+  if(!backdrop) return;
+  backdrop.style.opacity="0";
+  setTimeout(()=>{ backdrop.style.backgroundImage=`url("${String(src).replace(/"/g,'%22')}")`; backdrop.style.opacity="1"; },180);
+}
+function startReplayPhotoCycle(day){
+  clearInterval(replayPhotoTimer);
+  const photos=replayPhotosForDay(day); replayPhotoIndex=0;
+  const dots=$("replayPhotoDots");
+  if(dots) dots.innerHTML=photos.length>1?photos.map((_,i)=>`<button type="button" class="${i===0?"active":""}" aria-label="Photo ${i+1}"></button>`).join(""):"";
+  setReplayBackdrop(photos[0]);
+  if(photos.length<2) return;
+  replayPhotoTimer=setInterval(()=>{
+    if(replayPaused) return;
+    replayPhotoIndex=(replayPhotoIndex+1)%photos.length;
+    setReplayBackdrop(photos[replayPhotoIndex]);
+    dots?.querySelectorAll("button").forEach((dot,i)=>dot.classList.toggle("active",i===replayPhotoIndex));
+  },2200);
 }
 function replayPlacesForDay(day){ return Array.isArray(day?.herePlaces) ? day.herePlaces.length : 0; }
 function replayMemoryText(day){ return timelineReflection(day) || timelineMemoryForDay(day) || "Une nouvelle journée à garder en mémoire."; }
@@ -2037,17 +2059,27 @@ function renderReplayRoute(day){
   const cities=replayCities(); const active=cityForDay(day)||"Italie"; const activeIndex=Math.max(0,cities.indexOf(active));
   $("replayRouteList").innerHTML=cities.map((city,index)=>`<div class="replay-route-step ${index<activeIndex?"done":index===activeIndex?"active":""}"><i></i><span>${esc(city)}</span></div>`).join("");
 }
+function weatherPlaceIdForCity(city){
+  const value=String(city||"").toLocaleLowerCase("fr-CA");
+  if(value.includes("cinque")||value.includes("vernazza")||value.includes("manarola")||value.includes("monterosso")) return "cinque-terre";
+  if(value.includes("florence")||value.includes("firenze")) return "florence";
+  if(value.includes("venise")||value.includes("venezia")) return "venise";
+  if(value.includes("toscane")||value.includes("chianti")||value.includes("sienne")||value.includes("siena")) return "toscane";
+  if(value.includes("rome")||value.includes("roma")) return "rome";
+  return "";
+}
 function renderReplayDay(index){
   if(!itineraryDays.length) return;
   replayIndex=Math.max(0,Math.min(index,itineraryDays.length-1));
   const day=itineraryDays[replayIndex]; const city=cityForDay(day)||"Italie";
-  $("replayBackdrop").style.opacity="0";
-  setTimeout(()=>{ $("replayBackdrop").style.backgroundImage=`url("${String(replayPhotoForDay(day)).replace(/"/g,'%22')}")`; $("replayBackdrop").style.opacity="1"; },180);
+  startReplayPhotoCycle(day);
   $("replayDate").textContent=formatDateFr(day.id);
   $("replayCity").textContent=city;
   $("replayTitle").textContent=firstValue(day,["title","location","arrival"])||"Une journée en Italie";
   $("replayQuote").textContent=`“${replayMemoryText(day)}”`;
   const photos=Array.isArray(day.photos)?day.photos.length:0; const places=replayPlacesForDay(day); const rating=timelineRating(day);
+  const placeKey=weatherPlaceIdForCity(city); const weather=placeKey?weatherData?.[placeKey]:null; const weatherInfo=weather?weatherCodeInfo(weather.current.weather_code):null;
+  $("replayWeather").textContent=weather?`${weatherInfo.icon} ${Math.round(weather.current.temperature_2m)} °C · ${weatherInfo.label}`:"";
   $("replayKpis").innerHTML=`<span>📸 ${photos} photo${photos>1?"s":""}</span><span>📍 ${places} lieu${places>1?"x":""}</span>${rating?`<span>⭐ ${rating}/5</span>`:""}${timelineBudget(day)?`<span>💶 ${esc(displayValue(timelineBudget(day)))}</span>`:""}`;
   $("replayCounter").textContent=`${replayIndex+1} / ${itineraryDays.length}`;
   $("replayProgressFill").style.width=`${((replayIndex+1)/itineraryDays.length)*100}%`;
@@ -2059,10 +2091,10 @@ function openTripReplay(){
   if(!itineraryDays.length){ alert("L’itinéraire est encore en chargement. Réessaie dans un instant."); return; }
   stopTimelinePlayback(); replayPaused=false; $("replayFinale").classList.remove("show"); $("tripReplay").classList.add("open"); $("tripReplay").setAttribute("aria-hidden","false"); document.body.style.overflow="hidden"; $("replayToggle").textContent="⏸"; renderReplayDay(0); replaySchedule();
 }
-function closeTripReplay(){ clearTimeout(replayTimer); $("tripReplay").classList.remove("open"); $("tripReplay").setAttribute("aria-hidden","true"); document.body.style.overflow=""; }
+function closeTripReplay(){ clearTimeout(replayTimer); clearInterval(replayPhotoTimer); $("tripReplay").classList.remove("open"); $("tripReplay").setAttribute("aria-hidden","true"); document.body.style.overflow=""; }
 function toggleTripReplay(){ replayPaused=!replayPaused; $("replayToggle").textContent=replayPaused?"▶":"⏸"; if(replayPaused) clearTimeout(replayTimer); else replaySchedule(); }
 function showReplayFinale(){
-  clearTimeout(replayTimer); const s=replayStats();
+  clearTimeout(replayTimer); clearInterval(replayPhotoTimer); const s=replayStats();
   $("replayFinalStats").innerHTML=`<div><strong>${s.photoCount}</strong><span>photos</span></div><div><strong>${s.favorites}</strong><span>coups de cœur</span></div><div><strong>${s.places}</strong><span>lieux</span></div><div><strong>${s.memories}</strong><span>journées racontées</span></div>`;
   $("replayFinale").classList.add("show");
 }
@@ -2072,6 +2104,16 @@ $("replayToggle")?.addEventListener("click",toggleTripReplay);
 $("replayPrevious")?.addEventListener("click",()=>{ $("replayFinale").classList.remove("show"); renderReplayDay(replayIndex-1); replaySchedule(); });
 $("replayNext")?.addEventListener("click",()=>{ if(replayIndex>=itineraryDays.length-1) showReplayFinale(); else {renderReplayDay(replayIndex+1);replaySchedule();} });
 $("replayRestart")?.addEventListener("click",()=>{ $("replayFinale").classList.remove("show"); replayPaused=false; $("replayToggle").textContent="⏸"; renderReplayDay(0); replaySchedule(); });
+
+$("replaySpeed")?.addEventListener("click",()=>{
+  replaySpeedIndex=(replaySpeedIndex+1)%REPLAY_SPEEDS.length;
+  const speed=REPLAY_SPEEDS[replaySpeedIndex]; REPLAY_INTERVAL=speed.ms; $("replaySpeed").textContent=speed.label; replaySchedule();
+});
+$("replayPhotoDots")?.addEventListener("click",event=>{
+  const dot=event.target.closest("button"); if(!dot) return;
+  const dots=[...$("replayPhotoDots").querySelectorAll("button")]; const next=dots.indexOf(dot); if(next<0) return;
+  const day=itineraryDays[replayIndex]; const photos=replayPhotosForDay(day); replayPhotoIndex=next; setReplayBackdrop(photos[next]); dots.forEach((item,i)=>item.classList.toggle("active",i===next));
+});
 document.addEventListener("keydown",event=>{ if(!$("tripReplay")?.classList.contains("open")) return; if(event.key==="Escape") closeTripReplay(); if(event.key==="ArrowRight") $("replayNext").click(); if(event.key==="ArrowLeft") $("replayPrevious").click(); if(event.key===" "){event.preventDefault();toggleTripReplay();} });
 
 
