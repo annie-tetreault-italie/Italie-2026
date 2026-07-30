@@ -1,3 +1,7 @@
+# Mon Carnet de Voyages — Premium 4.0.1
+
+Correction de fiabilité de la météo en temps réel : nouvelles tentatives automatiques, délai maximal, chargement ville par ville et conservation des dernières données disponibles.
+
 # 🌍 Mon Carnet de Voyages — Premium 4.0 Stable
 
 ## Nouveautés

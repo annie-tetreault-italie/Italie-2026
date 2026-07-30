@@ -2292,10 +2292,22 @@ function cityWeatherKey(city=""){
   return "rome";
 }
 async function fetchPlaceWeather(place){
-  const params=new URLSearchParams({latitude:place.lat,longitude:place.lon,timezone:"auto",forecast_days:"7",current:"temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,weather_code,wind_speed_10m",daily:"weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset,uv_index_max"});
-  const response=await fetch(`https://api.open-meteo.com/v1/forecast?${params}`);
-  if(!response.ok) throw new Error(`Météo ${place.name}: ${response.status}`);
-  return response.json();
+  const params=new URLSearchParams({latitude:String(place.lat),longitude:String(place.lon),timezone:"auto",forecast_days:"7",current:"temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,weather_code,wind_speed_10m",daily:"weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset,uv_index_max"});
+  const url=`https://api.open-meteo.com/v1/forecast?${params.toString()}`;
+  let lastError=null;
+  for(let attempt=0;attempt<2;attempt++){
+    const controller=new AbortController();
+    const timer=setTimeout(()=>controller.abort(),12000);
+    try{
+      const response=await fetch(url,{signal:controller.signal,cache:"no-store"});
+      if(!response.ok) throw new Error(`Météo ${place.name}: ${response.status}`);
+      const data=await response.json();
+      if(!data?.current||!data?.daily) throw new Error(`Réponse météo incomplète pour ${place.name}`);
+      return data;
+    }catch(err){lastError=err; if(attempt===0) await new Promise(r=>setTimeout(r,700));}
+    finally{clearTimeout(timer);}
+  }
+  throw lastError||new Error(`Météo indisponible pour ${place.name}`);
 }
 function cachedWeather(){
   const cache=LS.get(WEATHER_CACHE_KEY,null);
@@ -2307,12 +2319,21 @@ async function loadWeather(force=false){
   if(cached){weatherData=cached;renderAllWeather();return;}
   const error=$("weatherError"); if(error) error.hidden=true;
   try{
-    const results=await Promise.all(WEATHER_PLACES.map(async place=>[place.id,await fetchPlaceWeather(place)]));
-    weatherData=Object.fromEntries(results); LS.set(WEATHER_CACHE_KEY,{savedAt:Date.now(),data:weatherData}); renderAllWeather();
+    const settled=await Promise.allSettled(WEATHER_PLACES.map(async place=>[place.id,await fetchPlaceWeather(place)]));
+    const successful=settled.filter(r=>r.status==="fulfilled").map(r=>r.value);
+    const failed=settled.filter(r=>r.status==="rejected");
+    if(successful.length){
+      weatherData=Object.fromEntries(successful);
+      LS.set(WEATHER_CACHE_KEY,{savedAt:Date.now(),data:weatherData});
+      renderAllWeather(failed.length>0);
+      if(error){error.hidden=failed.length===0; if(failed.length) error.textContent=`Certaines villes n'ont pas chargé. Appuie sur Actualiser.`;}
+      return;
+    }
+    throw failed[0]?.reason||new Error("Aucune donnée météo reçue");
   }catch(err){
     console.error("Chargement météo",err);
     const fallback=LS.get(WEATHER_CACHE_KEY,null)?.data;
-    if(fallback){weatherData=fallback;renderAllWeather(true);} else {if(error) error.hidden=false; renderWeatherUnavailable();}
+    if(fallback){weatherData=fallback;renderAllWeather(true);if(error){error.hidden=false;error.textContent="Dernières données météo affichées. Appuie sur Actualiser pour réessayer.";}} else {if(error){error.hidden=false;error.textContent="La météo ne peut pas se connecter pour le moment. Appuie sur Actualiser dans quelques secondes.";} renderWeatherUnavailable();}
   }
 }
 function renderWeatherUnavailable(){
