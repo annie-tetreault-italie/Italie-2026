@@ -855,90 +855,35 @@ function timelineReflection(day){
   return city.includes("cinque") || city.includes("manarola") ? ITALY_SIGNATURE_QUOTE : "";
 }
 
-let reviveScenes = [];
-let reviveSceneIndex = 0;
-let reviveTimer = null;
-let revivePaused = false;
-
-function reviveImageForDay(day){
-  const photos=Array.isArray(day.photos)?day.photos.filter(Boolean):[];
-  return photos[0]||"assets/manarola-sunset.jpg";
-}
-function reviveCities(){
-  const cities=[];
-  itineraryDays.forEach(day=>{ const city=cityForDay(day)||"Italie"; if(cities[cities.length-1]!==city) cities.push(city); });
-  return cities;
-}
-function buildReviveScenes(){
-  const scenes=itineraryDays.map((day,index)=>({
-    type:"day",day,index,city:cityForDay(day)||"Italie",image:reviveImageForDay(day),
-    quote:timelineReflection(day)||timelineMemoryForDay(day)||"Une nouvelle journée à raconter.",
-    photos:Array.isArray(day.photos)?day.photos:[],places:Array.isArray(day.herePlaces)?day.herePlaces:[],rating:timelineRating(day)
-  }));
-  const totalPhotos=itineraryDays.reduce((n,d)=>n+(Array.isArray(d.photos)?d.photos.length:0),0);
-  const totalPlaces=itineraryDays.reduce((n,d)=>n+(Array.isArray(d.herePlaces)?d.herePlaces.length:0),0);
-  const favorites=itineraryDays.filter(d=>timelineRating(d)>=5 || d.favoritePhotoIndex!==undefined).length;
-  scenes.push({type:"final",image:"assets/manarola-sunset.jpg",totalPhotos,totalPlaces,favorites,days:itineraryDays.length});
-  return scenes;
-}
-function renderReviveRoute(scene){
-  const root=$("reviveRoute"); if(!root) return;
-  const cities=reviveCities();
-  let currentCity=scene.type==="day"?scene.city:cities[cities.length-1];
-  let active=cities.lastIndexOf(currentCity); if(active<0) active=0;
-  root.innerHTML=cities.map((city,i)=>`<div class="revive-route-step ${i<active?"done":i===active?"active":""}"><span>${esc(city)}</span></div>`).join("");
-}
-function renderReviveScene(){
-  const scene=reviveScenes[reviveSceneIndex]; if(!scene) return;
-  const bg=$("reviveBackground"),content=$("reviveContent");
-  bg.style.opacity="0";
-  setTimeout(()=>{ bg.style.backgroundImage=`url('${scene.image}')`; bg.style.opacity="1"; },120);
-  content.style.animation="none"; void content.offsetWidth; content.style.animation="reviveTextIn .75s ease";
-  if(scene.type==="final"){
-    content.className="revive-content revive-final";
-    content.innerHTML=`<span class="revive-eyebrow">Fin du voyage</span><h1>Merci Italie ❤️</h1><div class="revive-date">Des souvenirs à garder pour toujours</div><div class="revive-final-grid"><div><strong>${scene.days}</strong><span>journées</span></div><div><strong>${scene.totalPhotos}</strong><span>photos</span></div><div><strong>${scene.totalPlaces}</strong><span>lieux enregistrés</span></div><div><strong>${scene.favorites}</strong><span>journées favorites</span></div></div>`;
-  }else{
-    content.className="revive-content";
-    content.innerHTML=`<span class="revive-eyebrow">Jour ${scene.index+1} sur ${itineraryDays.length}</span><h1>${esc(scene.city)}</h1><div class="revive-date">${esc(formatDateFr(scene.day.id))}</div><blockquote class="revive-quote">« ${esc(displayValue(scene.quote))} »</blockquote><div class="revive-summary"><span>📸 ${scene.photos.length} photo${scene.photos.length!==1?"s":""}</span><span>📌 ${scene.places.length} lieu${scene.places.length!==1?"x":""}</span><span>${scene.rating?"⭐ "+scene.rating+"/5":"⭐ Pas encore notée"}</span></div>`;
-  }
-  $("reviveCounter").textContent=`${reviveSceneIndex+1} / ${reviveScenes.length}`;
-  $("reviveProgress").style.width=`${Math.round(((reviveSceneIndex+1)/reviveScenes.length)*100)}%`;
-  renderReviveRoute(scene);
-}
-function scheduleRevive(){
-  clearTimeout(reviveTimer);
-  if(revivePaused) return;
-  reviveTimer=setTimeout(()=>{
-    if(reviveSceneIndex<reviveScenes.length-1){ reviveSceneIndex++; renderReviveScene(); scheduleRevive(); }
-    else { revivePaused=true; $("revivePause").textContent="▶ Rejouer"; $("reviveModal").classList.add("is-paused"); }
-  },6500);
-}
-function startTimelinePlayback(){
-  if(!itineraryDays.length) return;
-  reviveScenes=buildReviveScenes(); reviveSceneIndex=0; revivePaused=false;
-  const modal=$("reviveModal"); modal.hidden=false; modal.setAttribute("aria-hidden","false"); document.body.style.overflow="hidden";
-  $("revivePause").textContent="⏸ Pause"; modal.classList.remove("is-paused");
-  renderReviveScene(); scheduleRevive();
-}
 function stopTimelinePlayback(){
-  clearTimeout(reviveTimer); reviveTimer=null; revivePaused=false;
-  const modal=$("reviveModal"); if(modal){ modal.hidden=true; modal.setAttribute("aria-hidden","true"); modal.classList.remove("is-paused"); }
-  document.body.style.overflow="";
+  if(timelinePlaybackTimer) clearInterval(timelinePlaybackTimer);
+  timelinePlaybackTimer = null;
+  document.querySelectorAll('.timeline-day-card').forEach(card=>card.classList.remove('timeline-playing'));
+  const button=$("timelinePlayButton");
+  if(button) button.textContent="▶️ Revivre le voyage";
 }
-function moveRevive(delta){
-  reviveSceneIndex=Math.max(0,Math.min(reviveScenes.length-1,reviveSceneIndex+delta)); renderReviveScene(); scheduleRevive();
+
+function startTimelinePlayback(){
+  const cards=[...document.querySelectorAll('.timeline-day-card')];
+  if(!cards.length) return;
+  if(timelinePlaybackTimer){ stopTimelinePlayback(); return; }
+  timelinePlaybackIndex=0;
+  const button=$("timelinePlayButton");
+  if(button) button.textContent="⏸️ Arrêter";
+  const showCurrent=()=>{
+    cards.forEach(card=>card.classList.remove('timeline-playing'));
+    const card=cards[timelinePlaybackIndex];
+    if(!card){ stopTimelinePlayback(); return; }
+    card.classList.add('timeline-playing');
+    card.scrollIntoView({behavior:"smooth",block:"center"});
+    timelinePlaybackIndex += 1;
+    if(timelinePlaybackIndex>=cards.length){
+      setTimeout(stopTimelinePlayback,4200);
+    }
+  };
+  showCurrent();
+  timelinePlaybackTimer=setInterval(showCurrent,5000);
 }
-$("reviveClose")?.addEventListener("click",stopTimelinePlayback);
-$("revivePrev")?.addEventListener("click",()=>moveRevive(-1));
-$("reviveNext")?.addEventListener("click",()=>moveRevive(1));
-$("revivePause")?.addEventListener("click",()=>{
-  if(reviveSceneIndex===reviveScenes.length-1 && revivePaused){ reviveSceneIndex=0; revivePaused=false; }
-  else revivePaused=!revivePaused;
-  $("revivePause").textContent=revivePaused?"▶ Continuer":"⏸ Pause";
-  $("reviveModal").classList.toggle("is-paused",revivePaused);
-  renderReviveScene(); scheduleRevive();
-});
-document.addEventListener("keydown",e=>{ if($("reviveModal")?.hidden===false){ if(e.key==="Escape") stopTimelinePlayback(); if(e.key==="ArrowRight") moveRevive(1); if(e.key==="ArrowLeft") moveRevive(-1); } });
 
 async function saveTimelineReflection(dayId, text, statusElement){
   const value=String(text||"").trim();
