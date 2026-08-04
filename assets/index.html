@@ -5,29 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f7f0e6">
 <title>Mon Carnet de Voyages — Italie 2026</title>
-<meta name="application-version" content="phoenix-1.1.0-accueil">
+<meta name="application-version" content="premium-8.3-explorer-en-images">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
-<link rel="stylesheet" href="css/style.css?v=1.1.0">
-  <link rel="stylesheet" href="css/explorer.css?v=0.9.4.2">
-  <link rel="stylesheet" href="css/today.css?v=0.9.4.3">
-  <link rel="stylesheet" href="css/souvenirs.css?v=0.9.5.5">
-<link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
-<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
-<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
-<meta name="application-name" content="Mon Carnet de Voyages">
-<meta name="apple-mobile-web-app-title" content="Mon Carnet">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="format-detection" content="telephone=no">
-<meta name="description" content="Préparer, vivre et revivre chaque voyage dans un carnet personnel.">
-<link rel="stylesheet" href="css/pwa.css?v=0.9.6.0">
+<link rel="stylesheet" href="css/style.css?v=premium-8.3-explorer-en-images">
 </head>
 <body>
 <button id="themeToggle" class="theme-toggle" type="button" aria-label="Changer le thème">🌙</button>
 <div class="app">
-  <section id="home" class="panel active phoenix-home">
+  <section id="home" class="panel active">
     <div class="home-v5-hero tuscany-hero">
       <div class="home-v5-shade"></div>
 
@@ -158,23 +143,8 @@
         </button>
       </section>
 
-      <section class="phoenix-route card" aria-label="Parcours du voyage">
-        <div class="phoenix-route-head">
-          <div><span class="eyebrow">Votre parcours</span><h2>18 jours en Italie</h2></div>
-          <button type="button" onclick="showPanel('itinerary')">Voir l’itinéraire →</button>
-        </div>
-        <div class="phoenix-route-track" role="list">
-          <span role="listitem" class="done"><i>✈️</i><b>Montréal</b></span>
-          <span role="listitem" class="next"><i>🏛️</i><b>Rome</b></span>
-          <span role="listitem"><i>🌊</i><b>Cinque Terre</b></span>
-          <span role="listitem"><i>🎨</i><b>Florence</b></span>
-          <span role="listitem"><i>🚤</i><b>Venise</b></span>
-          <span role="listitem"><i>🍇</i><b>Toscane</b></span>
-          <span role="listitem"><i>🏟️</i><b>Rome</b></span>
-        </div>
-      </section>
 
-      <section class="home-v5-actions phoenix-primary-actions" aria-label="Accès rapides">
+      <section class="home-v5-actions" aria-label="Accès rapides">
         <button type="button" onclick="showPanel('map')">
           <span>🗺️</span><strong>Carte</strong><small>Voir le trajet</small>
         </button>
@@ -290,44 +260,23 @@
     </div>
   </section>
 
-  <section id="today" class="panel today-v941-panel">
-    <div id="todayPremiumHero" class="today-v941-hero">
-      <div class="today-v941-shade"></div>
-      <div class="today-v941-topbar">
-        <span id="todayModeLabel" class="today-v941-mode">Votre journée de voyage</span>
-        <span id="todayPremiumWeatherPill" class="today-v941-weather-pill">🌤️ Chargement…</span>
-      </div>
-      <div class="today-v941-hero-copy">
-        <span id="todayPremiumGreeting" class="today-v941-greeting">Bonjour Annie 👋</span>
-        <h1 id="todayCity">Italie</h1>
-        <p id="todayDateLabel" class="today-v941-date">Chargement…</p>
-        <blockquote id="todayPremiumQuote">Une belle journée vous attend.</blockquote>
-        <div class="today-v941-hero-actions">
-          <button id="todayNextActivity" class="btn today-v941-primary" type="button">▶ Ma prochaine activité</button>
-          <button id="todayOpenDay" class="btn secondary today-v941-secondary" type="button">Voir la fiche complète</button>
-        </div>
-      </div>
-      <div class="today-v941-hero-summary">
-        <div><span>Programme</span><strong id="todayPremiumActivityCount">0 activité</strong></div>
-        <div><span>Prochaine étape</span><strong id="todayPremiumNextActivity">À découvrir</strong></div>
-        <div><span>Budget du jour</span><strong id="todayPremiumSpend">0 $</strong></div>
-      </div>
+  <section id="today" class="panel">
+    <div class="hero today-hero">
+      <div class="eyebrow" id="todayModeLabel">Votre journée de voyage</div>
+      <h1 id="todayHeading">Aujourd’hui</h1>
+      <div class="dates" id="todayDateLabel">Chargement…</div>
     </div>
-
-    <div class="section today-v941-section">
+    <div class="section">
       <div id="todayEmpty" class="card loading-card" hidden>Aucune journée n’est encore disponible dans l’itinéraire.</div>
       <div id="todayContent">
-        <div class="today-v941-intro">
-          <div>
-            <span class="eyebrow">Votre journée en un coup d’œil</span>
-            <h2 id="todayHeading">Aujourd’hui</h2>
-            <p id="todayTitle">—</p>
-          </div>
-          <div class="today-v941-quick-actions">
-            <button type="button" data-today-scroll="todaySchedule">🕘 Programme</button>
-            <button type="button" data-today-scroll="todayWeatherTitle">🌤️ Météo</button>
-            <button type="button" data-today-scroll="currentLocationTitle">📍 Position</button>
-            <button type="button" data-today-scroll="todayBudget">💶 Budget</button>
+        <div class="card today-main-card">
+          <div class="today-location-row">
+            <div>
+              <span class="today-kicker">📍 Destination</span>
+              <h2 id="todayCity">—</h2>
+              <p id="todayTitle">—</p>
+            </div>
+            <button id="todayOpenDay" class="btn secondary" type="button">Voir la fiche</button>
           </div>
         </div>
 
@@ -362,41 +311,9 @@
         </article>
 
         <div class="today-grid">
-          <article class="card today-section-card wide today-v941-program-card today-v942-program-card">
-            <div class="today-v941-card-heading">
-              <div><span class="eyebrow">Votre rythme du jour</span><h3>🕘 Programme intelligent</h3></div>
-              <button id="todayNextActivityInline" class="btn secondary" type="button">Prochaine activité →</button>
-            </div>
-
-            <section id="todayNowCard" class="today-v942-now-card" aria-live="polite">
-              <div class="today-v942-now-icon">⏰</div>
-              <div class="today-v942-now-copy">
-                <span id="todayNowLabel">EN CE MOMENT</span>
-                <strong id="todayNowTitle">Votre journée se prépare</strong>
-                <p id="todayNowCountdown">Les activités apparaîtront ici.</p>
-              </div>
-              <button id="todayNowAction" type="button" class="btn">Voir</button>
-            </section>
-
-            <div class="today-v942-progress">
-              <div class="today-v942-progress-copy">
-                <div>
-                  <span class="eyebrow">Progression de la journée</span>
-                  <strong id="todayProgressText">0 activité terminée</strong>
-                </div>
-                <span id="todayProgressPercent">0 %</span>
-              </div>
-              <div class="today-v942-progress-track">
-                <div id="todayProgressFill"></div>
-              </div>
-            </div>
-
-            <div id="todaySchedule" class="today-timeline today-v942-timeline"></div>
-            <div id="todayCompleteMessage" class="today-v942-complete" hidden>
-              <span>🎉</span>
-              <div><strong>Votre journée est terminée.</strong><p>Ajoutez maintenant votre plus beau souvenir.</p></div>
-              <button type="button" id="todayCompleteMemory" class="btn">❤️ Souvenir du jour</button>
-            </div>
+          <article class="card today-section-card wide">
+            <h3>🕘 Programme</h3>
+            <div id="todaySchedule" class="today-timeline"></div>
           </article>
           <article class="card today-section-card">
             <h3>🏨 Hébergement</h3>
@@ -419,40 +336,6 @@
             <div id="todayNotes" class="today-value"></div>
           </article>
         </div>
-
-        <section class="today-v943-actions">
-          <div class="today-v943-actions-head">
-            <div>
-              <span class="eyebrow">Capturer le moment</span>
-              <h3>Ajoutez quelque chose en quelques secondes</h3>
-              <p>Chaque ajout est automatiquement rattaché à cette journée.</p>
-            </div>
-            <span id="todayQuickDayLabel" class="today-v943-day-pill">Aujourd’hui</span>
-          </div>
-          <div class="today-v943-actions-grid">
-            <button type="button" data-today-quick="photo">
-              <span>📷</span><strong>Ajouter une photo</strong><small>Ouvrir l’appareil ou choisir une image</small>
-            </button>
-            <button type="button" data-today-quick="favorite">
-              <span>❤️</span><strong>Coup de cœur</strong><small>Enregistrer le meilleur moment</small>
-            </button>
-            <button type="button" data-today-quick="note">
-              <span>📝</span><strong>Note rapide</strong><small>Écrire ce que vous voulez retenir</small>
-            </button>
-            <button type="button" data-today-quick="expense">
-              <span>💶</span><strong>Ajouter une dépense</strong><small>Préremplir la date et la ville</small>
-            </button>
-          </div>
-        </section>
-
-        <article class="card today-v941-evening-card">
-          <div>
-            <span class="eyebrow">À la fin de la journée</span>
-            <h3>Gardez une trace de ce moment</h3>
-            <p>La note, le coup de cœur et les photos de cette journée alimentent déjà vos Souvenirs.</p>
-          </div>
-          <button id="todayOpenMemory" class="btn" type="button">❤️ Ajouter un souvenir</button>
-        </article>
         <div class="today-switcher">
           <button id="todayPrevious" class="btn secondary" type="button">← Journée précédente</button>
           <button id="todayNext" class="btn" type="button">Journée suivante →</button>
@@ -630,128 +513,20 @@
         </div>
       </article>
 
-      <div class="explorer-v90-mode-switch card" role="tablist" aria-label="Mode d’exploration">
-        <button type="button" class="active" data-explorer-mode="destinations" role="tab" aria-selected="true">
-          <span>🖼️</span><strong>Destinations</strong><small>Voir les étapes</small>
-        </button>
-        <button type="button" data-explorer-mode="timeline" role="tab" aria-selected="false">
-          <span>🧭</span><strong>Chronologie</strong><small>Suivre l’histoire</small>
-        </button>
-        <button type="button" data-explorer-mode="map" role="tab" aria-selected="false">
-          <span>🗺️</span><strong>Carte</strong><small>Voir le parcours</small>
-        </button>
-      </div>
-
-      <section id="explorerTimelineMode" class="explorer-v90-timeline-mode explorer-v93-timeline-mode" hidden>
-        <div class="explorer-v90-timeline-head explorer-v93-timeline-head">
-          <div>
-            <span class="eyebrow">Le voyage jour après jour</span>
-            <h2>Votre aventure en chronologie</h2>
-            <p>Suivez le fil de votre voyage, de la première arrivée jusqu’au retour à Rome.</p>
-          </div>
-          <div class="explorer-v93-timeline-actions">
-            <span id="explorerTimelineSummary" class="explorer-v90-summary-pill">Italie 2026</span>
-            <button id="timelineAutoPlay" type="button" class="btn explorer-v93-play-button">▶ Lire le voyage</button>
-          </div>
-        </div>
-
-        <div class="explorer-v93-story-progress card">
-          <div>
-            <span class="eyebrow">Progression</span>
-            <strong id="timelineProgressLabel">Votre histoire complète</strong>
-          </div>
-          <div class="explorer-v93-progress-track"><div id="timelineProgressFill"></div></div>
-          <span id="timelineProgressPercent">0 %</span>
-        </div>
-
-        <div id="explorerTimelineJourney" class="explorer-v90-timeline-journey explorer-v93-timeline-journey"></div>
-      </section>
-
-      <section id="explorerMapMode" class="explorer-v90-map-mode" hidden></section>
-
-      <section class="explorer-v86-overview" aria-label="Résumé du voyage">
-        <article class="explorer-v86-featured">
-          <div id="explorerFeaturedVisual" class="explorer-v86-featured-visual">
-            <div class="explorer-v86-featured-shade"></div>
-            <div class="explorer-v86-featured-copy">
-              <span id="explorerFeaturedLabel">Prochaine étape</span>
-              <h2 id="explorerFeaturedCity">Votre voyage en Italie</h2>
-              <p id="explorerFeaturedDates">Les étapes se préparent…</p>
-              <div id="explorerFeaturedStats" class="explorer-v86-featured-stats"></div>
-              <button id="explorerFeaturedOpen" class="btn explorer-v86-featured-button" type="button">
-                Explorer cette étape →
-              </button>
-            </div>
-          </div>
-        </article>
-
-        <aside class="explorer-v86-journey-card card">
-          <span class="eyebrow">Vue d’ensemble</span>
-          <h2>Votre aventure</h2>
-          <p id="explorerJourneySummary">Le voyage se prépare…</p>
-          <div class="explorer-v86-progress">
-            <div class="explorer-v86-progress-head">
-              <strong id="explorerJourneyProgressLabel">Avant le départ</strong>
-              <span id="explorerJourneyProgressPercent">0 %</span>
-            </div>
-            <div class="explorer-v86-progress-track">
-              <div id="explorerJourneyProgressFill"></div>
-            </div>
-          </div>
-          <div class="explorer-v86-mini-stats">
-            <div><strong id="explorerOverviewCities">0</strong><span>destinations</span></div>
-            <div><strong id="explorerOverviewNights">0</strong><span>nuits</span></div>
-            <div><strong id="explorerOverviewFavorites">0</strong><span>coups de cœur</span></div>
-          </div>
-          <div class="explorer-v86-controls">
-            <button id="explorerFeaturedPrev" type="button" aria-label="Étape précédente">←</button>
-            <span id="explorerFeaturedCounter">0 / 0</span>
-            <button id="explorerFeaturedNext" type="button" aria-label="Étape suivante">→</button>
-          </div>
-        </aside>
-      </section>
-
       <section class="explorer-v83-destinations">
-        <div class="explorer-v83-section-heading explorer-v92-section-heading">
+        <div class="explorer-v83-section-heading">
           <div>
             <span class="eyebrow">Choisissez une étape</span>
             <h2>Explorer le voyage en images</h2>
           </div>
-          <div class="explorer-v92-heading-actions">
-            <span id="explorerJourneyLabel" class="explorer-v83-journey-label">Italie 2026</span>
-            <button id="explorerGuidedTour" type="button" class="btn explorer-v92-tour-button">▶ Aperçu guidé</button>
-          </div>
+          <span id="explorerJourneyLabel" class="explorer-v83-journey-label">Italie 2026</span>
         </div>
-
-        <div class="explorer-v92-toolbar card" aria-label="Filtrer les destinations">
-          <div class="explorer-v92-filters" role="group" aria-label="Type de destination">
-            <button type="button" class="active" data-destination-filter="all">Toutes</button>
-            <button type="button" data-destination-filter="sea">🌊 Mer</button>
-            <button type="button" data-destination-filter="city">🏛️ Villes</button>
-            <button type="button" data-destination-filter="country">🍇 Campagne</button>
-          </div>
-          <div class="explorer-v92-tour-status">
-            <span id="explorerVisibleCount">5 destinations</span>
-            <strong id="explorerTourCounter">Prête à explorer</strong>
-          </div>
-        </div>
-
         <div id="explorerCityCards" class="explorer-v81-city-grid explorer-v83-city-grid" aria-label="Étapes du voyage"></div>
       </section>
 
       <article class="card explorer-v81-map-card">
-        <div class="explorer-v81-map-head explorer-v84-map-head">
-          <div><span class="eyebrow">Carte interactive</span><h2>Le parcours complet</h2></div>
-          <div class="explorer-v84-map-tools">
-            <span class="explorer-v81-map-hint">Touchez une étape pour l’explorer</span>
-            <button type="button" id="mapFullscreenButton" class="btn secondary explorer-v84-fullscreen-button">⛶ Agrandir</button>
-          </div>
-        </div>
-        <div id="explorerRouteStrip" class="explorer-v84-route-strip" aria-label="Parcours du voyage"></div>
-        <div class="explorer-v84-map-wrap">
-          <div id="tripMap" class="trip-map explorer-v81-map explorer-v84-map" aria-label="Carte interactive du voyage"></div>
-          <div class="explorer-v84-map-badge"><span>🇮🇹</span><div><small>Italie 2026</small><strong id="explorerRouteSummary">Votre aventure</strong></div></div>
-        </div>
+        <div class="explorer-v81-map-head"><div><span class="eyebrow">Carte interactive</span><h2>Le parcours complet</h2></div><span class="explorer-v81-map-hint">Touchez un marqueur pour ouvrir une étape</span></div>
+        <div id="tripMap" class="trip-map explorer-v81-map" aria-label="Carte interactive du voyage"></div>
         <div class="map-legend explorer-v81-legend">
           <span><i class="legend-dot route-dot"></i> Étape</span>
           <span><i class="legend-dot here-dot"></i> Lieu enregistré</span>
@@ -796,36 +571,9 @@
           <div class="field"><label>Prix</label><input id="bookPrice" type="number" min="0" step="0.01" placeholder="0,00"></div>
           <div class="field"><label>Devise</label><select id="bookCurrency"><option value="CAD">$ CA</option><option value="EUR">€</option></select></div>
         </div>
-        <div class="row">
-          <div class="field"><label>Date de fin / départ</label><input id="bookEndDate" type="date"></div>
-          <div class="field"><label>Heure de fin / départ</label><input id="bookEndTime" type="time"></div>
-        </div>
-        <div class="field"><label>Adresse</label><input id="bookAddress" placeholder="Rue, numéro, ville"></div>
-        <div class="row">
-          <div class="field"><label>Téléphone</label><input id="bookPhone" type="tel" placeholder="+39 ..."></div>
-          <div class="field"><label>Site Web</label><input id="bookWebsite" type="url" placeholder="https://..."></div>
-        </div>
-        <section id="hotelBookingFields" class="hotel-booking-fields">
-          <div class="hotel-booking-fields-head"><span>🏨</span><div><strong>Détails de l’hôtel</strong><small>Ces informations apparaîtront dans la fiche Hôtel Premium.</small></div></div>
-          <div class="row">
-            <div class="field"><label>Courriel</label><input id="bookEmail" type="email" placeholder="reception@hotel.it"></div>
-            <div class="field"><label>Classement</label><select id="bookStars"><option value="">Non précisé</option><option value="1">1 étoile</option><option value="2">2 étoiles</option><option value="3">3 étoiles</option><option value="4">4 étoiles</option><option value="5">5 étoiles</option></select></div>
-          </div>
-          <div class="row">
-            <div class="field"><label>Type de chambre</label><input id="bookRoom" placeholder="Ex. Chambre double, balcon"></div>
-            <div class="field"><label>Voyageurs</label><input id="bookTravelers" type="number" min="1" step="1" placeholder="2"></div>
-          </div>
-          <div class="row">
-            <div class="field"><label>Taxes / frais</label><input id="bookTaxes" type="number" min="0" step="0.01" placeholder="0,00"></div>
-            <div class="field"><label>Photo de l’hôtel (URL)</label><input id="bookPhoto" type="url" placeholder="https://..."></div>
-          </div>
-        </section>
         <div class="field"><label>Lien vers la réservation ou le billet</label><input id="bookLink" type="url" placeholder="https://..."></div>
-        <div class="field"><label>Notes</label><textarea id="bookNotes" placeholder="Terminal, siège, heure d’arrivée, détails..."></textarea></div>
-        <div class="booking-form-actions">
-          <button id="bookingSubmitButton" class="btn" type="button" onclick="saveBooking()">Ajouter la réservation</button>
-          <button id="bookingCancelEdit" class="btn secondary" type="button" onclick="cancelBookingEdit()" hidden>Annuler la modification</button>
-        </div>
+        <div class="field"><label>Notes</label><textarea id="bookNotes" placeholder="Adresse, terminal, siège, heure d’arrivée, détails..."></textarea></div>
+        <button class="btn" onclick="addBooking()">Ajouter la réservation</button>
       </div>
       <div class="booking-tools">
         <input id="bookingSearch" type="search" placeholder="Rechercher une réservation…">
@@ -918,242 +666,9 @@
     </div>
   </section>
 
-  <section id="notes" class="panel memories-v951-panel">
-    <div class="memories-v951-stage">
-      <article id="travelBookCover" class="memories-v951-cover" aria-label="Couverture du livre de voyage">
-        <div class="memories-v951-cover-shade"></div>
-
-        <div class="memories-v951-cover-top">
-          <span class="memories-v951-country">🇮🇹 Italie 2026</span>
-          <span class="memories-v951-edition">Édition personnelle</span>
-        </div>
-
-        <div class="memories-v951-cover-copy">
-          <span class="memories-v951-kicker">Mon Carnet de Voyages</span>
-          <h1>Préparer.<br>Vivre.<br>Revivre.</h1>
-          <p>Le récit de notre aventure italienne, du 28 septembre au 16 octobre 2026.</p>
-
-          <div class="memories-v951-cover-meta">
-            <div><span>Voyageuse</span><strong>Annie</strong></div>
-            <div><span>Durée</span><strong id="bookCoverDays">18 jours</strong></div>
-            <div><span>Destinations</span><strong id="bookCoverDestinations">5 étapes</strong></div>
-          </div>
-
-          <button id="openTravelBook" class="btn memories-v951-open-button" type="button">
-            📖 Ouvrir mon carnet
-          </button>
-        </div>
-
-        <div class="memories-v951-spine">MON CARNET DE VOYAGES · ITALIE 2026</div>
-      </article>
-
-      <aside class="memories-v951-preview card">
-        <span class="eyebrow">Votre livre se construit</span>
-        <h2>Un souvenir vivant</h2>
-        <p>Les photos, notes et coups de cœur enregistrés pendant le voyage apparaîtront automatiquement dans les prochains chapitres.</p>
-
-        <div class="memories-v951-stats">
-          <div><strong id="bookCoverPhotos">0</strong><span>photos</span></div>
-          <div><strong id="bookCoverMemories">0</strong><span>souvenirs</span></div>
-          <div><strong id="bookCoverChapters">5</strong><span>chapitres</span></div>
-        </div>
-
-        <div class="memories-v951-preview-note">
-          <span>❤️</span>
-          <p>Chaque journée terminée dans <strong>Aujourd’hui</strong> enrichira automatiquement ce livre.</p>
-        </div>
-      </aside>
-    </div>
-
-    <div id="travelBookContent" class="memories-v951-book-content" hidden>
-      <section id="travelBookToc" class="memories-v952-toc">
-        <div class="memories-v952-page">
-          <header class="memories-v952-toc-header">
-            <div>
-              <span class="eyebrow">Italie 2026</span>
-              <h2>Sommaire</h2>
-              <p>Choisissez un chapitre pour entrer directement dans cette étape du voyage.</p>
-            </div>
-            <div class="memories-v952-progress">
-              <span id="bookProgressLabel">Chapitre 0 sur 5</span>
-              <div><i id="bookProgressFill"></i></div>
-            </div>
-          </header>
-
-          <div id="travelBookChapters" class="memories-v952-chapters" aria-label="Chapitres du livre"></div>
-
-          <footer class="memories-v952-toc-footer">
-            <button type="button" class="memories-v952-special" data-book-special="moments">
-              <span>❤️</span><div><strong>Moments inoubliables</strong><small>Les souvenirs les plus précieux</small></div><b>→</b>
-            </button>
-            <button type="button" class="memories-v952-special" data-book-special="numbers">
-              <span>📊</span><div><strong>Le voyage en chiffres</strong><small>Le résumé de votre aventure</small></div><b>→</b>
-            </button>
-          </footer>
-        </div>
-      </section>
-
-      <section id="travelBookChapter" class="memories-v953-chapter" hidden>
-        <div class="memories-v953-chapter-hero">
-          <div class="memories-v953-chapter-shade"></div>
-          <button id="bookBackToToc" type="button" class="memories-v953-back">← Retour au sommaire</button>
-          <div class="memories-v953-chapter-copy">
-            <span id="bookChapterEyebrow" class="eyebrow">Chapitre 1</span>
-            <h2 id="bookChapterTitle">Cinque Terre</h2>
-            <p id="bookChapterDates">29 septembre — 3 octobre</p>
-            <blockquote id="bookChapterQuote">Notre aventure commence entre les falaises et la Méditerranée.</blockquote>
-          </div>
-        </div>
-
-        <div class="memories-v953-chapter-body">
-          <div class="memories-v953-chapter-summary">
-            <div><span>Jours</span><strong id="bookChapterDays">5</strong></div>
-            <div><span>Photos</span><strong id="bookChapterPhotos">0</strong></div>
-            <div><span>Souvenirs</span><strong id="bookChapterMemories">0</strong></div>
-            <div><span>Adresses</span><strong id="bookChapterPlaces">0</strong></div>
-          </div>
-
-          <article class="memories-v953-section-card">
-            <div>
-              <span class="eyebrow">Le début de l’histoire</span>
-              <h3 id="bookChapterIntroTitle">Bienvenue à Cinque Terre</h3>
-            </div>
-            <p id="bookChapterIntro">Les villages colorés, les sentiers et la mer ouvrent le premier chapitre de ce voyage.</p>
-          </article>
-
-          <div class="memories-v953-grid">
-            <article class="memories-v953-section-card">
-              <span class="memories-v953-section-icon">📷</span>
-              <h3>Galerie</h3>
-              <p id="bookChapterGalleryText">Les photos de cette étape apparaîtront ici.</p>
-              <div id="bookChapterGallery" class="memories-v953-gallery"></div>
-            </article>
-
-            <article class="memories-v953-section-card">
-              <span class="memories-v953-section-icon">❤️</span>
-              <h3>Coups de cœur</h3>
-              <div id="bookChapterFavorites" class="memories-v953-list"></div>
-            </article>
-
-            <article class="memories-v953-section-card">
-              <span class="memories-v953-section-icon">🍝</span>
-              <h3>Nos meilleures adresses</h3>
-              <div id="bookChapterRestaurants" class="memories-v953-list"></div>
-            </article>
-
-            <article class="memories-v953-section-card">
-              <span class="memories-v953-section-icon">📝</span>
-              <h3>Journal</h3>
-              <div id="bookChapterJournal" class="memories-v953-list"></div>
-            </article>
-          </div>
-
-          <article class="memories-v953-keepsake">
-            <span>Le souvenir que je garderai toujours</span>
-            <strong id="bookChapterKeepsake">Ce moment apparaîtra lorsque vous aurez ajouté un coup de cœur à cette étape.</strong>
-          </article>
-
-          <div class="memories-v953-chapter-nav">
-            <button id="bookPreviousChapter" type="button" class="btn secondary">← Chapitre précédent</button>
-            <button id="bookNextChapter" type="button" class="btn">Chapitre suivant →</button>
-          </div>
-        </div>
-      </section>
-
-      <section id="travelBookMoments" class="memories-v954-moments" hidden>
-        <div class="memories-v954-moments-hero">
-          <button id="momentsBackToToc" type="button" class="memories-v953-back">← Retour au sommaire</button>
-          <div>
-            <span class="eyebrow">Le cœur du voyage</span>
-            <h2>Moments inoubliables</h2>
-            <p>Les coups de cœur, les plus belles phrases et les journées les mieux notées réunis au même endroit.</p>
-          </div>
-        </div>
-
-        <div class="memories-v954-moments-body">
-          <div class="memories-v954-featured">
-            <div class="memories-v954-featured-visual">
-              <span>❤️</span>
-            </div>
-            <div>
-              <span class="eyebrow">Le souvenir qui représente le voyage</span>
-              <h3 id="bookFeaturedMomentTitle">Votre plus beau moment apparaîtra ici</h3>
-              <p id="bookFeaturedMomentText">Ajoutez un coup de cœur dans Aujourd’hui pour enrichir cette page.</p>
-              <small id="bookFeaturedMomentMeta">Italie 2026</small>
-            </div>
-          </div>
-
-          <div class="memories-v954-section-head">
-            <div>
-              <span class="eyebrow">Votre sélection personnelle</span>
-              <h3>Les moments à ne jamais oublier</h3>
-            </div>
-            <span id="bookMomentsCount" class="memories-v954-count">0 moment</span>
-          </div>
-
-          <div id="bookMomentsGrid" class="memories-v954-grid"></div>
-
-          <article class="memories-v954-reflection">
-            <span>Ce voyage restera celui...</span>
-            <strong id="bookJourneyReflection">des découvertes, des paysages et des souvenirs que vous choisirez de conserver.</strong>
-          </article>
-        </div>
-      </section>
-
-      <section id="travelBookNumbers" class="memories-v955-numbers" hidden>
-        <div class="memories-v955-hero">
-          <button id="numbersBackToToc" type="button" class="memories-v953-back">← Retour au sommaire</button>
-          <div>
-            <span class="eyebrow">La dernière page du livre</span>
-            <h2>Le voyage en chiffres</h2>
-            <p>Une célébration de tout ce que cette aventure aura permis de vivre, de découvrir et de conserver.</p>
-          </div>
-        </div>
-
-        <div class="memories-v955-body">
-          <div id="bookNumbersStats" class="memories-v955-stats" aria-label="Statistiques du voyage"></div>
-
-          <section class="memories-v955-awards">
-            <div class="memories-v955-section-head">
-              <div>
-                <span class="eyebrow">Les récompenses du voyage</span>
-                <h3>Les grands moments de l’aventure</h3>
-              </div>
-            </div>
-            <div class="memories-v955-awards-grid">
-              <article>
-                <span>🏆</span>
-                <small>Destination préférée</small>
-                <strong id="bookFavoriteDestination">À découvrir</strong>
-              </article>
-              <article>
-                <span>⭐</span>
-                <small>Plus belle journée</small>
-                <strong id="bookBestDay">À découvrir</strong>
-              </article>
-              <article>
-                <span>❤️</span>
-                <small>Souvenir emblématique</small>
-                <strong id="bookSignatureMoment">À écrire</strong>
-              </article>
-            </div>
-          </section>
-
-          <article class="memories-v955-summary">
-            <span>Ce voyage restera celui...</span>
-            <strong id="bookNumbersReflection">des découvertes, des paysages et des moments qui deviendront des souvenirs.</strong>
-          </article>
-
-          <article class="memories-v955-thanks">
-            <div class="memories-v955-thanks-heart">❤️</div>
-            <span>Merci Annie</span>
-            <h3>Ce carnet gardera toujours une trace de cette aventure.</h3>
-            <p>À bientôt pour le prochain voyage.</p>
-          </article>
-        </div>
-      </section>
-
-      <div class="section">
+  <section id="notes" class="panel">
+    <div class="hero"><div class="eyebrow">Revivre le voyage</div><h1>Souvenirs</h1></div>
+    <div class="section">
       <div class="memory-summary card">
         <div><strong id="memoryDayCount">0</strong><span>journées racontées</span></div>
         <div><strong id="memoryFavoriteCount">0</strong><span>coups de cœur</span></div><div><strong id="memoryFiveStarCount">0</strong><span>journées 5 étoiles</span></div>
@@ -1166,7 +681,6 @@
         <button class="btn" onclick="saveNotes()">Enregistrer</button>
       </div>
     </div>
-      </div>
   </section>
 </div>
 
@@ -1227,84 +741,6 @@
   </div>
 </div>
 
-
-<div id="bookingDetailModal" class="booking-detail-modal" hidden>
-  <div class="booking-detail-backdrop" data-close-booking-detail></div>
-  <article class="booking-detail-sheet" role="dialog" aria-modal="true" aria-labelledby="bookingDetailTitle">
-    <button type="button" class="booking-detail-close" data-close-booking-detail aria-label="Fermer">×</button>
-    <header class="booking-detail-header">
-      <div id="bookingDetailIcon" class="booking-detail-icon">🏨</div>
-      <div><span id="bookingDetailType" class="eyebrow">Réservation</span><h2 id="bookingDetailTitle">Réservation</h2><p id="bookingDetailLocation"></p></div>
-      <span id="bookingDetailStatus" class="booking-status">Réservé</span>
-    </header>
-    <section id="hotelPremiumBlock" class="hotel-premium-block" hidden>
-      <div id="hotelPremiumCover" class="hotel-premium-cover">
-        <div class="hotel-premium-cover-shade"></div>
-        <div class="hotel-premium-cover-copy">
-          <span id="hotelPremiumStars" class="hotel-premium-stars"></span>
-          <h3 id="hotelPremiumName">Hôtel</h3>
-          <p id="hotelPremiumCity"></p>
-          <strong id="hotelPremiumStay"></strong>
-        </div>
-      </div>
-      <div id="hotelSmartBanner" class="hotel-smart-banner"></div>
-      <div id="hotelPremiumMetrics" class="hotel-premium-metrics"></div>
-      <div class="hotel-readiness">
-        <div class="hotel-readiness-head"><div><span class="eyebrow">Tout est prêt ?</span><h3>Préparation de l’hôtel</h3></div><strong id="hotelReadinessPercent">0 %</strong></div>
-        <div class="hotel-readiness-track"><div id="hotelReadinessFill"></div></div>
-        <div id="hotelReadinessItems" class="hotel-readiness-items"></div>
-      </div>
-    </section>
-    <div id="bookingDetailFacts" class="booking-detail-facts"></div>
-    <section id="bookingConfirmationBlock" class="booking-confirmation-block" hidden><span>Numéro de confirmation</span><div><strong id="bookingDetailConfirmation"></strong><button id="bookingCopyConfirmation" type="button">📋 Copier</button></div></section>
-    <section id="bookingDetailNotesBlock" class="booking-detail-notes" hidden><span>Notes</span><p id="bookingDetailNotes"></p></section>
-    <section class="booking-documents" aria-labelledby="bookingDocumentsTitle">
-      <div class="booking-documents-head">
-        <div><span class="eyebrow">Documents hors ligne</span><h3 id="bookingDocumentsTitle">📎 Pièces jointes</h3><p>Ajoute une confirmation PDF, un billet ou une capture d’écran.</p></div>
-        <button id="bookingAddDocument" class="btn secondary booking-document-picker" type="button">＋ Ajouter un document</button>
-        <input id="bookingDocumentInput" class="booking-document-input" type="file" accept="application/pdf,image/*,.pdf,.jpg,.jpeg,.png,.webp,.heic,.heif" multiple hidden>
-      </div>
-      <div id="bookingDocumentsList" class="booking-documents-list"></div>
-      <div id="bookingDocumentStatus" class="subtle" role="status"></div>
-      <p class="booking-documents-privacy">Les fichiers restent enregistrés hors ligne sur cet appareil.</p>
-    </section>
-    <div id="bookingQuickActions" class="booking-detail-quick-actions"></div>
-    <footer class="booking-detail-footer"><button id="bookingEditButton" type="button" class="btn">✏️ Modifier</button><button id="bookingShareButton" type="button" class="btn secondary">📤 Partager</button><button id="bookingDeleteButton" type="button" class="btn booking-danger">🗑️ Supprimer</button></footer>
-  </article>
-</div>
-
-<div id="pwaSplash" class="pwa-splash" aria-hidden="true">
-  <div class="pwa-splash-mark">🌍</div>
-  <strong>Mon Carnet de Voyages</strong>
-  <span>Préparer · Vivre · Revivre</span>
-</div>
-
-<aside id="pwaInstallBanner" class="pwa-install-banner" hidden aria-live="polite">
-  <div class="pwa-install-icon">📖</div>
-  <div>
-    <strong>Installer Mon Carnet de Voyages</strong>
-    <span>Ouvrez-le comme une vraie application.</span>
-  </div>
-  <button id="pwaInstallButton" type="button">Installer</button>
-  <button id="pwaInstallDismiss" type="button" aria-label="Fermer">×</button>
-</aside>
-
-<div id="pwaIosModal" class="pwa-ios-modal" hidden>
-  <div class="pwa-ios-backdrop" data-pwa-close></div>
-  <div class="pwa-ios-card" role="dialog" aria-modal="true" aria-labelledby="pwaIosTitle">
-    <button type="button" class="pwa-ios-close" data-pwa-close aria-label="Fermer">×</button>
-    <div class="pwa-ios-logo">📖</div>
-    <h2 id="pwaIosTitle">Installer sur votre iPhone</h2>
-    <ol>
-      <li>Ouvrez cette page dans <strong>Safari</strong>.</li>
-      <li>Appuyez sur le bouton <strong>Partager</strong> <span class="pwa-share-symbol">□↑</span>.</li>
-      <li>Choisissez <strong>Ajouter à l’écran d’accueil</strong>.</li>
-      <li>Appuyez sur <strong>Ajouter</strong>.</li>
-    </ol>
-    <button type="button" class="btn" data-pwa-close>J’ai compris</button>
-  </div>
-</div>
-
 <nav class="nav nav-v63" aria-label="Navigation principale">
   <button class="active" data-panel="home" onclick="showPanel('home')">
     <span>🏠</span><strong>Accueil</strong>
@@ -1348,18 +784,11 @@
 <div id="tripReplay" class="replay-overlay" aria-hidden="true">
   <div id="replayBackdrop" class="replay-backdrop"></div><div class="replay-shade"></div>
   <div class="replay-top"><div class="replay-brand">🌍 Mon Carnet de Voyages</div><div class="replay-progress"><i id="replayProgressFill"></i></div><button id="replayClose" class="replay-close" aria-label="Fermer">×</button></div>
-  <main id="replayContent" class="replay-content"><div id="replayDate" class="replay-date"></div><h2 id="replayCity"></h2><p id="replayTitle" class="replay-title"></p><blockquote id="replayQuote" class="replay-quote"></blockquote><div id="replayKpis" class="replay-kpis"></div>  <div class="app-version-badge" aria-label="Version de l’application">
-      Mon Carnet de Voyages · Phoenix 1.1.0
-    </div>
-  </main>
+  <main id="replayContent" class="replay-content"><div id="replayDate" class="replay-date"></div><h2 id="replayCity"></h2><p id="replayTitle" class="replay-title"></p><blockquote id="replayQuote" class="replay-quote"></blockquote><div id="replayKpis" class="replay-kpis"></div></main>
   <aside class="replay-route"><h3>Le parcours</h3><div id="replayRouteList" class="replay-route-list"></div></aside>
   <div class="replay-controls"><button id="replayPrevious" class="replay-control" aria-label="Précédent">←</button><button id="replayToggle" class="replay-control primary" aria-label="Pause">⏸</button><div id="replayCounter" class="replay-counter">1 / 1</div><button id="replayNext" class="replay-control" aria-label="Suivant">→</button></div>
   <section id="replayFinale" class="replay-finale"><div class="replay-finale-card"><div class="replay-finale-flag">🇮🇹</div><h2>Merci Italie</h2><p>Un voyage se termine. Les souvenirs, eux, restent pour toujours.</p><div id="replayFinalStats" class="replay-final-stats"></div><button id="replayRestart" class="replay-control primary" aria-label="Recommencer">↻</button></div></section>
 </div>
-<script type="module" src="js/app.js?v=1.1.0"></script>
-  <script src="js/explorer.js?v=0.9.4.2"></script>
-  <script src="js/today.js?v=0.9.4.3"></script>
-  <script src="js/souvenirs.js?v=0.9.5.5"></script>
-  <script src="js/pwa.js?v=0.9.6.0"></script>
+<script type="module" src="js/app.js?v=premium-8.3-explorer-en-images"></script>
 </body>
 </html>

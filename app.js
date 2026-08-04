@@ -1558,6 +1558,115 @@ function bookingIndexById(id){return bookings.findIndex(item=>item&&item.id===id
 function bookingDateText(date,time){return [date?formatDateFr(date):"",time||""].filter(Boolean).join(" · ")}
 function bookingMapUrl(b){const q=[b.address,b.name,b.city].filter(Boolean).join(", ");return q?`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`:""}
 function normalizedPhone(v){return String(v||"").replace(/[^\d+]/g,"")}
+
+
+// ===== Documents hors ligne des réservations — 0.9.7.0 =====
+const BOOKING_DOC_DB="mon-carnet-booking-documents";
+const BOOKING_DOC_STORE="documents";
+const BOOKING_DOC_MAX_FILES=8;
+const BOOKING_DOC_MAX_BYTES=8*1024*1024;
+function bookingDocumentDb(){return new Promise((resolve,reject)=>{const request=indexedDB.open(BOOKING_DOC_DB,1);request.onupgradeneeded=()=>{const db=request.result;if(!db.objectStoreNames.contains(BOOKING_DOC_STORE)){const store=db.createObjectStore(BOOKING_DOC_STORE,{keyPath:"id"});store.createIndex("bookingId","bookingId",{unique:false})}};request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error||new Error("IndexedDB indisponible"))})}
+async function bookingDocumentsFor(bookingId){const db=await bookingDocumentDb();return new Promise((resolve,reject)=>{const tx=db.transaction(BOOKING_DOC_STORE,"readonly"),index=tx.objectStore(BOOKING_DOC_STORE).index("bookingId"),request=index.getAll(bookingId);request.onsuccess=()=>resolve((request.result||[]).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0)));request.onerror=()=>reject(request.error);tx.oncomplete=()=>db.close()})}
+async function saveBookingDocument(record){const db=await bookingDocumentDb();return new Promise((resolve,reject)=>{const tx=db.transaction(BOOKING_DOC_STORE,"readwrite");tx.objectStore(BOOKING_DOC_STORE).put(record);tx.oncomplete=()=>{db.close();resolve(record)};tx.onerror=()=>{db.close();reject(tx.error)}})}
+async function deleteBookingDocumentRecord(id){const db=await bookingDocumentDb();return new Promise((resolve,reject)=>{const tx=db.transaction(BOOKING_DOC_STORE,"readwrite");tx.objectStore(BOOKING_DOC_STORE).delete(id);tx.oncomplete=()=>{db.close();resolve()};tx.onerror=()=>{db.close();reject(tx.error)}})}
+async function deleteAllBookingDocuments(bookingId){const docs=await bookingDocumentsFor(bookingId);await Promise.all(docs.map(item=>deleteBookingDocumentRecord(item.id)))}
+function bookingDocumentIcon(type="",name=""){if(type==="application/pdf"||String(name).toLowerCase().endsWith(".pdf"))return"📄";if(String(type).startsWith("image/"))return"🖼️";return"📎"}
+function bookingDocumentSize(bytes=0){if(bytes<1024)return`${bytes} o`;if(bytes<1024*1024)return`${(bytes/1024).toFixed(1)} Ko`;return`${(bytes/1024/1024).toFixed(1)} Mo`}
+function bookingDocumentDate(timestamp){return new Intl.DateTimeFormat("fr-CA",{day:"numeric",month:"short",year:"numeric"}).format(new Date(timestamp||Date.now()))}
+async function renderBookingDocuments(bookingId){const root=$("bookingDocumentsList"),status=$("bookingDocumentStatus");if(!root)return;root.innerHTML='<div class="booking-document-empty">Chargement des documents…</div>';try{const docs=await bookingDocumentsFor(bookingId);if(activeBookingId!==bookingId)return;root.innerHTML="";if(!docs.length){root.innerHTML='<div class="booking-document-empty">Aucun document ajouté. Les billets et confirmations pourront être consultés même sans connexion.</div>';return}docs.forEach(item=>{const row=document.createElement("article");row.className="booking-document-item";row.innerHTML=`<div class="booking-document-icon">${bookingDocumentIcon(item.type,item.name)}</div><div class="booking-document-copy"><strong title="${esc(item.name)}">${esc(item.name)}</strong><small>${esc(bookingDocumentSize(item.size))} · ${esc(bookingDocumentDate(item.createdAt))}</small></div><div class="booking-document-actions"><button type="button" data-doc-open>👁 Ouvrir</button><button type="button" data-doc-share>📤 Partager</button><button type="button" class="danger" data-doc-delete>🗑️</button></div>`;row.querySelector("[data-doc-open]").onclick=()=>openBookingDocument(item);row.querySelector("[data-doc-share]").onclick=()=>shareBookingDocument(item);row.querySelector("[data-doc-delete]").onclick=()=>removeBookingDocument(item);root.appendChild(row)});if(status)status.textContent=`${docs.length} document${docs.length>1?"s":""} disponible${docs.length>1?"s":""} hors ligne.`}catch(error){console.error("Lecture des documents impossible",error);root.innerHTML='<div class="booking-document-empty">⚠️ Les documents ne peuvent pas être lus sur ce navigateur.</div>'}}
+function bookingDocumentUrl(item){return URL.createObjectURL(item.blob)}
+function openBookingDocument(item){const url=bookingDocumentUrl(item);const popup=window.open(url,"_blank","noopener");if(!popup){const a=document.createElement("a");a.href=url;a.download=item.name||"document";a.click()}setTimeout(()=>URL.revokeObjectURL(url),60000)}
+async function shareBookingDocument(item){const file=new File([item.blob],item.name,{type:item.type||item.blob?.type||"application/octet-stream"});if(navigator.canShare?.({files:[file]})&&navigator.share){try{await navigator.share({files:[file],title:item.name});return}catch(error){if(error?.name==="AbortError")return}}const url=bookingDocumentUrl(item);const a=document.createElement("a");a.href=url;a.download=item.name||"document";a.click();setTimeout(()=>URL.revokeObjectURL(url),30000)}
+async function removeBookingDocument(item){if(!confirm(`Supprimer le document « ${item.name} » ?`))return;const status=$("bookingDocumentStatus");if(status)status.textContent="Suppression…";try{await deleteBookingDocumentRecord(item.id);await renderBookingDocuments(item.bookingId)}catch(error){console.error(error);if(status)status.textContent="⚠️ Suppression impossible."}}
+async function addBookingDocuments(files){const bookingId=activeBookingId,status=$("bookingDocumentStatus"),input=$("bookingDocumentInput");if(!bookingId||!files?.length)return;try{const existing=await bookingDocumentsFor(bookingId);const available=Math.max(0,BOOKING_DOC_MAX_FILES-existing.length);if(!available){status.textContent=`Maximum de ${BOOKING_DOC_MAX_FILES} documents atteint.`;return}const selected=[...files].slice(0,available);for(const file of selected){if(!(file.type==="application/pdf"||file.type.startsWith("image/"))){status.textContent=`⚠️ ${file.name} n’est pas un PDF ou une image.`;continue}if(file.size>BOOKING_DOC_MAX_BYTES){status.textContent=`⚠️ ${file.name} dépasse 8 Mo.`;continue}status.textContent=`Ajout de ${file.name}…`;await saveBookingDocument({id:crypto.randomUUID?crypto.randomUUID():`${Date.now()}-${Math.random()}`,bookingId,name:file.name||"document",type:file.type,size:file.size,createdAt:Date.now(),blob:file})}await renderBookingDocuments(bookingId)}catch(error){console.error("Ajout de document impossible",error);status.textContent="⚠️ Impossible d’ajouter ce document."}finally{if(input)input.value=""}}
+// Le sélecteur est un <label for="bookingDocumentInput"> : l’ouverture du
+// dialogue de fichiers est donc native et ne dépend plus d’un clic JavaScript.
+window.addBookingDocuments = addBookingDocuments;
+const bookingDocumentInput = $("bookingDocumentInput");
+bookingDocumentInput?.addEventListener("change", event => {
+  const files = event.currentTarget?.files;
+  addBookingDocuments(files);
+});
+$("bookingAddDocument")?.addEventListener("click", () => bookingDocumentInput?.click());
+
+// ===== Centre de voyage intelligent — Hôtel Premium 1.0.0 =====
+function bookingNights(b){
+  if(!b?.date || !b?.endDate) return 0;
+  const start=new Date(b.date+"T12:00:00"), end=new Date(b.endDate+"T12:00:00");
+  return Math.max(0,Math.round((end-start)/86400000));
+}
+function bookingStarsText(value){
+  const n=Math.max(0,Math.min(5,Number(value)||0));
+  return n ? "★".repeat(n)+"☆".repeat(5-n) : "";
+}
+function bookingDateTime(b,end=false){
+  const date=end?b.endDate:b.date, time=end?b.endTime:b.time;
+  if(!date) return null;
+  const parts=date.split("-").map(Number);
+  const hm=(time||"00:00").split(":").map(Number);
+  return new Date(parts[0],parts[1]-1,parts[2],hm[0]||0,hm[1]||0,0,0);
+}
+function hotelSmartMessage(b){
+  const now=new Date(), checkIn=bookingDateTime(b,false), checkOut=bookingDateTime(b,true);
+  if(checkOut && now>checkOut) return {state:"done",icon:"✅",text:"Séjour terminé — vos documents restent disponibles."};
+  if(checkOut && now.toDateString()===checkOut.toDateString() && now<checkOut){
+    return {state:"urgent",icon:"⏰",text:`Départ avant ${b.endTime||"l’heure prévue"}.`};
+  }
+  if(checkIn && now<checkIn){
+    const mins=Math.max(0,Math.round((checkIn-now)/60000));
+    if(mins<24*60){
+      const h=Math.floor(mins/60), m=mins%60;
+      return {state:"soon",icon:"⏳",text:`Check-in dans ${h?`${h} h `:""}${m} min.`};
+    }
+    return {state:"planned",icon:"🏨",text:`Arrivée prévue le ${formatDateFr(b.date)}${b.time?` à ${b.time}`:""}.`};
+  }
+  if(checkIn && (!checkOut || now<checkOut)) return {state:"available",icon:"🟢",text:"Check-in disponible maintenant."};
+  return {state:"planned",icon:"🏨",text:"Séjour hôtel prêt à consulter."};
+}
+function renderHotelPremium(b){
+  const block=$("hotelPremiumBlock"); if(!block) return;
+  const isHotel=b.type==="Hôtel";
+  block.hidden=!isHotel;
+  document.querySelector(".booking-detail-sheet")?.classList.toggle("hotel-mode",isHotel);
+  if(!isHotel) return;
+  const cover=$("hotelPremiumCover");
+  const photo=safeLink(b.photo)||"assets/toscane-accueil.jpg";
+  cover.style.backgroundImage=`linear-gradient(180deg,rgba(7,20,16,.04),rgba(7,20,16,.78)),url("${String(photo).replace(/"/g,"%22")}")`;
+  $("hotelPremiumStars").textContent=bookingStarsText(b.stars)||"Hôtel Premium";
+  $("hotelPremiumName").textContent=b.name||"Hôtel";
+  $("hotelPremiumCity").textContent=b.city?`📍 ${b.city}`:"Destination à préciser";
+  const nights=bookingNights(b);
+  $("hotelPremiumStay").textContent=[nights?`${nights} nuit${nights>1?"s":""}`:"Séjour",b.room||""].filter(Boolean).join(" · ");
+  const msg=hotelSmartMessage(b), banner=$("hotelSmartBanner");
+  banner.className=`hotel-smart-banner ${msg.state}`;
+  banner.innerHTML=`<span>${msg.icon}</span><strong>${esc(msg.text)}</strong>`;
+  const metrics=[
+    ["🕒","Check-in",b.time||"À préciser"],
+    ["🕚","Check-out",b.endTime||"À préciser"],
+    ["🌙","Séjour",nights?`${nights} nuit${nights>1?"s":""}`:"À calculer"],
+    ["👥","Voyageurs",b.travelers?String(b.travelers):"À préciser"],
+    ["🛏️","Chambre",b.room||"À préciser"],
+    ["💶","Total",bookingMoney(b)||"À préciser"]
+  ];
+  $("hotelPremiumMetrics").innerHTML=metrics.map(([icon,label,value])=>`<article><span>${icon}</span><small>${esc(label)}</small><strong>${esc(value)}</strong></article>`).join("");
+  const checks=[
+    ["Confirmation",Boolean(b.conf)],
+    ["Paiement",b.status==="Payé"],
+    ["Adresse",Boolean(b.address)],
+    ["Téléphone",Boolean(b.phone)],
+    ["Dates et heures",Boolean(b.date&&b.endDate&&b.time&&b.endTime)],
+    ["Chambre / voyageurs",Boolean(b.room&&b.travelers)]
+  ];
+  const done=checks.filter(([,ok])=>ok).length, percent=Math.round(done/checks.length*100);
+  $("hotelReadinessPercent").textContent=`${percent} %`;
+  $("hotelReadinessFill").style.width=`${percent}%`;
+  $("hotelReadinessItems").innerHTML=checks.map(([label,ok])=>`<span class="${ok?"ready":"missing"}">${ok?"✓":"!"} ${esc(label)}</span>`).join("");
+}
+function toggleHotelBookingFields(){
+  const section=$("hotelBookingFields"); if(!section) return;
+  section.hidden=$("bookType")?.value!=="Hôtel";
+}
+
 function createBookingCard(b,i,compact=false){
  const el=document.createElement("article");el.className="booking-card"+(compact?" compact":"");el.tabIndex=0;el.setAttribute("role","button");el.setAttribute("aria-label",`Ouvrir la réservation ${b.name||""}`);
  const link=safeLink(b.link),website=safeLink(b.website);
@@ -1565,23 +1674,25 @@ function createBookingCard(b,i,compact=false){
  const open=()=>openBookingDetail(b.id);el.addEventListener("click",e=>{if(e.target.closest("button,a"))return;open()});el.addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&!e.target.closest("button,a")){e.preventDefault();open()}});el.querySelector(".booking-card-open")?.addEventListener("click",open);el.querySelector(".booking-card-edit")?.addEventListener("click",()=>startBookingEdit(b.id));el.querySelector(".booking-card-delete")?.addEventListener("click",()=>delBookingById(b.id));return el
 }
 function renderBookingSummary(){const paid=bookings.filter(b=>b.status==="Payé").length;const totals=bookings.reduce((s,b)=>{const p=Number(b.price)||0;if((b.currency||"CAD")==="EUR")s.eur+=p;else s.cad+=p;return s},{cad:0,eur:0});$("bookingCount").textContent=bookings.length;$("bookingPaidCount").textContent=paid;const parts=[];if(totals.cad)parts.push(new Intl.NumberFormat("fr-CA",{style:"currency",currency:"CAD",maximumFractionDigits:0}).format(totals.cad));if(totals.eur)parts.push(new Intl.NumberFormat("fr-CA",{style:"currency",currency:"EUR",maximumFractionDigits:0}).format(totals.eur));$("bookingTotal").textContent=parts.join(" + ")||"0 $"}
-function renderBookings(){renderBookingSummary();const root=$("bookingList");root.innerHTML="";const filtered=bookings.map((b,i)=>({b,i})).filter(({b})=>{const text=[b.type,b.name,b.city,b.date,b.conf,b.notes,b.status,b.address,b.phone].join(" ").toLocaleLowerCase("fr-CA");return(!bookingSearchText||text.includes(bookingSearchText))&&(!bookingStatusValue||b.status===bookingStatusValue)}).sort((x,y)=>compareBookings(x.b,y.b));if(!filtered.length)root.innerHTML='<p class="subtle">Aucune réservation ne correspond à ce filtre.</p>';else filtered.forEach(({b,i})=>root.appendChild(createBookingCard(b,i)));renderDashboard()}
-function bookingFormData(){return{type:$("bookType").value,status:$("bookStatus").value,city:$("bookCity").value.trim(),name:$("bookName").value.trim(),date:$("bookDate").value,time:$("bookTime").value,endDate:$("bookEndDate").value,endTime:$("bookEndTime").value,conf:$("bookConf").value.trim(),price:Number($("bookPrice").value)||0,currency:$("bookCurrency").value,address:$("bookAddress").value.trim(),phone:$("bookPhone").value.trim(),website:$("bookWebsite").value.trim(),link:$("bookLink").value.trim(),notes:$("bookNotes").value.trim()}}
-function resetBookingForm(){["bookCity","bookName","bookDate","bookTime","bookEndDate","bookEndTime","bookConf","bookPrice","bookAddress","bookPhone","bookWebsite","bookLink","bookNotes"].forEach(id=>$(id).value="");$("bookType").value="Hôtel";$("bookStatus").value="À réserver";$("bookCurrency").value="CAD";editingBookingId=null;$("bookingSubmitButton").textContent="Ajouter la réservation";$("bookingCancelEdit").hidden=true}
+function renderBookings(){renderBookingSummary();const root=$("bookingList");root.innerHTML="";const filtered=bookings.map((b,i)=>({b,i})).filter(({b})=>{const text=[b.type,b.name,b.city,b.date,b.conf,b.notes,b.status,b.address,b.phone,b.email,b.room].join(" ").toLocaleLowerCase("fr-CA");return(!bookingSearchText||text.includes(bookingSearchText))&&(!bookingStatusValue||b.status===bookingStatusValue)}).sort((x,y)=>compareBookings(x.b,y.b));if(!filtered.length)root.innerHTML='<p class="subtle">Aucune réservation ne correspond à ce filtre.</p>';else filtered.forEach(({b,i})=>root.appendChild(createBookingCard(b,i)));renderDashboard()}
+function bookingFormData(){return{type:$("bookType").value,status:$("bookStatus").value,city:$("bookCity").value.trim(),name:$("bookName").value.trim(),date:$("bookDate").value,time:$("bookTime").value,endDate:$("bookEndDate").value,endTime:$("bookEndTime").value,conf:$("bookConf").value.trim(),price:Number($("bookPrice").value)||0,currency:$("bookCurrency").value,address:$("bookAddress").value.trim(),phone:$("bookPhone").value.trim(),website:$("bookWebsite").value.trim(),email:$("bookEmail").value.trim(),stars:Number($("bookStars").value)||0,room:$("bookRoom").value.trim(),travelers:Number($("bookTravelers").value)||0,taxes:Number($("bookTaxes").value)||0,photo:$("bookPhoto").value.trim(),link:$("bookLink").value.trim(),notes:$("bookNotes").value.trim()}}
+function resetBookingForm(){["bookCity","bookName","bookDate","bookTime","bookEndDate","bookEndTime","bookConf","bookPrice","bookAddress","bookPhone","bookWebsite","bookEmail","bookRoom","bookTravelers","bookTaxes","bookPhoto","bookLink","bookNotes"].forEach(id=>$(id).value="");$("bookStars").value="";$("bookType").value="Hôtel";$("bookStatus").value="À réserver";$("bookCurrency").value="CAD";editingBookingId=null;$("bookingSubmitButton").textContent="Ajouter la réservation";$("bookingCancelEdit").hidden=true;toggleHotelBookingFields()}
 function saveBooking(){const data=bookingFormData();if(!data.name){alert("Ajoute au moins un nom ou une compagnie.");return}if(editingBookingId){const i=bookingIndexById(editingBookingId);if(i<0){resetBookingForm();return}bookings[i]={...bookings[i],...data,id:editingBookingId}}else bookings.push({id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),...data});resetBookingForm();renderBookings();scheduleCloudSave()}
 window.saveBooking=saveBooking;window.addBooking=saveBooking;
-function startBookingEdit(id){const b=bookingById(id);if(!b)return;editingBookingId=id;$("bookType").value=b.type||"Hôtel";$("bookStatus").value=b.status||"À réserver";$("bookCity").value=b.city||"";$("bookName").value=b.name||"";$("bookDate").value=b.date||"";$("bookTime").value=b.time||"";$("bookEndDate").value=b.endDate||"";$("bookEndTime").value=b.endTime||"";$("bookConf").value=b.conf||"";$("bookPrice").value=Number(b.price)||"";$("bookCurrency").value=b.currency||"CAD";$("bookAddress").value=b.address||"";$("bookPhone").value=b.phone||"";$("bookWebsite").value=b.website||"";$("bookLink").value=b.link||"";$("bookNotes").value=b.notes||"";$("bookingSubmitButton").textContent="Enregistrer les modifications";$("bookingCancelEdit").hidden=false;closeBookingDetail();document.querySelector(".booking-form")?.scrollIntoView({behavior:"smooth",block:"start"});setTimeout(()=>$("bookName")?.focus(),350)}
+function startBookingEdit(id){const b=bookingById(id);if(!b)return;editingBookingId=id;$("bookType").value=b.type||"Hôtel";$("bookStatus").value=b.status||"À réserver";$("bookCity").value=b.city||"";$("bookName").value=b.name||"";$("bookDate").value=b.date||"";$("bookTime").value=b.time||"";$("bookEndDate").value=b.endDate||"";$("bookEndTime").value=b.endTime||"";$("bookConf").value=b.conf||"";$("bookPrice").value=Number(b.price)||"";$("bookCurrency").value=b.currency||"CAD";$("bookAddress").value=b.address||"";$("bookPhone").value=b.phone||"";$("bookWebsite").value=b.website||"";$("bookEmail").value=b.email||"";$("bookStars").value=Number(b.stars)||"";$("bookRoom").value=b.room||"";$("bookTravelers").value=Number(b.travelers)||"";$("bookTaxes").value=Number(b.taxes)||"";$("bookPhoto").value=b.photo||"";$("bookLink").value=b.link||"";$("bookNotes").value=b.notes||"";toggleHotelBookingFields();$("bookingSubmitButton").textContent="Enregistrer les modifications";$("bookingCancelEdit").hidden=false;closeBookingDetail();document.querySelector(".booking-form")?.scrollIntoView({behavior:"smooth",block:"start"});setTimeout(()=>$("bookName")?.focus(),350)}
 window.startBookingEdit=startBookingEdit;function cancelBookingEdit(){resetBookingForm()}window.cancelBookingEdit=cancelBookingEdit;
 function closeBookingDetail(){$("bookingDetailModal").hidden=true;document.body.classList.remove("booking-modal-open");activeBookingId=null}window.closeBookingDetail=closeBookingDetail;
 function addBookingFact(root,label,value,icon=""){if(!value)return;const item=document.createElement("div");item.className="booking-detail-fact";item.innerHTML=`<span>${icon} ${esc(label)}</span><strong>${esc(value)}</strong>`;root.appendChild(item)}
-function openBookingDetail(id){const b=bookingById(id);if(!b)return;activeBookingId=id;$("bookingDetailIcon").textContent=bookingIcon(b.type);$("bookingDetailType").textContent=b.type||"Réservation";$("bookingDetailTitle").textContent=b.name||"Réservation";$("bookingDetailLocation").textContent=[b.city,b.address].filter(Boolean).join(" · ");$("bookingDetailStatus").textContent=b.status||"Réservé";$("bookingDetailStatus").className=`booking-status ${statusClass(b.status||"Réservé")}`;const facts=$("bookingDetailFacts");facts.innerHTML="";addBookingFact(facts,"Début",bookingDateText(b.date,b.time),"📅");addBookingFact(facts,"Fin / départ",bookingDateText(b.endDate,b.endTime),"📅");addBookingFact(facts,"Prix",bookingMoney(b),"💶");addBookingFact(facts,"Adresse",b.address,"📍");addBookingFact(facts,"Téléphone",b.phone,"☎️");$("bookingConfirmationBlock").hidden=!b.conf;$("bookingDetailConfirmation").textContent=b.conf||"";$("bookingDetailNotesBlock").hidden=!b.notes;$("bookingDetailNotes").textContent=b.notes||"";const quick=$("bookingQuickActions");quick.innerHTML="";const maps=bookingMapUrl(b),phone=normalizedPhone(b.phone),website=safeLink(b.website),link=safeLink(b.link);if(maps)quick.insertAdjacentHTML("beforeend",`<a href="${esc(maps)}" target="_blank" rel="noopener">📍 Ouvrir dans Maps</a>`);if(phone)quick.insertAdjacentHTML("beforeend",`<a href="tel:${esc(phone)}">☎️ Appeler</a>`);if(website)quick.insertAdjacentHTML("beforeend",`<a href="${esc(website)}" target="_blank" rel="noopener">🌐 Site Web</a>`);if(link)quick.insertAdjacentHTML("beforeend",`<a href="${esc(link)}" target="_blank" rel="noopener">🎟️ Réservation / billet</a>`);if(b.date)quick.insertAdjacentHTML("beforeend",'<button type="button" data-booking-day>📅 Voir la journée</button>');quick.querySelector("[data-booking-day]")?.addEventListener("click",()=>{closeBookingDetail();openDayDetail(b.date)});$("bookingEditButton").onclick=()=>startBookingEdit(id);$("bookingDeleteButton").onclick=()=>delBookingById(id);$("bookingShareButton").onclick=()=>shareBooking(id);$("bookingCopyConfirmation").onclick=()=>copyBookingConfirmation(id);$("bookingDetailModal").hidden=false;document.body.classList.add("booking-modal-open")}
+function openBookingDetail(id){const b=bookingById(id);if(!b)return;activeBookingId=id;$("bookingDetailIcon").textContent=bookingIcon(b.type);$("bookingDetailType").textContent=b.type||"Réservation";$("bookingDetailTitle").textContent=b.name||"Réservation";$("bookingDetailLocation").textContent=[b.city,b.address].filter(Boolean).join(" · ");$("bookingDetailStatus").textContent=b.status||"Réservé";$("bookingDetailStatus").className=`booking-status ${statusClass(b.status||"Réservé")}`;const facts=$("bookingDetailFacts");facts.innerHTML="";addBookingFact(facts,"Début",bookingDateText(b.date,b.time),"📅");addBookingFact(facts,"Fin / départ",bookingDateText(b.endDate,b.endTime),"📅");addBookingFact(facts,"Prix",bookingMoney(b),"💶");addBookingFact(facts,"Adresse",b.address,"📍");addBookingFact(facts,"Téléphone",b.phone,"☎️");addBookingFact(facts,"Courriel",b.email,"✉️");addBookingFact(facts,"Taxes / frais",b.taxes?new Intl.NumberFormat("fr-CA",{style:"currency",currency:b.currency||"CAD"}).format(Number(b.taxes)):"","🧾");renderHotelPremium(b);$("bookingConfirmationBlock").hidden=!b.conf;$("bookingDetailConfirmation").textContent=b.conf||"";$("bookingDetailNotesBlock").hidden=!b.notes;$("bookingDetailNotes").textContent=b.notes||"";const quick=$("bookingQuickActions");quick.innerHTML="";const maps=bookingMapUrl(b),phone=normalizedPhone(b.phone),website=safeLink(b.website),link=safeLink(b.link),email=String(b.email||"").trim();if(maps)quick.insertAdjacentHTML("beforeend",`<a href="${esc(maps)}" target="_blank" rel="noopener">📍 Ouvrir dans Maps</a>`);if(phone)quick.insertAdjacentHTML("beforeend",`<a href="tel:${esc(phone)}">☎️ Appeler</a>`);if(website)quick.insertAdjacentHTML("beforeend",`<a href="${esc(website)}" target="_blank" rel="noopener">🌐 Site Web</a>`);if(email)quick.insertAdjacentHTML("beforeend",`<a href="mailto:${esc(email)}">✉️ Courriel</a>`);if(link)quick.insertAdjacentHTML("beforeend",`<a href="${esc(link)}" target="_blank" rel="noopener">🎟️ Réservation / billet</a>`);if(b.date)quick.insertAdjacentHTML("beforeend",'<button type="button" data-booking-day>📅 Voir la journée</button>');quick.querySelector("[data-booking-day]")?.addEventListener("click",()=>{closeBookingDetail();openDayDetail(b.date)});$("bookingEditButton").onclick=()=>startBookingEdit(id);$("bookingDeleteButton").onclick=()=>delBookingById(id);$("bookingShareButton").onclick=()=>shareBooking(id);$("bookingCopyConfirmation").onclick=()=>copyBookingConfirmation(id);$("bookingDetailModal").hidden=false;document.body.classList.add("booking-modal-open");$("bookingDocumentStatus").textContent="";renderBookingDocuments(id)}
 window.openBookingDetail=openBookingDetail;
 async function copyBookingConfirmation(id){const b=bookingById(id);if(!b?.conf)return;try{await navigator.clipboard.writeText(b.conf);$("bookingCopyConfirmation").textContent="✅ Copié";setTimeout(()=>$("bookingCopyConfirmation").textContent="📋 Copier",1200)}catch(e){prompt("Copiez le numéro de confirmation :",b.conf)}}
-async function shareBooking(id){const b=bookingById(id);if(!b)return;const text=[`${bookingIcon(b.type)} ${b.name||"Réservation"}`,b.date?bookingDateText(b.date,b.time):"",b.endDate?`Fin : ${bookingDateText(b.endDate,b.endTime)}`:"",b.city||"",b.address||"",b.conf?`Confirmation : ${b.conf}`:"",safeLink(b.link)||safeLink(b.website)||""].filter(Boolean).join("\n");if(navigator.share){try{await navigator.share({title:b.name||"Réservation",text})}catch(e){}}else try{await navigator.clipboard.writeText(text);alert("Les détails de la réservation ont été copiés.")}catch(e){prompt("Copiez les détails de la réservation :",text)}}
-function delBookingById(id){const b=bookingById(id);if(!b)return;if(!confirm(`Supprimer la réservation « ${b.name||"Réservation"} » ?`))return;const i=bookingIndexById(id);if(i>=0)bookings.splice(i,1);if(editingBookingId===id)resetBookingForm();closeBookingDetail();renderBookings();scheduleCloudSave()}
+async function shareBooking(id){const b=bookingById(id);if(!b)return;const text=[`${bookingIcon(b.type)} ${b.name||"Réservation"}`,b.date?bookingDateText(b.date,b.time):"",b.endDate?`Fin : ${bookingDateText(b.endDate,b.endTime)}`:"",b.city||"",b.address||"",b.conf?`Confirmation : ${b.conf}`:"",b.type==="Hôtel"&&b.room?`Chambre : ${b.room}`:"",b.type==="Hôtel"&&b.travelers?`Voyageurs : ${b.travelers}`:"",safeLink(b.link)||safeLink(b.website)||""].filter(Boolean).join("\n");if(navigator.share){try{await navigator.share({title:b.name||"Réservation",text})}catch(e){}}else try{await navigator.clipboard.writeText(text);alert("Les détails de la réservation ont été copiés.")}catch(e){prompt("Copiez les détails de la réservation :",text)}}
+function delBookingById(id){const b=bookingById(id);if(!b)return;if(!confirm(`Supprimer la réservation « ${b.name||"Réservation"} » ?`))return;const i=bookingIndexById(id);if(i>=0)bookings.splice(i,1);deleteAllBookingDocuments(id).catch(error=>console.warn("Suppression des documents impossible",error));if(editingBookingId===id)resetBookingForm();closeBookingDetail();renderBookings();scheduleCloudSave()}
 window.delBookingById=delBookingById;function delBooking(i){const b=bookings[i];if(b)delBookingById(b.id)}window.delBooking=delBooking;
 document.addEventListener("click",e=>{if(e.target.closest("[data-close-booking-detail]"))closeBookingDetail()});document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("bookingDetailModal").hidden)closeBookingDetail()});
 $("bookingSearch").addEventListener("input",e=>{bookingSearchText=e.target.value.trim().toLocaleLowerCase("fr-CA");renderBookings()});$("bookingStatusFilter").addEventListener("change",e=>{bookingStatusValue=e.target.value;renderBookings()});
+$("bookType")?.addEventListener("change",toggleHotelBookingFields);
+toggleHotelBookingFields();
 
 function moneyCAD(value){
   return new Intl.NumberFormat("fr-CA",{style:"currency",currency:"CAD",maximumFractionDigits:2}).format(Number(value)||0);

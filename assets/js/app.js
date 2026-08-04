@@ -945,7 +945,6 @@ onSnapshot(daysQuery, snapshot => {
   renderMemories();
   renderTimeline();
   renderTripMapData();
-  window.renderExplorerTimelineV90?.();
   setStatus("✅ Itinéraire détaillé synchronisé avec Firebase.", "ok");
 }, error => {
   console.error("Lecture de l’itinéraire impossible :", error);
@@ -990,74 +989,6 @@ function scheduleEntries(day){
   return valueItems(firstValue(day,["activities","activity"]));
 }
 
-
-function todayPremiumCityVisual(city=""){
-  const c=String(city).toLocaleLowerCase("fr-CA");
-  if(c.includes("cinque")||c.includes("manarola")||c.includes("vernazza")) return "assets/manarola-sunset.jpg";
-  return "assets/toscane-accueil.jpg";
-}
-function todayPremiumQuote(city="",mode=""){
-  const c=String(city).toLocaleLowerCase("fr-CA");
-  if(mode==="Aperçu avant le départ") return "Chaque détail préparé aujourd’hui rendra le voyage encore plus doux.";
-  if(c.includes("cinque")) return "Prenez le temps de regarder la mer et de savourer chaque village.";
-  if(c.includes("florence")) return "Une journée parfaite pour marcher au cœur de la Renaissance.";
-  if(c.includes("venise")) return "Laissez les ruelles et les canaux vous guider.";
-  if(c.includes("toscane")) return "Ralentissez : les plus beaux souvenirs se cachent souvent sur la route.";
-  if(c.includes("rome")) return "Aujourd’hui, l’histoire vous accompagne à chaque coin de rue.";
-  return "Une belle journée vous attend. Profitez de chaque instant.";
-}
-function todayNextScheduleEntry(entries){
-  if(!entries.length) return null;
-  const now=new Date();
-  const minutesNow=now.getHours()*60+now.getMinutes();
-  const parsed=entries.map((entry,index)=>{
-    const match=String(entry).match(/^\s*([0-2]?\d)[:h]([0-5]\d)\s*[—–-]?\s*(.*)$/i);
-    return {raw:entry,index,minutes:match?Number(match[1])*60+Number(match[2]):null,label:match?(match[3]||entry):entry};
-  });
-  return parsed.find(item=>item.minutes!==null&&item.minutes>=minutesNow)||parsed[0];
-}
-function updateTodayPremium(day,mode,entries,linkedExpenses){
-  const city=cityForDay(day)||"Italie";
-  const hero=$("todayPremiumHero");
-  if(hero) hero.style.backgroundImage=`linear-gradient(90deg,rgba(7,24,18,.76),rgba(7,24,18,.13) 72%),url("${todayPremiumCityVisual(city)}")`;
-  const hour=new Date().getHours();
-  $("todayPremiumGreeting").textContent=hour<12?"Bonjour Annie 👋":hour<18?"Bon après-midi Annie 👋":"Bonsoir Annie 👋";
-  $("todayPremiumQuote").textContent=todayPremiumQuote(city,mode);
-  $("todayPremiumActivityCount").textContent=`${entries.length} activité${entries.length===1?"":"s"}`;
-  const next=todayNextScheduleEntry(entries);
-  $("todayPremiumNextActivity").textContent=next?.label||"Journée libre";
-  const spent=linkedExpenses.reduce((sum,item)=>sum+expenseCad(item),0);
-  $("todayPremiumSpend").textContent=dashboardMoney(spent);
-  const weatherKey=cityWeatherKey(city);
-  const weather=weatherData?.[weatherKey];
-  const pill=$("todayPremiumWeatherPill");
-  if(pill){
-    if(weather){
-      const info=weatherCodeInfo(weather.current.weather_code);
-      pill.textContent=`${info.icon} ${Math.round(weather.current.temperature_2m)} °C · ${info.label}`;
-    }else pill.textContent="🌤️ Météo à venir";
-  }
-  const scrollNext=()=>{
-    const events=[...document.querySelectorAll("#todaySchedule .today-event")];
-    if(!events.length) return;
-    const target=events[Math.min(next?.index||0,events.length-1)];
-    events.forEach(item=>item.classList.remove("today-v941-next-highlight"));
-    target.classList.add("today-v941-next-highlight");
-    target.scrollIntoView({behavior:"smooth",block:"center"});
-  };
-  $("todayNextActivity").onclick=scrollNext;
-  $("todayNextActivityInline").onclick=scrollNext;
-}
-document.addEventListener("click",event=>{
-  const button=event.target.closest("[data-today-scroll]");
-  if(!button) return;
-  $(button.dataset.todayScroll)?.scrollIntoView({behavior:"smooth",block:"center"});
-});
-$("todayOpenMemory")?.addEventListener("click",()=>{
-  const day=selectedTodayDay();
-  if(day) openDayDetail(day.id);
-});
-
 function renderToday(){
   const day = selectedTodayDay();
   const empty = $("todayEmpty");
@@ -1091,12 +1022,7 @@ function renderToday(){
     const match = String(entry).match(/^\s*([0-2]?\d[:h][0-5]\d)\s*[—–-]?\s*(.*)$/i);
     const time = match ? match[1].replace("h",":") : "";
     const label = match ? match[2] : entry;
-    return `<article class="today-event today-v942-event" data-today-event-index="${index}" data-today-event-time="${esc(time)}" data-today-event-label="${esc(label)}">
-      <button type="button" class="today-v942-check" aria-label="Marquer ${esc(label)} comme terminée" aria-pressed="false"><span>✓</span></button>
-      <span class="today-event-time">${time ? esc(time) : String(index+1).padStart(2,"0")}</span>
-      <span class="today-v942-event-copy"><strong>${esc(label)}</strong><small>À venir</small></span>
-      <span class="today-v942-event-status">À faire</span>
-    </article>`;
+    return `<div class="today-event"><span class="today-event-time">${time ? esc(time) : String(index+1).padStart(2,"0")}</span><span>${esc(label)}</span></div>`;
   }).join("") : emptyTodayValue("Aucune activité inscrite");
 
   const hotel = firstValue(day,["hotel","accommodation"]);
@@ -1113,7 +1039,6 @@ function renderToday(){
   const linkedExpenses = expenses.filter(item => item && item.date === day.id);
   const totalCad = linkedExpenses.reduce((sum,item)=>sum+expenseCad(item),0);
   $("todayBudget").innerHTML = `<strong>${dashboardMoney(totalCad)}</strong><span>${linkedExpenses.length} dépense${linkedExpenses.length===1?"":"s"} enregistrée${linkedExpenses.length===1?"":"s"}</span>`;
-  updateTodayPremium(day,mode,entries,linkedExpenses);
 
   const index = itineraryDays.findIndex(item => item.id === day.id);
   const previous = $("todayPrevious");
@@ -1122,10 +1047,6 @@ function renderToday(){
   next.disabled = index < 0 || index >= itineraryDays.length-1;
   previous.onclick = () => { if(index>0){ todaySelectedDayId=itineraryDays[index-1].id; renderToday(); window.scrollTo({top:0,behavior:"smooth"}); }};
   next.onclick = () => { if(index<itineraryDays.length-1){ todaySelectedDayId=itineraryDays[index+1].id; renderToday(); window.scrollTo({top:0,behavior:"smooth"}); }};
-
-  document.dispatchEvent(new CustomEvent("today:rendered",{
-    detail:{dayId:day.id,city:cityForDay(day)||"Italie",entries:[...entries]}
-  }));
 }
 window.renderToday = renderToday;
 
@@ -1551,37 +1472,98 @@ function safeLink(value){
   return /^https?:\/\//i.test(text) ? text : "";
 }
 
-let editingBookingId = null;
-let activeBookingId = null;
-function bookingById(id){return bookings.find(item=>item&&item.id===id)}
-function bookingIndexById(id){return bookings.findIndex(item=>item&&item.id===id)}
-function bookingDateText(date,time){return [date?formatDateFr(date):"",time||""].filter(Boolean).join(" · ")}
-function bookingMapUrl(b){const q=[b.address,b.name,b.city].filter(Boolean).join(", ");return q?`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`:""}
-function normalizedPhone(v){return String(v||"").replace(/[^\d+]/g,"")}
 function createBookingCard(b,i,compact=false){
- const el=document.createElement("article");el.className="booking-card"+(compact?" compact":"");el.tabIndex=0;el.setAttribute("role","button");el.setAttribute("aria-label",`Ouvrir la réservation ${b.name||""}`);
- const link=safeLink(b.link),website=safeLink(b.website);
- el.innerHTML=`<div class="booking-icon">${bookingIcon(b.type)}</div><div class="booking-main"><div class="booking-topline"><strong>${esc(b.name||"Réservation")}</strong><span class="booking-status ${statusClass(b.status||"Réservé")}">${esc(b.status||"Réservé")}</span></div><div class="booking-meta">${[b.type,b.date?formatDateFr(b.date):"",b.time,b.city].filter(Boolean).map(esc).join(" · ")}</div>${b.conf?`<div class="confirmation">Confirmation : <strong>${esc(b.conf)}</strong></div>`:""}${b.notes&&compact?`<p>${esc(b.notes)}</p>`:""}${compact?`<div class="booking-actions">${bookingMoney(b)?`<span class="booking-price">${esc(bookingMoney(b))}</span>`:""}<span class="booking-open-hint">Voir la réservation →</span></div>`:`<div class="booking-card-actions"><button class="booking-card-open" type="button">👁 Voir</button><button class="booking-card-edit" type="button">✏️ Modifier</button>${link?`<a href="${esc(link)}" target="_blank" rel="noopener">🎟️ Billet</a>`:""}${website?`<a href="${esc(website)}" target="_blank" rel="noopener">🌐 Site</a>`:""}<button class="booking-card-delete" type="button">🗑️ Supprimer</button></div>`}</div>`;
- const open=()=>openBookingDetail(b.id);el.addEventListener("click",e=>{if(e.target.closest("button,a"))return;open()});el.addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&!e.target.closest("button,a")){e.preventDefault();open()}});el.querySelector(".booking-card-open")?.addEventListener("click",open);el.querySelector(".booking-card-edit")?.addEventListener("click",()=>startBookingEdit(b.id));el.querySelector(".booking-card-delete")?.addEventListener("click",()=>delBookingById(b.id));return el
+  const el=document.createElement("article");
+  el.className="booking-card" + (compact ? " compact" : "");
+  const link=safeLink(b.link);
+  el.innerHTML=`
+    <div class="booking-icon">${bookingIcon(b.type)}</div>
+    <div class="booking-main">
+      <div class="booking-topline"><strong>${esc(b.name||"Réservation")}</strong><span class="booking-status ${statusClass(b.status||"Réservé")}">${esc(b.status||"Réservé")}</span></div>
+      <div class="booking-meta">${[b.type,b.date?formatDateFr(b.date):"",b.time,b.city].filter(Boolean).map(esc).join(" · ")}</div>
+      ${b.conf?`<div class="confirmation">Confirmation : <strong>${esc(b.conf)}</strong></div>`:""}
+      ${b.notes?`<p>${esc(b.notes)}</p>`:""}
+      <div class="booking-actions">
+        ${bookingMoney(b)?`<span class="booking-price">${esc(bookingMoney(b))}</span>`:""}
+        ${link?`<a href="${esc(link)}" target="_blank" rel="noopener">Ouvrir le lien →</a>`:""}
+        ${b.date?`<button type="button" onclick="openDayDetail('${esc(b.date)}')">Voir la journée</button>`:""}
+      </div>
+    </div>
+    ${compact?"":`<button class="delete-booking" type="button" onclick="delBooking(${i})" aria-label="Supprimer">✕</button>`}`;
+  return el;
 }
-function renderBookingSummary(){const paid=bookings.filter(b=>b.status==="Payé").length;const totals=bookings.reduce((s,b)=>{const p=Number(b.price)||0;if((b.currency||"CAD")==="EUR")s.eur+=p;else s.cad+=p;return s},{cad:0,eur:0});$("bookingCount").textContent=bookings.length;$("bookingPaidCount").textContent=paid;const parts=[];if(totals.cad)parts.push(new Intl.NumberFormat("fr-CA",{style:"currency",currency:"CAD",maximumFractionDigits:0}).format(totals.cad));if(totals.eur)parts.push(new Intl.NumberFormat("fr-CA",{style:"currency",currency:"EUR",maximumFractionDigits:0}).format(totals.eur));$("bookingTotal").textContent=parts.join(" + ")||"0 $"}
-function renderBookings(){renderBookingSummary();const root=$("bookingList");root.innerHTML="";const filtered=bookings.map((b,i)=>({b,i})).filter(({b})=>{const text=[b.type,b.name,b.city,b.date,b.conf,b.notes,b.status,b.address,b.phone].join(" ").toLocaleLowerCase("fr-CA");return(!bookingSearchText||text.includes(bookingSearchText))&&(!bookingStatusValue||b.status===bookingStatusValue)}).sort((x,y)=>compareBookings(x.b,y.b));if(!filtered.length)root.innerHTML='<p class="subtle">Aucune réservation ne correspond à ce filtre.</p>';else filtered.forEach(({b,i})=>root.appendChild(createBookingCard(b,i)));renderDashboard()}
-function bookingFormData(){return{type:$("bookType").value,status:$("bookStatus").value,city:$("bookCity").value.trim(),name:$("bookName").value.trim(),date:$("bookDate").value,time:$("bookTime").value,endDate:$("bookEndDate").value,endTime:$("bookEndTime").value,conf:$("bookConf").value.trim(),price:Number($("bookPrice").value)||0,currency:$("bookCurrency").value,address:$("bookAddress").value.trim(),phone:$("bookPhone").value.trim(),website:$("bookWebsite").value.trim(),link:$("bookLink").value.trim(),notes:$("bookNotes").value.trim()}}
-function resetBookingForm(){["bookCity","bookName","bookDate","bookTime","bookEndDate","bookEndTime","bookConf","bookPrice","bookAddress","bookPhone","bookWebsite","bookLink","bookNotes"].forEach(id=>$(id).value="");$("bookType").value="Hôtel";$("bookStatus").value="À réserver";$("bookCurrency").value="CAD";editingBookingId=null;$("bookingSubmitButton").textContent="Ajouter la réservation";$("bookingCancelEdit").hidden=true}
-function saveBooking(){const data=bookingFormData();if(!data.name){alert("Ajoute au moins un nom ou une compagnie.");return}if(editingBookingId){const i=bookingIndexById(editingBookingId);if(i<0){resetBookingForm();return}bookings[i]={...bookings[i],...data,id:editingBookingId}}else bookings.push({id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),...data});resetBookingForm();renderBookings();scheduleCloudSave()}
-window.saveBooking=saveBooking;window.addBooking=saveBooking;
-function startBookingEdit(id){const b=bookingById(id);if(!b)return;editingBookingId=id;$("bookType").value=b.type||"Hôtel";$("bookStatus").value=b.status||"À réserver";$("bookCity").value=b.city||"";$("bookName").value=b.name||"";$("bookDate").value=b.date||"";$("bookTime").value=b.time||"";$("bookEndDate").value=b.endDate||"";$("bookEndTime").value=b.endTime||"";$("bookConf").value=b.conf||"";$("bookPrice").value=Number(b.price)||"";$("bookCurrency").value=b.currency||"CAD";$("bookAddress").value=b.address||"";$("bookPhone").value=b.phone||"";$("bookWebsite").value=b.website||"";$("bookLink").value=b.link||"";$("bookNotes").value=b.notes||"";$("bookingSubmitButton").textContent="Enregistrer les modifications";$("bookingCancelEdit").hidden=false;closeBookingDetail();document.querySelector(".booking-form")?.scrollIntoView({behavior:"smooth",block:"start"});setTimeout(()=>$("bookName")?.focus(),350)}
-window.startBookingEdit=startBookingEdit;function cancelBookingEdit(){resetBookingForm()}window.cancelBookingEdit=cancelBookingEdit;
-function closeBookingDetail(){$("bookingDetailModal").hidden=true;document.body.classList.remove("booking-modal-open");activeBookingId=null}window.closeBookingDetail=closeBookingDetail;
-function addBookingFact(root,label,value,icon=""){if(!value)return;const item=document.createElement("div");item.className="booking-detail-fact";item.innerHTML=`<span>${icon} ${esc(label)}</span><strong>${esc(value)}</strong>`;root.appendChild(item)}
-function openBookingDetail(id){const b=bookingById(id);if(!b)return;activeBookingId=id;$("bookingDetailIcon").textContent=bookingIcon(b.type);$("bookingDetailType").textContent=b.type||"Réservation";$("bookingDetailTitle").textContent=b.name||"Réservation";$("bookingDetailLocation").textContent=[b.city,b.address].filter(Boolean).join(" · ");$("bookingDetailStatus").textContent=b.status||"Réservé";$("bookingDetailStatus").className=`booking-status ${statusClass(b.status||"Réservé")}`;const facts=$("bookingDetailFacts");facts.innerHTML="";addBookingFact(facts,"Début",bookingDateText(b.date,b.time),"📅");addBookingFact(facts,"Fin / départ",bookingDateText(b.endDate,b.endTime),"📅");addBookingFact(facts,"Prix",bookingMoney(b),"💶");addBookingFact(facts,"Adresse",b.address,"📍");addBookingFact(facts,"Téléphone",b.phone,"☎️");$("bookingConfirmationBlock").hidden=!b.conf;$("bookingDetailConfirmation").textContent=b.conf||"";$("bookingDetailNotesBlock").hidden=!b.notes;$("bookingDetailNotes").textContent=b.notes||"";const quick=$("bookingQuickActions");quick.innerHTML="";const maps=bookingMapUrl(b),phone=normalizedPhone(b.phone),website=safeLink(b.website),link=safeLink(b.link);if(maps)quick.insertAdjacentHTML("beforeend",`<a href="${esc(maps)}" target="_blank" rel="noopener">📍 Ouvrir dans Maps</a>`);if(phone)quick.insertAdjacentHTML("beforeend",`<a href="tel:${esc(phone)}">☎️ Appeler</a>`);if(website)quick.insertAdjacentHTML("beforeend",`<a href="${esc(website)}" target="_blank" rel="noopener">🌐 Site Web</a>`);if(link)quick.insertAdjacentHTML("beforeend",`<a href="${esc(link)}" target="_blank" rel="noopener">🎟️ Réservation / billet</a>`);if(b.date)quick.insertAdjacentHTML("beforeend",'<button type="button" data-booking-day>📅 Voir la journée</button>');quick.querySelector("[data-booking-day]")?.addEventListener("click",()=>{closeBookingDetail();openDayDetail(b.date)});$("bookingEditButton").onclick=()=>startBookingEdit(id);$("bookingDeleteButton").onclick=()=>delBookingById(id);$("bookingShareButton").onclick=()=>shareBooking(id);$("bookingCopyConfirmation").onclick=()=>copyBookingConfirmation(id);$("bookingDetailModal").hidden=false;document.body.classList.add("booking-modal-open")}
-window.openBookingDetail=openBookingDetail;
-async function copyBookingConfirmation(id){const b=bookingById(id);if(!b?.conf)return;try{await navigator.clipboard.writeText(b.conf);$("bookingCopyConfirmation").textContent="✅ Copié";setTimeout(()=>$("bookingCopyConfirmation").textContent="📋 Copier",1200)}catch(e){prompt("Copiez le numéro de confirmation :",b.conf)}}
-async function shareBooking(id){const b=bookingById(id);if(!b)return;const text=[`${bookingIcon(b.type)} ${b.name||"Réservation"}`,b.date?bookingDateText(b.date,b.time):"",b.endDate?`Fin : ${bookingDateText(b.endDate,b.endTime)}`:"",b.city||"",b.address||"",b.conf?`Confirmation : ${b.conf}`:"",safeLink(b.link)||safeLink(b.website)||""].filter(Boolean).join("\n");if(navigator.share){try{await navigator.share({title:b.name||"Réservation",text})}catch(e){}}else try{await navigator.clipboard.writeText(text);alert("Les détails de la réservation ont été copiés.")}catch(e){prompt("Copiez les détails de la réservation :",text)}}
-function delBookingById(id){const b=bookingById(id);if(!b)return;if(!confirm(`Supprimer la réservation « ${b.name||"Réservation"} » ?`))return;const i=bookingIndexById(id);if(i>=0)bookings.splice(i,1);if(editingBookingId===id)resetBookingForm();closeBookingDetail();renderBookings();scheduleCloudSave()}
-window.delBookingById=delBookingById;function delBooking(i){const b=bookings[i];if(b)delBookingById(b.id)}window.delBooking=delBooking;
-document.addEventListener("click",e=>{if(e.target.closest("[data-close-booking-detail]"))closeBookingDetail()});document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("bookingDetailModal").hidden)closeBookingDetail()});
-$("bookingSearch").addEventListener("input",e=>{bookingSearchText=e.target.value.trim().toLocaleLowerCase("fr-CA");renderBookings()});$("bookingStatusFilter").addEventListener("change",e=>{bookingStatusValue=e.target.value;renderBookings()});
+
+function renderBookingSummary(){
+  const paid=bookings.filter(b=>b.status==="Payé").length;
+  const totals=bookings.reduce((sum,b)=>{
+    const price=Number(b.price)||0;
+    if((b.currency||"CAD")==="EUR") sum.eur+=price; else sum.cad+=price;
+    return sum;
+  },{cad:0,eur:0});
+  $("bookingCount").textContent=bookings.length;
+  $("bookingPaidCount").textContent=paid;
+  const parts=[];
+  if(totals.cad) parts.push(new Intl.NumberFormat("fr-CA",{style:"currency",currency:"CAD",maximumFractionDigits:0}).format(totals.cad));
+  if(totals.eur) parts.push(new Intl.NumberFormat("fr-CA",{style:"currency",currency:"EUR",maximumFractionDigits:0}).format(totals.eur));
+  $("bookingTotal").textContent=parts.join(" + ") || "0 $";
+}
+
+function renderBookings(){
+  renderBookingSummary();
+  const root = $("bookingList");
+  root.innerHTML="";
+  const filtered=bookings.map((b,i)=>({b,i})).filter(({b})=>{
+    const text=[b.type,b.name,b.city,b.date,b.conf,b.notes,b.status].join(" ").toLocaleLowerCase("fr-CA");
+    return (!bookingSearchText || text.includes(bookingSearchText)) && (!bookingStatusValue || b.status===bookingStatusValue);
+  }).sort((x,y)=>compareBookings(x.b,y.b));
+  if(!filtered.length){
+    root.innerHTML='<p class="subtle">Aucune réservation ne correspond à ce filtre.</p>';
+  }else{
+    filtered.forEach(({b,i})=>root.appendChild(createBookingCard(b,i)));
+  }
+  renderDashboard();
+}
+
+function addBooking(){
+  const b={
+    id:crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
+    type:$("bookType").value,
+    status:$("bookStatus").value,
+    city:$("bookCity").value.trim(),
+    name:$("bookName").value.trim(),
+    date:$("bookDate").value,
+    time:$("bookTime").value,
+    conf:$("bookConf").value.trim(),
+    price:Number($("bookPrice").value)||0,
+    currency:$("bookCurrency").value,
+    link:$("bookLink").value.trim(),
+    notes:$("bookNotes").value.trim()
+  };
+  if(!b.name){ alert("Ajoute au moins un nom ou une compagnie."); return; }
+  bookings.push(b);
+  ["bookCity","bookName","bookDate","bookTime","bookConf","bookPrice","bookLink","bookNotes"].forEach(id=>$(id).value="");
+  $("bookStatus").value="À réserver";
+  renderBookings();
+  scheduleCloudSave();
+}
+window.addBooking = addBooking;
+
+function delBooking(i){
+  if(!confirm("Supprimer cette réservation?")) return;
+  bookings.splice(i,1);
+  renderBookings();
+  scheduleCloudSave();
+}
+window.delBooking = delBooking;
+
+$("bookingSearch").addEventListener("input",event=>{
+  bookingSearchText=event.target.value.trim().toLocaleLowerCase("fr-CA");
+  renderBookings();
+});
+$("bookingStatusFilter").addEventListener("change",event=>{
+  bookingStatusValue=event.target.value;
+  renderBookings();
+});
 
 function moneyCAD(value){
   return new Intl.NumberFormat("fr-CA",{style:"currency",currency:"CAD",maximumFractionDigits:2}).format(Number(value)||0);
@@ -2066,260 +2048,57 @@ function explorerStageVisual(stage,index,photos){
   return index%2 ? "linear-gradient(145deg,#3d6f75,#b77b58)" : "linear-gradient(145deg,#315f50,#7e9a70)";
 }
 
-
-let explorerFeaturedIndex = 0;
-let explorerFeaturedStages = [];
-
-function explorerTripProgress(){
-  const start=new Date("2026-09-28T00:00:00");
-  const end=new Date("2026-10-16T23:59:59");
-  const now=new Date();
-  if(now<start) return {percent:0,label:"Avant le départ"};
-  if(now>end) return {percent:100,label:"Voyage terminé"};
-  const percent=Math.max(0,Math.min(100,Math.round((now-start)/(end-start)*100)));
-  return {percent,label:"Voyage en cours"};
-}
-
-function explorerFeaturedStageIndex(stages){
-  if(!stages.length) return 0;
-  const today=localDateKey();
-  let index=stages.findIndex(stage=>stage.days.some(day=>day.id===today));
-  if(index<0) index=stages.findIndex(stage=>stage.days.some(day=>day.id>today));
-  return index<0 ? stages.length-1 : index;
-}
-
-function renderExplorerFeatured(index=explorerFeaturedIndex){
-  const stages=explorerFeaturedStages;
-  if(!stages.length) return;
-  explorerFeaturedIndex=(Number(index)+stages.length)%stages.length;
-  const stage=stages[explorerFeaturedIndex];
-  const photos=stage.days.flatMap(day=>Array.isArray(day.photos)?day.photos.filter(Boolean):[]);
-  const activities=uniqueStageItems(stage,["activities","activity","schedule"]);
-  const restaurants=uniqueStageItems(stage,["restaurants","restaurant"]);
-  const memories=stage.days.filter(day=>memoryHasContent(day));
-  const visual=explorerStageVisual(stage,explorerFeaturedIndex,photos);
-  const featured=$("explorerFeaturedVisual");
-  if(featured){
-    featured.style.backgroundImage=`linear-gradient(180deg,rgba(7,20,16,.06),rgba(7,20,16,.84)),${visual}`;
-  }
-  const today=localDateKey();
-  const isCurrent=stage.days.some(day=>day.id===today);
-  const isPast=stage.days.every(day=>day.id<today);
-  $("explorerFeaturedLabel").textContent=isCurrent?"Étape d’aujourd’hui":isPast?"Souvenir du voyage":"Prochaine étape";
-  $("explorerFeaturedCity").textContent=stage.city;
-  $("explorerFeaturedDates").textContent=stageDateRange(stage);
-  $("explorerFeaturedStats").innerHTML=`
-    <span>📅 ${stage.days.length} jour${stage.days.length>1?"s":""}</span>
-    <span>🥾 ${activities.length} activité${activities.length>1?"s":""}</span>
-    <span>🍝 ${restaurants.length} adresse${restaurants.length>1?"s":""}</span>
-    <span>❤️ ${memories.length} souvenir${memories.length>1?"s":""}</span>`;
-  $("explorerFeaturedCounter").textContent=`${explorerFeaturedIndex+1} / ${stages.length}`;
-  setActiveExplorerStage(explorerFeaturedIndex);
-}
-
-function renderExplorerOverview(stages){
-  explorerFeaturedStages=stages;
-  if(!stages.length) return;
-  explorerFeaturedIndex=explorerFeaturedStageIndex(stages);
-  const progress=explorerTripProgress();
-  const totalFavorites=itineraryDays.filter(day=>Number(day.rating||0)>=4||String(day.favorite||"").trim()).length;
-  const totalNights=Math.max(0,itineraryDays.length-1);
-  $("explorerJourneySummary").textContent=`${stages.length} étapes, ${itineraryDays.length} journées et une aventure à vivre du 28 septembre au 16 octobre 2026.`;
-  $("explorerJourneyProgressLabel").textContent=progress.label;
-  $("explorerJourneyProgressPercent").textContent=`${progress.percent} %`;
-  $("explorerJourneyProgressFill").style.width=`${progress.percent}%`;
-  $("explorerOverviewCities").textContent=stages.length;
-  $("explorerOverviewNights").textContent=totalNights;
-  $("explorerOverviewFavorites").textContent=totalFavorites;
-  renderExplorerFeatured(explorerFeaturedIndex);
-}
-
-$("explorerFeaturedPrev")?.addEventListener("click",()=>renderExplorerFeatured(explorerFeaturedIndex-1));
-$("explorerFeaturedNext")?.addEventListener("click",()=>renderExplorerFeatured(explorerFeaturedIndex+1));
-$("explorerFeaturedOpen")?.addEventListener("click",()=>{
-  const stage=explorerFeaturedStages[explorerFeaturedIndex];
-  if(!stage) return;
-  renderMapStageDetails(stage,explorerFeaturedIndex);
-  if(tripMap) tripMap.flyTo(stage.coords,10,{duration:1.05});
-});
-
-
-function explorerDestinationStory(stage,index){
-  const city=normalizedPlaceName(stage.city);
-  if(city.includes("cinque")||city.includes("manarola")||city.includes("vernazza")){
-    return {icon:"🌊",eyebrow:"Villages suspendus entre mer et montagne",story:"Sentiers côtiers, maisons colorées et couchers de soleil sur la Méditerranée."};
-  }
-  if(city.includes("florence")||city.includes("firenze")){
-    return {icon:"🏛️",eyebrow:"Art, architecture et douceur toscane",story:"Une étape au cœur de la Renaissance, entre chefs-d’œuvre, ruelles et gelato."};
-  }
-  if(city.includes("venise")||city.includes("venezia")){
-    return {icon:"🚤",eyebrow:"Canaux, palais et lumière sur la lagune",story:"Une ville unique à découvrir à pied, en vaporetto et au fil de l’eau."};
-  }
-  if(city.includes("toscane")||city.includes("chianti")||city.includes("sienne")){
-    return {icon:"🍇",eyebrow:"Routes panoramiques et villages de pierre",story:"Vignobles, cyprès, marchés et longues journées au rythme de la campagne."};
-  }
-  if(city.includes("rome")||city.includes("roma")){
-    return {icon:"🏟️",eyebrow:"Deux mille ans d’histoire à ciel ouvert",story:"Places mythiques, fontaines, ruines antiques et soirées romaines."};
-  }
-  return {icon:"📍",eyebrow:"Une nouvelle étape de votre histoire",story:"Découvrez les journées, les lieux, les photos et les souvenirs de cette destination."};
-}
-
-function explorerDestinationCategory(stage){
-  const city=normalizedPlaceName(stage.city);
-  if(city.includes("cinque")||city.includes("manarola")||city.includes("vernazza")) return "sea";
-  if(city.includes("toscane")||city.includes("chianti")||city.includes("sienne")) return "country";
-  return "city";
-}
-
 function renderExplorerCityCards(stages){
   const root=$("explorerCityCards");
   if(!root) return;
-
   const totalPhotos=itineraryDays.reduce((n,d)=>n+(Array.isArray(d.photos)?d.photos.length:0),0);
   const totalMemories=itineraryDays.filter(d=>memoryHasContent(d)).length;
-
   $("explorerStageCount") && ($("explorerStageCount").textContent=stages.length);
   $("explorerDayCount") && ($("explorerDayCount").textContent=itineraryDays.length);
   $("explorerPhotoCount") && ($("explorerPhotoCount").textContent=totalPhotos);
   $("explorerMemoryCount") && ($("explorerMemoryCount").textContent=totalMemories);
   $("explorerJourneyLabel") && ($("explorerJourneyLabel").textContent=`${stages.length} étapes · ${itineraryDays.length} jours`);
-
   if(!stages.length){
     root.innerHTML='<div class="card loading-card">Les étapes apparaîtront ici dès que les villes seront ajoutées à l’itinéraire.</div>';
     return;
   }
-
   root.innerHTML=stages.map((stage,index)=>{
     const stagePhotos=stage.days.flatMap(d=>Array.isArray(d.photos)?d.photos.filter(Boolean):[]);
     const restaurants=uniqueStageItems(stage,["restaurants","restaurant"]).length;
     const activities=uniqueStageItems(stage,["activities","activity","schedule"]).length;
     const favorites=stage.days.filter(d=>Number(d.rating||0)>=4||String(d.favorite||"").trim()).length;
-    const places=stage.days.reduce((n,d)=>n+(Array.isArray(d.herePlaces)?d.herePlaces.length:0),0);
     const first=stage.days[0],last=stage.days[stage.days.length-1];
     const visual=explorerStageVisual(stage,index,stagePhotos);
-    const story=explorerDestinationStory(stage,index);
-    const firstShort=formatShortDate(first.id);
-    const lastShort=formatShortDate(last.id);
-
-    const category=explorerDestinationCategory(stage);
-    return `<article class="explorer-v91-destination-card ${stagePhotos.length?"has-photo":"no-photo"}" data-explorer-stage="${index}" data-destination-category="${category}" style="--explorer-cover:${visual}">
-      <button type="button" class="explorer-v91-card-main" aria-label="Explorer ${esc(stage.city)}">
-        <span class="explorer-v91-overlay"></span>
-        <span class="explorer-v91-topline">
-          <span class="explorer-v91-step">Étape ${String(index+1).padStart(2,"0")}</span>
-          <span class="explorer-v91-dates">${esc(firstShort.day)} ${esc(firstShort.month)}${last.id!==first.id?` — ${esc(lastShort.day)} ${esc(lastShort.month)}`:""}</span>
+    const hasPhoto=stagePhotos.length>0;
+    return `<button type="button" class="explorer-city-card explorer-v83-city-card ${hasPhoto?"has-photo":"no-photo"}" data-explorer-stage="${index}" aria-label="Explorer ${esc(stage.city)}" style="--explorer-cover:${visual}">
+      <span class="explorer-v83-number">${String(index+1).padStart(2,"0")}</span>
+      <span class="explorer-city-card-content">
+        <small>${esc(formatShortDate(first.id).day)} ${esc(formatShortDate(first.id).month)}${last.id!==first.id?` — ${esc(formatShortDate(last.id).day)} ${esc(formatShortDate(last.id).month)}`:""}</small>
+        <h3>${esc(stage.city)}</h3>
+        <span class="explorer-v83-description">${stage.days.length} journée${stage.days.length>1?"s":""} pour découvrir cette étape</span>
+        <span class="explorer-city-kpis">
+          <span>📸 ${stagePhotos.length}</span>
+          <span>🥾 ${activities}</span>
+          <span>🍝 ${restaurants}</span>
+          <span>❤️ ${favorites}</span>
         </span>
-        <span class="explorer-v91-copy">
-          <span class="explorer-v91-icon">${story.icon}</span>
-          <span class="explorer-v91-eyebrow">${esc(story.eyebrow)}</span>
-          <strong>${esc(stage.city)}</strong>
-          <span class="explorer-v91-story">${esc(story.story)}</span>
-          <span class="explorer-v91-kpis">
-            <span><b>${stage.days.length}</b> jour${stage.days.length>1?"s":""}</span>
-            <span><b>${stagePhotos.length}</b> photo${stagePhotos.length>1?"s":""}</span>
-            <span><b>${activities}</b> activité${activities>1?"s":""}</span>
-            <span><b>${restaurants}</b> adresse${restaurants>1?"s":""}</span>
-            <span><b>${favorites}</b> coup${favorites>1?"s":""} de cœur</span>
-            <span><b>${places}</b> lieu${places>1?"x":""}</span>
-          </span>
-          <span class="explorer-v91-open"><span>Explorer cette étape</span><b>→</b></span>
-        </span>
-      </button>
-    </article>`;
-  }).join("");
-
-  root.querySelectorAll("[data-explorer-stage]").forEach(card=>{
-    card.querySelector(".explorer-v91-card-main")?.addEventListener("click",()=>{
-      const index=Number(card.dataset.explorerStage)||0;
-      const stage=stages[index];
-      setActiveExplorerStage(index);
-      renderMapStageDetails(stage,index);
-      if(tripMap) tripMap.flyTo(stage.coords,10,{duration:1.05});
-    });
-  });
-
-  window.refreshDestinationPremiumV92?.();
-}
-
-
-function explorerStageIcon(stage){
-  const city=normalizedPlaceName(stage.city);
-  if(city.includes("cinque")||city.includes("manarola")||city.includes("vernazza")) return "🌊";
-  if(city.includes("florence")||city.includes("firenze")) return "🏛️";
-  if(city.includes("venise")||city.includes("venezia")) return "🚤";
-  if(city.includes("toscane")||city.includes("chianti")||city.includes("sienne")) return "🍇";
-  if(city.includes("rome")||city.includes("roma")) return "🏟️";
-  return "📍";
-}
-
-function renderExplorerRouteStrip(stages){
-  const root=$("explorerRouteStrip");
-  if(!root) return;
-  if(!stages.length){
-    root.innerHTML="";
-    return;
-  }
-  root.innerHTML=stages.map((stage,index)=>`
-    <button type="button" data-route-stage="${index}" aria-label="Voir ${esc(stage.city)} sur la carte">
-      <span class="explorer-v84-route-number">${index+1}</span>
-      <span class="explorer-v84-route-icon">${explorerStageIcon(stage)}</span>
-      <span class="explorer-v84-route-copy">
-        <strong>${esc(stage.city)}</strong>
-        <small>${stage.days.length} jour${stage.days.length>1?"s":""}</small>
+        <span class="explorer-city-open">Ouvrir la fiche <b>→</b></span>
       </span>
-    </button>`).join("");
-  root.querySelectorAll("[data-route-stage]").forEach(button=>button.addEventListener("click",()=>{
-    const index=Number(button.dataset.routeStage)||0;
+    </button>`;
+  }).join("");
+  root.querySelectorAll("[data-explorer-stage]").forEach(button=>button.addEventListener("click",()=>{
+    const index=Number(button.dataset.explorerStage)||0;
     const stage=stages[index];
-    root.querySelectorAll("button").forEach(item=>item.classList.toggle("active",item===button));
-    document.querySelectorAll(".explorer-city-card").forEach((card,cardIndex)=>card.classList.toggle("selected",cardIndex===index));
-    if(tripMap){
-      tripMap.flyTo(stage.coords,10,{duration:1.1});
-    }
+    root.querySelectorAll(".explorer-city-card").forEach(card=>card.classList.toggle("selected",card===button));
     renderMapStageDetails(stage,index);
+    if(tripMap) tripMap.setView(stage.coords,10);
   }));
-  const summary=$("explorerRouteSummary");
-  if(summary) summary.textContent=`${stages.length} étapes · ${itineraryDays.length} jours`;
 }
 
-function setActiveExplorerStage(index){
-  document.querySelectorAll("#explorerRouteStrip [data-route-stage]").forEach(
-    button=>button.classList.toggle("active",Number(button.dataset.routeStage)===index)
-  );
-  document.querySelectorAll(".explorer-city-card").forEach(
-    (card,cardIndex)=>{
-      const selected=cardIndex===index;
-      card.classList.toggle("selected",selected);
-      if(selected){
-        card.classList.remove("explorer-v85-pulse");
-        requestAnimationFrame(()=>card.classList.add("explorer-v85-pulse"));
-      }
-    }
-  );
-}
-
-function toggleExplorerMapFullscreen(){
-  const card=document.querySelector(".explorer-v81-map-card");
-  const button=$("mapFullscreenButton");
-  if(!card||!button) return;
-  const open=card.classList.toggle("explorer-v84-fullscreen");
-  document.body.classList.toggle("explorer-map-open",open);
-  button.textContent=open?"✕ Fermer":"⛶ Agrandir";
-  setTimeout(()=>tripMap?.invalidateSize(),180);
-}
-
-$("mapFullscreenButton")?.addEventListener("click",toggleExplorerMapFullscreen);
-document.addEventListener("keydown",event=>{
-  if(event.key==="Escape" && document.querySelector(".explorer-v81-map-card.explorer-v84-fullscreen")){
-    toggleExplorerMapFullscreen();
-  }
-});
 
 function renderTripMapData(fit=false){
   const stages=mapStageData();
   const places=allHerePlaces();
-  renderExplorerRouteStrip(stages);
-  renderExplorerOverview(stages);
   renderExplorerCityCards(stages);
   $("mapStageCount") && ($("mapStageCount").textContent=stages.length);
   $("mapHereCount") && ($("mapHereCount").textContent=places.length);
@@ -2331,21 +2110,10 @@ function renderTripMapData(fit=false){
   const route=[];
   stages.forEach((stage,index)=>{
     route.push(stage.coords);
-    const stageIcon=L.divIcon({
-      className:"explorer-v84-marker-shell",
-      html:`<span class="explorer-v84-marker"><b>${index+1}</b><i>${explorerStageIcon(stage)}</i></span>`,
-      iconSize:[48,56],
-      iconAnchor:[24,52],
-      popupAnchor:[0,-48]
-    });
-    const marker=L.marker(stage.coords,{title:stage.city,icon:stageIcon}).addTo(tripMarkersLayer).bindPopup(stagePopup(stage,index));
-    marker.on("click",()=>{
-      setActiveExplorerStage(index);
-      renderMapStageDetails(stage,index);
-      tripMap?.flyTo(stage.coords,10,{duration:.9});
-    });
+    const marker=L.marker(stage.coords,{title:stage.city}).addTo(tripMarkersLayer).bindPopup(stagePopup(stage,index));
+    marker.on("click",()=>renderMapStageDetails(stage,index));
   });
-  if(route.length>1) L.polyline(route,{color:"#1f6b52",weight:5,opacity:.88,dashArray:"10 10",className:"explorer-v84-route-line"}).addTo(tripRouteLayer);
+  if(route.length>1) L.polyline(route,{color:"#1f6b52",weight:4,opacity:.75,dashArray:"9 8"}).addTo(tripRouteLayer);
   places.forEach(place=>{
     const lat=Number(place.latitude),lng=Number(place.longitude);
     if(!Number.isFinite(lat)||!Number.isFinite(lng)) return;
@@ -2482,11 +2250,7 @@ function renderMapStageDetails(stage,index){
     root.innerHTML="";
     document.querySelector(".explorer-v81-map-card")?.scrollIntoView({behavior:"smooth",block:"start"});
   });
-  root.classList.remove("explorer-v85-revealed");
-  requestAnimationFrame(()=>{
-    root.classList.add("explorer-v85-revealed");
-    root.scrollIntoView({behavior:"smooth",block:"start"});
-  });
+  root.scrollIntoView({behavior:"smooth",block:"start"});
 }
 
 function openMapTodayStage(){
@@ -2907,12 +2671,3 @@ const originalShowPanel=window.showPanel;
 window.showPanel=function(id){originalShowPanel(id);if(id==="conditions"||id==="today")setTimeout(()=>{renderAllWeather();},80);if(id==="world")setTimeout(renderWorldDashboard,40);};
 loadWeather();
 setInterval(()=>loadWeather(true),WEATHER_TTL);
-
-// Exposition minimale pour Explorer 3.0
-window.mapStageData = mapStageData;
-window.renderMapStageDetails = renderMapStageDetails;
-window.setActiveExplorerStage = setActiveExplorerStage;
-Object.defineProperty(window,"itineraryDays",{get:()=>itineraryDays});
-Object.defineProperty(window,"tripMap",{get:()=>tripMap});
-
-window.explorerStageVisual = explorerStageVisual;

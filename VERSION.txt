@@ -1,1 +1,11 @@
-Premium 4.0.1 — Météo corrigée
+Mon Carnet de Voyages
+Version 7.0 — Accueil Toscane
+
+Nouveautés et correctifs :
+- Nouvelle photo d’accueil inspirée de la Toscane
+- Hero plus compact
+- Cockpit visible immédiatement sous le Hero
+- Suppression du bouton Voir le cockpit qui était caché
+- Navigation à 5 sections conservée et rendue plus compacte
+- Meilleure transition entre la photo et le Cockpit
+- Ajustements ordinateur et téléphone
